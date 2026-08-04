@@ -18,14 +18,25 @@ Design horizon is deliberately short: a one-month build to a working demo around
 | Auth | Supabase Auth, email magic link | No passwords to store or handle. Two real accounts, so the action log can attribute who did what. |
 | ORM / migrations | Drizzle | Typed schema, plain SQL migrations, light in serverless. |
 | UI | Tailwind + shadcn/ui | Mobile-first component set without design work. |
-| LLM | Anthropic Claude (Sonnet for the daily run, Haiku for Q&A) | Allison has existing credits. Strong tool-use support. Accessed through a provider seam (see below). |
+| LLM | Gemini Flash free tier for development; Anthropic Claude (Sonnet for the daily run, Haiku for Q&A) for the demo path | Split by workload, not by preference — see below. Both sit behind one provider seam. |
 | Weather | Open-Meteo | Free, **no API key**, 16-day forecast plus `past_days` history, and reference evapotranspiration (ET₀) — a direct measure of how fast soil is drying. |
 | Email | Nodemailer over Gmail SMTP (app password) | Free, reaches both users with no domain or DNS setup. |
 | Scheduler | GitHub Actions cron | Free, flexible cadence, timezone-controllable, and every run leaves a log. Vercel Hobby cron is once-per-day, UTC-only, and fires anywhere within the scheduled hour. |
 
 Two notes on the stack that matter more than they look:
 
-**The LLM sits behind a provider seam.** All model calls go through one module (`lib/llm/`) exposing a single `runToolLoop()` interface. Anthropic is the implementation; Google Gemini's free Flash tier (1,500 requests/day, no credit card) is the documented fallback. This is one small file's worth of indirection that buys an escape hatch if credits run out mid-build — the one dependency here that is *not* actually free.
+**The LLM sits behind a provider seam, and both sides of it are used.** All model calls go through one module (`lib/llm/`) exposing a single `runToolLoop()` interface, with an Anthropic implementation and a Gemini implementation. Provider is selected by environment variable, defaulting to Gemini locally and Anthropic in production.
+
+The split follows the workloads, which pull in opposite directions:
+
+- **Development is high-volume and low-stakes.** Tuning an agent loop means running it dozens to low-hundreds of times a day. Gemini's free Flash tier allows ~1,500 requests/day at 10–15 requests/minute with no credit card; at ~8 model calls per agent run that is roughly **185 full runs per day, free** — comfortably more than iteration needs.
+- **Production is low-volume and high-stakes.** One scheduled run per day, plus light Q&A, against a graded demo. Here the cost is trivial and multi-step tool-use reliability is worth paying for, since a model that drops or malforms a tool call mid-loop fails the exact property this project is assessed on.
+
+Running free during development is not only about money. Metered iteration quietly discourages iteration, and the thing you would iterate less on is the agentic core — the one graded deliverable.
+
+Treating Gemini as a mere emergency fallback was rejected: an escape hatch that is never exercised is not an escape hatch. Because dev traffic runs on it continuously, the fallback is known-working *and* a real quality comparison exists by the end of Phase 3, when the final demo-path provider is chosen from evidence rather than assumption.
+
+Two operational details. The Gemini key must live in a **separate Google Cloud project with billing disabled** — enabling billing on a project permanently removes its free tier. And Google may use free-tier prompts for training, which is an accepted trade here given that the data is one household's vegetable garden.
 
 **Open-Meteo requires attribution** under its CC BY 4.0 data licence. A footer credit satisfies this. Non-commercial use is free up to 10,000 calls/day; this app will make roughly 1–2.
 
@@ -46,7 +57,7 @@ flowchart TB
     end
 
     subgraph External
-        LLM[Anthropic Claude]
+        LLM[LLM provider<br/>Gemini Flash · dev<br/>Anthropic Claude · demo]
         WX[Open-Meteo<br/>no API key]
         SMTP[Gmail SMTP]
     end
@@ -166,7 +177,7 @@ Weather is cached rather than fetched per request, for three reasons: repeat age
 
 **Agent layer:**
 
-- `agent_run` — kind, trigger, status, timings, model, token counts, estimated cost, the full `tool_calls` trace, linked `weather_fetch_id`, and `simulated_weather` when in demo mode. This is the observability backbone; Supabase's free tier retains platform logs for only **1 day**, so run history must live in our own table.
+- `agent_run` — kind, trigger, status, timings, **provider** and model, token counts, estimated cost, the full `tool_calls` trace, linked `weather_fetch_id`, and `simulated_weather` when in demo mode. Recording the provider alongside the tool trace is what turns the Phase 3 provider decision into a data question — malformed or skipped tool calls are visible per provider rather than recalled anecdotally. This is the observability backbone; Supabase's free tier retains platform logs for only **1 day**, so run history must live in our own table.
 - `recommendation` — first-class persisted record: `location_id`, `action_type`, `urgency` (now / today / this_week / monitor), `headline`, `rationale`, `confidence`, `evidence` (facts vs. inferences, separated), `status` (open / done / dismissed / superseded / expired), and `resolved_action_log_id` closing the loop when the user marks it done.
 - `conversation` / `message` — Q&A history, each assistant message linked to its `agent_run`.
 - `notification` — channel, recipient, the recommendations included, provider result, and a unique `dedupe_key` so a retried run cannot double-send.
@@ -178,7 +189,8 @@ Recommendations are stored, not streamed-and-forgotten. That is what makes them 
 
 | Service | Purpose | Auth | Failure mode |
 | --- | --- | --- | --- |
-| Anthropic Claude | All agent reasoning | `ANTHROPIC_API_KEY` | Rate limit or credit exhaustion → run recorded as failed, no alert sent (see degradation) |
+| Anthropic Claude | Agent reasoning on the demo path | `ANTHROPIC_API_KEY` | Rate limit or credit exhaustion → fail over to Gemini, run recorded with provider used; if both fail, run fails and no alert is sent |
+| Google Gemini | Agent reasoning during development | `GEMINI_API_KEY` (free tier, separate project, billing disabled) | Daily quota or 10 RPM limit → retry with backoff; dev-only, so no user impact |
 | Open-Meteo | Forecast + recent history + ET₀ | **None** | Cached data serves; run proceeds with staleness noted |
 | Supabase | Postgres + Auth | Service role key (server-only) | Hard dependency. Pauses after 7 days inactivity — the daily cron prevents this |
 | Gmail SMTP | Alert email | App password | Send failure logged; the in-app Today view remains the source of truth |
@@ -256,7 +268,7 @@ Plus two standing statements, shown once during onboarding and available in the 
 - **Schedule**: `.github/workflows/checkin.yml` fires daily at 06:00 garden-local (expressed in UTC) and POSTs to the check-in endpoint with a bearer secret. Chosen over Vercel Hobby cron, which allows only one run per day, only in UTC, and only within ±59 minutes of the target.
 - **Backups**: Supabase's free tier includes **no automated backups**. A weekly GitHub Actions `pg_dump` retained as a build artifact covers this. The garden profile is hand-entered and slow to recreate; the action log is irreplaceable.
 - **Observability**: the `agent_run` table is the primary record — every run's inputs, tool trace, tokens, cost, and outcome. Vercel function logs are secondary. An internal `/runs` page renders recent runs, which doubles as demo material for showing autonomous tool use.
-- **Secrets**: Vercel environment variables and GitHub Actions secrets. `ANTHROPIC_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GMAIL_APP_PASSWORD`, `CRON_SECRET`, `ALLOWED_EMAILS`. None may ever carry the `NEXT_PUBLIC_` prefix, which would inline them into the client bundle.
+- **Secrets**: Vercel environment variables and GitHub Actions secrets. `LLM_PROVIDER`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GMAIL_APP_PASSWORD`, `CRON_SECRET`, `ALLOWED_EMAILS`. None may ever carry the `NEXT_PUBLIC_` prefix, which would inline them into the client bundle.
 
 ### Suggested build sequence
 
@@ -266,7 +278,7 @@ Ordered so the agentic core — the thing the capstone is graded on and the thin
 | --- | --- | --- |
 | 1 (days 1–4) | Deploy skeleton, schema, auth + allowlist, seed real garden | Nothing can be demoed without a deployed URL and real data |
 | 2 (days 4–9) | Garden profile CRUD, action log | The agent is worthless without ground truth to reason over |
-| 3 (days 8–16) | **Agent engine, tools, weather, recommendations, Today page** | The demo spine. Start it before the UI is polished |
+| 3 (days 8–16) | **Agent engine, tools, weather, recommendations, Today page** — both provider implementations from the start | The demo spine. Start it before the UI is polished. Ends with the provider decision, made from `agent_run` traces |
 | 4 (days 14–20) | Scheduled run, email digest, run observability, demo weather mode | Makes the behavior *proactive*, which is the graded property |
 | 5 (days 18–24) | Q&A (same engine, new prompt) | Cheap once phase 3 exists |
 | 6 (days 22–28) | Harvest windows, then planting recommendations if time | Both are prompts over existing context; genuinely deferrable |
@@ -274,13 +286,36 @@ Ordered so the agentic core — the thing the capstone is graded on and the thin
 
 ### Estimated running cost
 
+Two different bills, and the smaller one is the one usually estimated.
+
+**Steady state — what the app costs once built:**
+
 | Item | Monthly |
 | --- | --- |
 | Vercel, Supabase, Open-Meteo, Gmail, GitHub Actions | $0 |
 | Anthropic — daily check-in (Sonnet, ~1 run/day) | ~$5–8 |
 | Anthropic — Q&A (Haiku, light use) | ~$3–8 |
 
-Rough figures, not quotes. Two things keep this down: **prompt caching** for the garden profile, which is re-sent on every tool round trip and barely changes, and Haiku for Q&A. Because this is the only non-free dependency, a hard monthly token budget with a kill switch is specified as a security/cost control rather than left to good intentions.
+**Build month — what development costs, which is larger:**
+
+One agent run is ~8 model calls with context that grows each round trip, roughly 60k input and 2k output tokens end to end. On Sonnet that is about **$0.14 per run**. Phases 3–5 mean iterating on prompts and tool schemas at 50–150 runs/day:
+
+```
+100 runs/day × 12 active days × $0.14 = ~$170
+```
+
+Plausibly $100–300 across the month, which is **five to twenty times the steady-state figure above**. This is why development runs on Gemini's free tier: it moves the larger of the two bills to $0 and leaves the paid dependency carrying only the ~$10–16/month it was actually estimated for.
+
+**Against the actual budget.** The available Anthropic credit is **$100**, which buys roughly 715 runs at the uncached rate — everything included. Reserving the production cron, Q&A, and demo rehearsals leaves ~$75–85, or about 35 development runs per day across Phases 3–5. That is survivable but has no slack for a bad debugging day, which is the case the dev/demo split exists to remove: with development free, the full $100 stays available for the demo path, rehearsal, and the graded runs.
+
+Two ways that budget disappears faster than the arithmetic implies, both worth designing against rather than discovering:
+
+- **An unbounded loop.** A model that re-calls the same tool, or a loop whose call cap is not yet enforced, can burn several dollars in one run. The tool-call and token bounds must exist in the **first** version of the engine, not arrive as a later hardening pass.
+- **Prompt churn defeats caching.** Cache hits require a stable prefix; during active prompt tuning every edit invalidates it. The most iterative days are therefore the most expensive per run, which is the opposite of how the steady-state estimate reads.
+
+Three caveats on the Anthropic numbers. They assume **prompt caching** for the garden profile, which is re-sent on every tool round trip and barely changes, and Haiku for Q&A. They are computed at Sonnet's introductory rate of $2/$10 per Mtok, which **ends August 31, 2026** and reverts to $3/$15 — a 50% increase landing two days before the September 3 demo, so demo-week costs run half again higher than the table. And they are estimates, not quotes.
+
+The spend cap should therefore **alert rather than hard-kill**, and be sized against development reality rather than the steady-state estimate. A kill switch set at the ~$20 production figure would fire somewhere in week two, taking the agent offline in the middle of the phase that can least afford to stall.
 
 ## Open decisions
 
@@ -288,7 +323,8 @@ Rough figures, not quotes. Two things keep this down: **prompt caching** for the
 - **Current season contents** — how the bed is divided right now and what is actually in the ground, needed for the seed script and for a demo with real plantings.
 - **Whether planting recommendations (ALL-11) make the September demo.** They address the most expensive failures but demo worst in September, when the windows have passed. The architecture keeps them cheap to add late; the call belongs to the PO.
 - **Web push** — deferred. Revisit only if email proves insufficient; on iOS it requires the app be added to the home screen.
-- **Monthly spend cap value** for the Anthropic budget kill switch.
+- **Monthly spend alert threshold** for the Anthropic budget control — sized to development burn, not steady state. Given a $100 balance, alert at $50 (halfway, with the demo still ahead) and again at $80.
+- **Final demo-path provider**, to be decided at the end of Phase 3 (~day 16), by which point both providers will have run the same loop against the same garden. Choose Anthropic only if the tool-use reliability difference is observable; if Gemini Flash drives the loop cleanly, the project has no paid dependency at all and satisfies the brief's free-tier constraint outright.
 - **Post-capstone plan** — if the app goes unused for a week the Supabase project pauses. Fine for a capstone, decide before relying on it next season.
 
 ## Known constraints & tradeoffs
@@ -304,7 +340,8 @@ Rough figures, not quotes. Two things keep this down: **prompt caching** for the
 
 - **Plant-care guidance is unverifiable.** Mitigated by legibility, not accuracy — see above.
 - **No microclimate awareness.** No sensors, so recommendations reason from a regional forecast and cannot know that one end of the bed stays soggy. Stated plainly to users; partially correctable via `garden_note`.
-- **The LLM is the one paid dependency.** Contained by a provider seam, prompt caching, a spend cap, and Haiku for cheap paths.
+- **The LLM is the one potentially paid dependency**, and the brief's constraint is "free tiers only," including for LLM usage. The dev/demo split is how that tension is managed rather than ignored: development sits inside a genuine free tier, and only the once-daily production path can incur cost. Further contained by prompt caching, a spend alert, Haiku for cheap paths, and a continuously exercised Gemini implementation that can take over the demo path entirely. If the Phase 3 comparison favors Gemini, the constraint is met with no exception at all.
+- **Free-tier limits are real limits.** Gemini free tier is ~1,500 requests/day at 10–15 requests/minute with no SLA. At ~8 model calls per agent run the daily ceiling is generous, but the per-minute limit caps tight iteration at roughly one full loop per minute. Verified August 2026; Google has changed these terms more than once (Pro models left the free tier in April 2026), so they are worth re-checking rather than trusted.
 - **Free-tier operational edges**: Supabase pauses after 7 days idle (the daily cron prevents it) and has no automated backups (weekly `pg_dump` covers it); Supabase platform logs retain 1 day (the `agent_run` table covers it); Vercel Hobby cron is too coarse (GitHub Actions covers it).
 - **Email deliverability is not guaranteed.** Gmail SMTP to two addresses is a low-risk path, but if a digest lands in spam the proactive feature silently fails. The Today page is the durable source of truth, and delivery is verified rather than assumed.
 - **The demo depends on weather that may not cooperate.** The top success criterion is the agent visibly changing a recommendation because of live weather. Early September may simply be dry. A labeled simulated-weather mode runs the real agent against a substituted forecast so the behavior can be shown on demand — a requirement driven by the demo, not by the product.
