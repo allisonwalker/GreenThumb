@@ -1,0 +1,22 @@
+# dependencies
+/node_modules
+
+# Next.js
+/.next/
+/out/
+
+# local environment variables
+.env*
+!.env.example
+
+# deployment
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+
+# operating system
+.DS_Store
+
+# local archives
+cursor-skills.zip
