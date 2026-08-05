@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:db": "RUN_DB_TESTS=true node --env-file-if-exists=.env.local ./node_modules/vitest/vitest.mjs run lib/db/schema.integration.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.ts"
   },
