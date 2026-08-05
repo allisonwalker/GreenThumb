@@ -6,7 +6,7 @@ Supabase Postgres, and Vercel.
 
 ## Live app
 
-The production URL will be added here after the Vercel project is connected.
+[green-thumb-orpin.vercel.app](https://green-thumb-orpin.vercel.app)
 
 ## Local setup
 
