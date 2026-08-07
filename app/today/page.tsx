@@ -1,6 +1,9 @@
 import { PlaceholderPage } from "@/components/placeholder-page";
+import { requirePageUser } from "@/lib/auth/session";
 
-export default function TodayPage() {
+export default async function TodayPage() {
+  await requirePageUser();
+
   return (
     <PlaceholderPage
       title="Today"

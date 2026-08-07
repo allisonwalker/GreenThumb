@@ -14,7 +14,7 @@ Prerequisites:
 
 - Node.js 22 or newer
 - npm
-- A Supabase project (only `DATABASE_URL` is needed to run this skeleton)
+- A Supabase project
 
 From a fresh clone:
 
@@ -34,19 +34,22 @@ From a fresh clone:
    Select the **Session pooler**, copy its URI, replace the password placeholder,
    and set it as `DATABASE_URL` in `.env.local`.
 
-4. Apply every checked-in migration with one command:
+4. Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SITE_URL` in
+   `.env.local`. For local development, use `SITE_URL=http://localhost:3000`.
+
+5. Apply every checked-in migration with one command:
 
    ```sh
    npm run db:migrate
    ```
 
-5. Start the app:
+6. Start the app:
 
    ```sh
    npm run dev
    ```
 
-6. Open [http://localhost:3000](http://localhost:3000). The database health
+7. Open [http://localhost:3000](http://localhost:3000). The database health
    response is at [http://localhost:3000/health](http://localhost:3000/health).
 
 Only server modules access Postgres. Do not add `NEXT_PUBLIC_` to database,
@@ -58,10 +61,18 @@ Supabase service-role, model, email, or cron credentials.
 2. Save the generated database password in a password manager.
 3. Copy the **Session pooler** connection URI into `DATABASE_URL`.
 4. Open **Project Settings → API Keys** and copy the service-role key into
-   `SUPABASE_SERVICE_ROLE_KEY`. This skeleton does not use that key yet, but
-   later server-side auth work will.
-5. Run `npm run db:migrate`. It creates the trivial `app_metadata` table and
-   Drizzle's migration journal, proving the migration path end to end.
+   `SUPABASE_SERVICE_ROLE_KEY`. It stays server-only; never give it a
+   `NEXT_PUBLIC_` prefix.
+5. Under **Authentication → URL Configuration**, set the Site URL and add
+   `<SITE_URL>/auth/callback` to the allowed redirect URLs. Add both local and
+   deployed callback URLs when testing both environments.
+6. Ensure the email provider is enabled under **Authentication → Providers**.
+7. Run `npm run db:migrate`. It creates the application tables and Drizzle's
+   migration journal.
+
+Magic-link authentication currently permits any email address supported by the
+Supabase project. Do not deploy this branch publicly until ALL-13 adds the
+two-address admission allowlist.
 
 When the schema changes, edit `lib/db/schema.ts`, run `npm run db:generate`,
 review the generated SQL under `lib/db/migrations`, and commit it.

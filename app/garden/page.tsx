@@ -1,6 +1,9 @@
 import { PlaceholderPage } from "@/components/placeholder-page";
+import { requirePageUser } from "@/lib/auth/session";
 
-export default function GardenPage() {
+export default async function GardenPage() {
+  await requirePageUser();
+
   return (
     <PlaceholderPage
       title="Garden"

@@ -72,6 +72,14 @@ export const appMetadata = pgTable("app_metadata", {
     .notNull(),
 });
 
+export const appUsers = pgTable("app_user", {
+  id: uuid("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 export const gardens = pgTable(
   "garden",
   {

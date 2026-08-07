@@ -1,6 +1,9 @@
 import { PlaceholderPage } from "@/components/placeholder-page";
+import { requirePageUser } from "@/lib/auth/session";
 
-export default function LogPage() {
+export default async function LogPage() {
+  await requirePageUser();
+
   return (
     <PlaceholderPage
       title="Log"

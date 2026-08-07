@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { AppNav } from "@/components/app-nav";
+import { AppShell } from "@/components/app-shell";
 
 import "./globals.css";
 
@@ -17,12 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="mx-auto min-h-dvh max-w-5xl md:grid md:grid-cols-[auto_1fr]">
-          <AppNav />
-          <main className="px-4 py-8 pb-24 sm:px-6 md:px-10 md:pb-8">
-            {children}
-          </main>
-        </div>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
