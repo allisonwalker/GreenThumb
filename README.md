@@ -67,12 +67,21 @@ Supabase service-role, model, email, or cron credentials.
    `<SITE_URL>/auth/callback` to the allowed redirect URLs. Add both local and
    deployed callback URLs when testing both environments.
 6. Ensure the email provider is enabled under **Authentication → Providers**.
-7. Run `npm run db:migrate`. It creates the application tables and Drizzle's
+7. Under **Authentication → Providers → Email**, turn **off** “Allow new users
+   to sign up” (open signup). GreenThumb admits only the two household
+   addresses via `ALLOWED_EMAILS`; leaving open signup on would let Supabase
+   create accounts for other addresses even though the app callback rejects
+   them. Create the two household users first (sign in once with signup still
+   on, or invite them from the Auth dashboard), then disable open signup.
+8. Set `ALLOWED_EMAILS` in `.env.local` to a comma-separated list of the two
+   permitted addresses (see `.env.example`). Changing who can sign in is an
+   env-var edit plus redeploy — no code change.
+9. Run `npm run db:migrate`. It creates the application tables and Drizzle's
    migration journal.
 
-Magic-link authentication currently permits any email address supported by the
-Supabase project. Do not deploy this branch publicly until ALL-13 adds the
-two-address admission allowlist.
+Admission is enforced server-side on the magic-link callback: a non-allowlisted
+address is signed out immediately and cannot keep a session. Rejected attempts
+are logged with the email and timestamp.
 
 When the schema changes, edit `lib/db/schema.ts`, run `npm run db:generate`,
 review the generated SQL under `lib/db/migrations`, and commit it.

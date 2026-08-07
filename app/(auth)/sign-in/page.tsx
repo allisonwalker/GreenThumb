@@ -33,7 +33,9 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             role="alert"
             className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-800"
           >
-            That sign-in link is invalid or expired. Request a new one below.
+            {error === "not-allowed"
+              ? "That email is not authorized to use GreenThumb."
+              : "That sign-in link is invalid or expired. Request a new one below."}
           </p>
         ) : null}
         <SignInForm />

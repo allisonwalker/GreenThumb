@@ -1,5 +1,9 @@
 "use server";
 
+import {
+  isEmailAllowed,
+  logRejectedAdmission,
+} from "@/lib/auth/allowlist";
 import { getAuthCallbackUrl, normalizeEmail } from "@/lib/auth/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -18,6 +22,14 @@ export async function requestMagicLink(
     return {
       status: "error",
       message: "Enter a valid email address.",
+    };
+  }
+
+  if (!isEmailAllowed(email)) {
+    logRejectedAdmission(email);
+    return {
+      status: "error",
+      message: "This email is not authorized to use GreenThumb.",
     };
   }
 
