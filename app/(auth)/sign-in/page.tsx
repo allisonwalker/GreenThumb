@@ -29,7 +29,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           Sign in to your garden
         </h1>
         <p className="mt-3 text-sm leading-6 text-neutral-600">
-          We&apos;ll email you a one-time link. GreenThumb does not use
+          We&apos;ll email you a one-time code. GreenThumb does not use
           passwords.
         </p>
         {error ? (
@@ -39,7 +39,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           >
             {error === "not-allowed"
               ? "That email is not authorized to use GreenThumb."
-              : "That sign-in link is invalid or expired. Request a new one, then open it in the same browser you used here (copy the link and paste it into this tab — don\u2019t open it from the mail app)."}
+              : "That sign-in link is invalid or expired. Request a new code on this page and enter the code from the email."}
           </p>
         ) : null}
         <SignInForm

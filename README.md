@@ -79,17 +79,23 @@ Supabase service-role, model, email, or cron credentials.
 8. Set `ALLOWED_EMAILS` in `.env.local` to a comma-separated list of the two
    permitted addresses (see `.env.example`). Changing who can sign in is an
    env-var edit plus redeploy — no code change.
-9. (Recommended) Under **Authentication → Email Templates → Magic Link**, set
-   the CTA href to a token-hash callback so the link works even if you open it
-   in a different browser than the one that requested it:
+9. Under **Authentication → Email Templates → Magic Link**, replace the body
+   so the email shows a **6-digit code** (required for local sign-in). Example:
 
    ```html
-   <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email">Sign in</a>
+   <h2>Sign in to GreenThumb</h2>
+   <p>Your code is <strong>{{ .Token }}</strong></p>
+   <p>Enter this code in the app. It expires shortly and can only be used once.</p>
    ```
 
-   Until that template is updated, open the magic link in the **same browser**
-   that submitted the sign-in form (copy/paste the URL if your mail app opens
-   a different browser).
+   Optional: also include a token-hash link that works across browsers:
+
+   ```html
+   <p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email">Or sign in with this link</a></p>
+   ```
+
+   Do **not** use `{{ .ConfirmationURL }}` for local testing — that PKCE flow
+   fails when the mail app opens a different browser (or prefetches the link).
 10. Run `npm run db:migrate`. It creates the application tables and Drizzle's
    migration journal.
 

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { config, isProtectedPath } from "./proxy";
+import {
+  config,
+  isProtectedPath,
+  shouldRedirectAuthenticatedSignIn,
+} from "./proxy";
 
 describe("authentication proxy", () => {
   it.each(["/today", "/garden/sections", "/log", "/ask/history"])(
@@ -25,5 +29,17 @@ describe("authentication proxy", () => {
       "/ask/:path*",
       "/sign-in",
     ]);
+  });
+
+  it("redirects authenticated GET visits away from sign-in", () => {
+    expect(shouldRedirectAuthenticatedSignIn("/sign-in", "GET", true)).toBe(
+      true,
+    );
+  });
+
+  it("allows authenticated POSTs to sign-in so OTP finish actions can run", () => {
+    expect(shouldRedirectAuthenticatedSignIn("/sign-in", "POST", true)).toBe(
+      false,
+    );
   });
 });

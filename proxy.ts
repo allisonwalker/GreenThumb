@@ -24,6 +24,14 @@ function redirectWithCookies(
   return redirect;
 }
 
+export function shouldRedirectAuthenticatedSignIn(
+  pathname: string,
+  method: string,
+  hasUser: boolean,
+) {
+  return pathname === "/sign-in" && hasUser && method === "GET";
+}
+
 export async function proxy(request: NextRequest) {
   const { response, user } = await refreshAuthSession(request);
   const { pathname } = request.nextUrl;
@@ -32,7 +40,9 @@ export async function proxy(request: NextRequest) {
     return redirectWithCookies(request, "/sign-in", response);
   }
 
-  if (pathname === "/sign-in" && user) {
+  // Only redirect document navigations. Server actions POST to /sign-in after
+  // OTP verification and must not be turned into a redirect response.
+  if (shouldRedirectAuthenticatedSignIn(pathname, request.method, Boolean(user))) {
     return redirectWithCookies(request, "/today", response);
   }
 
