@@ -13,7 +13,7 @@ export type AnthropicClientOptions = {
   client?: Anthropic;
 };
 
-const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
+const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-6";
 
 export function createAnthropicClient(
   options: AnthropicClientOptions = {},

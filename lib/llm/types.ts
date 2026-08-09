@@ -12,6 +12,8 @@ export type ToolCallRequest = {
   id: string;
   name: string;
   input: Record<string, unknown>;
+  /** Opaque provider metadata (e.g. Gemini thoughtSignature). */
+  providerMeta?: Record<string, unknown>;
 };
 
 export type ToolTraceEntry = {
@@ -38,6 +40,11 @@ export type ProviderMessage =
       role: "assistant";
       content: string | null;
       toolCalls: ToolCallRequest[];
+      /**
+       * Opaque provider content to echo back unchanged (Gemini thought
+       * signatures live on these parts and must not be rebuilt).
+       */
+      providerContent?: unknown;
     }
   | {
       role: "tool";
@@ -52,6 +59,7 @@ export type ProviderTurnResult = {
   inputTokens: number;
   outputTokens: number;
   stopReason: "tool_use" | "end" | "max_tokens";
+  providerContent?: unknown;
 };
 
 export type LlmClient = {

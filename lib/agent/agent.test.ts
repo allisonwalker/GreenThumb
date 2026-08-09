@@ -26,7 +26,7 @@ describe("runAgent", () => {
 
     const client: LlmClient = {
       provider: "gemini",
-      model: "gemini-2.0-flash",
+      model: "gemini-flash-latest",
       async complete() {
         return {
           text: "Garden looks fine.",

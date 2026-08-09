@@ -92,6 +92,7 @@ export async function runToolLoop(
         role: "assistant",
         content: turn.text,
         toolCalls: turn.toolCalls,
+        providerContent: turn.providerContent,
       });
 
       for (const call of turn.toolCalls) {
