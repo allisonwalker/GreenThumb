@@ -64,6 +64,11 @@ export const actionTypeEnum = pgEnum("action_type", [
   "treated",
 ]);
 
+export const weatherDayKindEnum = pgEnum("weather_day_kind", [
+  "observed",
+  "forecast",
+]);
+
 export const appMetadata = pgTable("app_metadata", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
@@ -322,6 +327,83 @@ export const gardenNotes = pgTable(
       table.createdAt,
     ),
     check("garden_note_not_blank", sql`length(trim(${table.note})) > 0`),
+  ],
+);
+
+export const weatherFetches = pgTable(
+  "weather_fetch",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    gardenId: uuid("garden_id")
+      .notNull()
+      .references(() => gardens.id, { onDelete: "cascade" }),
+    requestUrl: text("request_url").notNull(),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    rawResponse: jsonb("raw_response").$type<unknown>(),
+    success: boolean("success").notNull(),
+    error: text("error"),
+  },
+  (table) => [
+    index("weather_fetch_garden_fetched_idx").on(
+      table.gardenId,
+      table.fetchedAt,
+    ),
+    check(
+      "weather_fetch_result",
+      sql`(${table.success} and ${table.rawResponse} is not null and ${table.error} is null)
+        or (not ${table.success} and ${table.error} is not null)`,
+    ),
+  ],
+);
+
+export const weatherDays = pgTable(
+  "weather_day",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    gardenId: uuid("garden_id")
+      .notNull()
+      .references(() => gardens.id, { onDelete: "cascade" }),
+    weatherFetchId: uuid("weather_fetch_id")
+      .notNull()
+      .references(() => weatherFetches.id, { onDelete: "restrict" }),
+    date: date("date").notNull(),
+    kind: weatherDayKindEnum("kind").notNull(),
+    precipitationMm: numeric("precipitation_mm", {
+      precision: 8,
+      scale: 3,
+    }).notNull(),
+    temperatureMinC: numeric("temperature_min_c", {
+      precision: 6,
+      scale: 2,
+    }).notNull(),
+    temperatureMaxC: numeric("temperature_max_c", {
+      precision: 6,
+      scale: 2,
+    }).notNull(),
+    et0Mm: numeric("et0_mm", { precision: 8, scale: 3 }).notNull(),
+    windSpeedMaxKph: numeric("wind_speed_max_kph", {
+      precision: 7,
+      scale: 2,
+    }).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("weather_day_garden_date_kind_idx").on(
+      table.gardenId,
+      table.date,
+      table.kind,
+    ),
+    index("weather_day_garden_date_idx").on(table.gardenId, table.date),
+    check(
+      "weather_day_temperature_order",
+      sql`${table.temperatureMaxC} >= ${table.temperatureMinC}`,
+    ),
+    check(
+      "weather_day_nonnegative_measurements",
+      sql`${table.precipitationMm} >= 0 and ${table.et0Mm} >= 0 and ${table.windSpeedMaxKph} >= 0`,
+    ),
   ],
 );
 

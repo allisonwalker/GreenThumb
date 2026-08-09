@@ -411,6 +411,144 @@ describeDatabase("garden schema integration", () => {
     ).rejects.toThrow(/location_kind_fields/);
   });
 
+  it("audits weather fetches and upserts normalized weather days", async () => {
+    await expectRollback(async (transaction) => {
+      const [garden] = await transaction<{ id: string }[]>`
+        insert into garden (
+          latitude,
+          longitude,
+          timezone,
+          hardiness_zone
+        )
+        values (45.52, -122.68, 'America/Los_Angeles', '8b')
+        returning id
+      `;
+      const rawResponse = {
+        daily: {
+          time: ["2026-08-01"],
+          et0_fao_evapotranspiration: [3.2],
+        },
+      };
+      const [firstFetch] = await transaction<{ id: string }[]>`
+        insert into weather_fetch (
+          garden_id,
+          request_url,
+          raw_response,
+          success
+        )
+        values (
+          ${garden.id},
+          'https://api.open-meteo.com/v1/forecast?latitude=45.52',
+          ${transaction.json(rawResponse)},
+          true
+        )
+        returning id
+      `;
+
+      await transaction`
+        insert into weather_day (
+          garden_id,
+          weather_fetch_id,
+          date,
+          kind,
+          precipitation_mm,
+          temperature_min_c,
+          temperature_max_c,
+          et0_mm,
+          wind_speed_max_kph
+        )
+        values (
+          ${garden.id},
+          ${firstFetch.id},
+          '2026-08-01',
+          'observed',
+          0.5,
+          12,
+          25,
+          3.2,
+          15
+        )
+      `;
+      const [secondFetch] = await transaction<{ id: string }[]>`
+        insert into weather_fetch (
+          garden_id,
+          request_url,
+          raw_response,
+          success
+        )
+        values (
+          ${garden.id},
+          'https://api.open-meteo.com/v1/forecast?latitude=45.52',
+          ${transaction.json(rawResponse)},
+          true
+        )
+        returning id
+      `;
+      await transaction`
+        insert into weather_day (
+          garden_id,
+          weather_fetch_id,
+          date,
+          kind,
+          precipitation_mm,
+          temperature_min_c,
+          temperature_max_c,
+          et0_mm,
+          wind_speed_max_kph
+        )
+        values (
+          ${garden.id},
+          ${secondFetch.id},
+          '2026-08-01',
+          'observed',
+          1.25,
+          13,
+          26,
+          3.4,
+          16
+        )
+        on conflict (garden_id, date, kind)
+        do update set
+          weather_fetch_id = excluded.weather_fetch_id,
+          precipitation_mm = excluded.precipitation_mm,
+          temperature_min_c = excluded.temperature_min_c,
+          temperature_max_c = excluded.temperature_max_c,
+          et0_mm = excluded.et0_mm,
+          wind_speed_max_kph = excluded.wind_speed_max_kph,
+          updated_at = now()
+      `;
+
+      const rows = await transaction<
+        {
+          weather_fetch_id: string;
+          precipitation_mm: string;
+          et0_mm: string;
+        }[]
+      >`
+        select weather_fetch_id, precipitation_mm, et0_mm
+        from weather_day
+        where garden_id = ${garden.id}
+      `;
+      const audits = await transaction<{ raw_response: unknown }[]>`
+        select raw_response
+        from weather_fetch
+        where garden_id = ${garden.id}
+      `;
+
+      expect(rows).toEqual([
+        {
+          weather_fetch_id: secondFetch.id,
+          precipitation_mm: "1.250",
+          et0_mm: "3.400",
+        },
+      ]);
+      expect(audits).toHaveLength(2);
+      expect(audits[0]?.raw_response).toEqual(rawResponse);
+
+      throw new Error(rollbackMessage);
+    });
+  });
+
   it("uses timestamptz for every timestamp column", async () => {
     const timestampWithoutTimeZone = await client!<
       { table_name: string; column_name: string }[]
@@ -426,7 +564,9 @@ describeDatabase("garden schema integration", () => {
           'location',
           'planting',
           'action_log',
-          'garden_note'
+          'garden_note',
+          'weather_day',
+          'weather_fetch'
         )
         and data_type = 'timestamp without time zone'
     `;
