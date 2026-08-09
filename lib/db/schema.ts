@@ -69,6 +69,51 @@ export const weatherDayKindEnum = pgEnum("weather_day_kind", [
   "forecast",
 ]);
 
+export const agentRunKindEnum = pgEnum("agent_run_kind", [
+  "scheduled_checkin",
+  "ask",
+  "script",
+  "test",
+]);
+
+export const agentRunStatusEnum = pgEnum("agent_run_status", [
+  "running",
+  "succeeded",
+  "failed",
+  "timed_out",
+  "budget_exceeded",
+]);
+
+export const recommendationUrgencyEnum = pgEnum("recommendation_urgency", [
+  "now",
+  "today",
+  "this_week",
+  "monitor",
+]);
+
+export const recommendationStatusEnum = pgEnum("recommendation_status", [
+  "open",
+  "done",
+  "dismissed",
+  "superseded",
+  "expired",
+]);
+
+export type RecommendationEvidence = {
+  facts: string[];
+  inferences: string[];
+};
+
+export type AgentToolTraceEntry = {
+  iteration: number;
+  toolCallId: string;
+  name: string;
+  input: unknown;
+  output?: unknown;
+  error?: string;
+  durationMs: number;
+};
+
 export const appMetadata = pgTable("app_metadata", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
@@ -404,6 +449,98 @@ export const weatherDays = pgTable(
       "weather_day_nonnegative_measurements",
       sql`${table.precipitationMm} >= 0 and ${table.et0Mm} >= 0 and ${table.windSpeedMaxKph} >= 0`,
     ),
+  ],
+);
+
+export const agentRuns = pgTable(
+  "agent_run",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    kind: agentRunKindEnum("kind").notNull(),
+    trigger: text("trigger").notNull(),
+    status: agentRunStatusEnum("status").default("running").notNull(),
+    provider: text("provider").notNull(),
+    model: text("model").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    inputTokens: numeric("input_tokens", { precision: 12, scale: 0 })
+      .default("0")
+      .notNull(),
+    outputTokens: numeric("output_tokens", { precision: 12, scale: 0 })
+      .default("0")
+      .notNull(),
+    estimatedCostUsd: numeric("estimated_cost_usd", {
+      precision: 12,
+      scale: 6,
+    })
+      .default("0")
+      .notNull(),
+    toolCalls: jsonb("tool_calls")
+      .$type<AgentToolTraceEntry[]>()
+      .default([])
+      .notNull(),
+    weatherFetchId: uuid("weather_fetch_id").references(
+      () => weatherFetches.id,
+      { onDelete: "set null" },
+    ),
+    simulatedWeather: jsonb("simulated_weather").$type<unknown>(),
+    finalText: text("final_text"),
+    error: text("error"),
+    stopReason: text("stop_reason"),
+    ...timestamps,
+  },
+  (table) => [
+    index("agent_run_started_idx").on(table.startedAt),
+    index("agent_run_provider_started_idx").on(table.provider, table.startedAt),
+    check(
+      "agent_run_nonnegative_tokens",
+      sql`${table.inputTokens} >= 0 and ${table.outputTokens} >= 0 and ${table.estimatedCostUsd} >= 0`,
+    ),
+  ],
+);
+
+export const recommendations = pgTable(
+  "recommendation",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    agentRunId: uuid("agent_run_id")
+      .notNull()
+      .references(() => agentRuns.id, { onDelete: "restrict" }),
+    locationId: uuid("location_id")
+      .notNull()
+      .references(() => locations.id, { onDelete: "restrict" }),
+    plantingId: uuid("planting_id").references(() => plantings.id, {
+      onDelete: "restrict",
+    }),
+    actionType: actionTypeEnum("action_type").notNull(),
+    urgency: recommendationUrgencyEnum("urgency").notNull(),
+    headline: text("headline").notNull(),
+    rationale: text("rationale").notNull(),
+    confidence: numeric("confidence", { precision: 4, scale: 3 }).notNull(),
+    evidence: jsonb("evidence").$type<RecommendationEvidence>().notNull(),
+    status: recommendationStatusEnum("status").default("open").notNull(),
+    dueBy: timestamp("due_by", { withTimezone: true }),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    resolvedBy: uuid("resolved_by"),
+    resolvedActionLogId: uuid("resolved_action_log_id").references(
+      () => actionLogs.id,
+      { onDelete: "set null" },
+    ),
+    ...timestamps,
+  },
+  (table) => [
+    index("recommendation_status_idx").on(table.status),
+    index("recommendation_location_status_idx").on(
+      table.locationId,
+      table.status,
+    ),
+    check(
+      "recommendation_confidence_range",
+      sql`${table.confidence} between 0 and 1`,
+    ),
+    check("recommendation_headline_not_blank", sql`length(trim(${table.headline})) > 0`),
   ],
 );
 

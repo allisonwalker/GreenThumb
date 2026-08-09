@@ -1,5 +1,3 @@
-import "server-only";
-
 import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
 
 import { getDatabase } from "@/lib/db/client";

@@ -29,6 +29,13 @@
       "when": 1786246142816,
       "tag": "0003_panoramic_vin_gonzales",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786247083077,
+      "tag": "0004_jazzy_the_liberteens",
+      "breakpoints": true
     }
   ]
 }

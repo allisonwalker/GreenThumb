@@ -11,9 +11,12 @@
     "test": "vitest run",
     "test:db": "RUN_DB_TESTS=true node --env-file-if-exists=.env.local ./node_modules/vitest/vitest.mjs run lib/db/schema.integration.test.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.ts"
+    "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.ts",
+    "agent:run": "tsx --env-file-if-exists=.env.local scripts/run-agent.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.116.0",
+    "@google/generative-ai": "^0.24.1",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.2",
     "class-variance-authority": "^0.7.1",
@@ -24,11 +27,12 @@
     "postgres": "^3.4.9",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "server-only": "^0.0.1",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "drizzle-kit": "^0.31.10",

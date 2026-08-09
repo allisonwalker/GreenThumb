@@ -566,7 +566,9 @@ describeDatabase("garden schema integration", () => {
           'action_log',
           'garden_note',
           'weather_day',
-          'weather_fetch'
+          'weather_fetch',
+          'agent_run',
+          'recommendation'
         )
         and data_type = 'timestamp without time zone'
     `;
