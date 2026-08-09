@@ -1,3 +1,4 @@
+import { type EmailOtpType } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { admitOrRejectSession } from "@/lib/auth/allowlist";
@@ -18,8 +19,17 @@ async function clearSessionBestEffort() {
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
+  const tokenHash = request.nextUrl.searchParams.get("token_hash");
+  const type = request.nextUrl.searchParams.get("type");
+  const authError = request.nextUrl.searchParams.get("error");
 
-  if (!code) {
+  if (authError) {
+    return NextResponse.redirect(
+      new URL("/sign-in?error=invalid-link", request.url),
+    );
+  }
+
+  if (!code && !(tokenHash && type)) {
     return NextResponse.redirect(
       new URL("/sign-in?error=invalid-link", request.url),
     );
@@ -27,10 +37,22 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-    if (error) {
-      throw error;
+    if (tokenHash && type) {
+      const { error } = await supabase.auth.verifyOtp({
+        type: type as EmailOtpType,
+        token_hash: tokenHash,
+      });
+
+      if (error) {
+        throw error;
+      }
+    } else if (code) {
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+      if (error) {
+        throw error;
+      }
     }
 
     const {

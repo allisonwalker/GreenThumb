@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { SignInForm } from "@/app/(auth)/sign-in/sign-in-form";
 import { getAuthenticatedIdentity } from "@/lib/auth/session";
+import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/config";
 
 type SignInPageProps = {
   searchParams: Promise<{ error?: string }>;
@@ -15,6 +16,9 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   if (identity) {
     redirect("/today");
   }
+
+  const supabaseUrl = getSupabaseUrl();
+  const supabaseAnonKey = getSupabaseAnonKey();
 
   return (
     <section className="mx-auto flex min-h-[75dvh] max-w-md items-center">
@@ -35,10 +39,13 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           >
             {error === "not-allowed"
               ? "That email is not authorized to use GreenThumb."
-              : "That sign-in link is invalid or expired. Request a new one below."}
+              : "That sign-in link is invalid or expired. Request a new one, then open it in the same browser you used here (copy the link and paste it into this tab — don\u2019t open it from the mail app)."}
           </p>
         ) : null}
-        <SignInForm />
+        <SignInForm
+          supabaseUrl={supabaseUrl}
+          supabaseAnonKey={supabaseAnonKey}
+        />
       </div>
     </section>
   );

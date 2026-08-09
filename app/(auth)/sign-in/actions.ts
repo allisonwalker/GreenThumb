@@ -5,22 +5,23 @@ import {
   logRejectedAdmission,
 } from "@/lib/auth/allowlist";
 import { getAuthCallbackUrl, normalizeEmail } from "@/lib/auth/config";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export type SignInState = {
-  status: "idle" | "error" | "sent";
-  message?: string;
-};
+export type PrepareMagicLinkResult =
+  | { ok: true; email: string; callbackUrl: string }
+  | { ok: false; message: string };
 
-export async function requestMagicLink(
-  _previousState: SignInState,
+/**
+ * Server-side admission check before the browser requests a magic link.
+ * OTP itself runs in the browser so the PKCE verifier is stored in cookies.
+ */
+export async function prepareMagicLink(
   formData: FormData,
-): Promise<SignInState> {
+): Promise<PrepareMagicLinkResult> {
   const email = normalizeEmail(formData.get("email"));
 
   if (!email) {
     return {
-      status: "error",
+      ok: false,
       message: "Enter a valid email address.",
     };
   }
@@ -28,31 +29,14 @@ export async function requestMagicLink(
   if (!isEmailAllowed(email)) {
     logRejectedAdmission(email);
     return {
-      status: "error",
+      ok: false,
       message: "This email is not authorized to use GreenThumb.",
     };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: getAuthCallbackUrl(process.env.SITE_URL),
-      shouldCreateUser: true,
-    },
-  });
-
-  if (error) {
-    console.error("Supabase could not send a magic sign-in link.", error);
-
-    return {
-      status: "error",
-      message: "We could not send the sign-in link. Please try again.",
-    };
-  }
-
   return {
-    status: "sent",
-    message: `Check ${email} for your sign-in link.`,
+    ok: true,
+    email,
+    callbackUrl: getAuthCallbackUrl(process.env.SITE_URL),
   };
 }

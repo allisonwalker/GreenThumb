@@ -1,22 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-function getSupabaseConfig() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !key) {
-    throw new Error(
-      "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be configured",
-    );
-  }
-
-  return { url, key };
-}
+import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/config";
 
 export async function refreshAuthSession(request: NextRequest) {
   let response = NextResponse.next({ request });
-  const { url, key } = getSupabaseConfig();
+  const url = getSupabaseUrl();
+  const key = getSupabaseAnonKey();
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll() {

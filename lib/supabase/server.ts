@@ -3,22 +3,12 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-function getSupabaseConfig() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !key) {
-    throw new Error(
-      "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be configured",
-    );
-  }
-
-  return { url, key };
-}
+import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/config";
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
-  const { url, key } = getSupabaseConfig();
+  const url = getSupabaseUrl();
+  const key = getSupabaseAnonKey();
 
   return createServerClient(url, key, {
     cookies: {

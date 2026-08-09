@@ -34,8 +34,9 @@ From a fresh clone:
    Select the **Session pooler**, copy its URI, replace the password placeholder,
    and set it as `DATABASE_URL` in `.env.local`.
 
-4. Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SITE_URL` in
-   `.env.local`. For local development, use `SITE_URL=http://localhost:3000`.
+4. Set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and
+   `SITE_URL` in `.env.local`. For local development, use
+   `SITE_URL=http://localhost:3000`.
 
 5. Apply every checked-in migration with one command:
 
@@ -60,9 +61,11 @@ Supabase service-role, model, email, or cron credentials.
 1. Create a project at [database.new](https://database.new) on the free plan.
 2. Save the generated database password in a password manager.
 3. Copy the **Session pooler** connection URI into `DATABASE_URL`.
-4. Open **Project Settings → API Keys** and copy the service-role key into
-   `SUPABASE_SERVICE_ROLE_KEY`. It stays server-only; never give it a
-   `NEXT_PUBLIC_` prefix.
+4. Open **Project Settings → API Keys** and copy:
+   - the **anon / publishable** key into `SUPABASE_ANON_KEY` (used for magic-link
+     session cookies — do not use the service-role key here)
+   - the **service_role** key into `SUPABASE_SERVICE_ROLE_KEY`
+   Both stay server-only; never give either a `NEXT_PUBLIC_` prefix.
 5. Under **Authentication → URL Configuration**, set the Site URL and add
    `<SITE_URL>/auth/callback` to the allowed redirect URLs. Add both local and
    deployed callback URLs when testing both environments.
@@ -76,7 +79,18 @@ Supabase service-role, model, email, or cron credentials.
 8. Set `ALLOWED_EMAILS` in `.env.local` to a comma-separated list of the two
    permitted addresses (see `.env.example`). Changing who can sign in is an
    env-var edit plus redeploy — no code change.
-9. Run `npm run db:migrate`. It creates the application tables and Drizzle's
+9. (Recommended) Under **Authentication → Email Templates → Magic Link**, set
+   the CTA href to a token-hash callback so the link works even if you open it
+   in a different browser than the one that requested it:
+
+   ```html
+   <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email">Sign in</a>
+   ```
+
+   Until that template is updated, open the magic link in the **same browser**
+   that submitted the sign-in form (copy/paste the URL if your mail app opens
+   a different browser).
+10. Run `npm run db:migrate`. It creates the application tables and Drizzle's
    migration journal.
 
 Admission is enforced server-side on the magic-link callback: a non-allowlisted
