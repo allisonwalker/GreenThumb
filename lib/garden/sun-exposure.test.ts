@@ -23,7 +23,7 @@ describe("sun-zone coverage", () => {
         { startFt: 0, endFt: 20, sunExposure: "full_sun" },
         { startFt: 18, endFt: 50, sunExposure: "part_sun" },
       ]),
-    ).toThrow("must not overlap");
+    ).toThrow("overlap from 18 to 20 feet");
   });
 
   it("rejects a gap between zones", () => {
@@ -32,7 +32,7 @@ describe("sun-zone coverage", () => {
         { startFt: 0, endFt: 18, sunExposure: "full_sun" },
         { startFt: 20, endFt: 50, sunExposure: "part_sun" },
       ]),
-    ).toThrow("without gaps");
+    ).toThrow("gap from 18 to 20 feet");
   });
 });
 

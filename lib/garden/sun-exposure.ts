@@ -29,6 +29,10 @@ function nearlyEqual(left: number, right: number) {
   return Math.abs(left - right) <= EPSILON;
 }
 
+function formatFeet(value: number) {
+  return Number.isInteger(value) ? String(value) : String(round(value));
+}
+
 function round(value: number) {
   return Math.round(value * 10_000) / 10_000;
 }
@@ -42,7 +46,9 @@ export function validateSunZoneCoverage(
   }
 
   if (zones.length === 0) {
-    throw new Error("Sun zones must cover the bed without gaps.");
+    throw new Error(
+      `Sun zones leave a gap from 0 to ${formatFeet(bedLengthFt)} feet.`,
+    );
   }
 
   const sortedZones = [...zones].sort(
@@ -52,7 +58,9 @@ export function validateSunZoneCoverage(
 
   for (const zone of sortedZones) {
     if (zone.startFt < -EPSILON || zone.endFt > bedLengthFt + EPSILON) {
-      throw new Error("Sun zones must stay within the bed.");
+      throw new Error(
+        `Sun zone ${formatFeet(zone.startFt)}–${formatFeet(zone.endFt)} feet must stay within the 0–${formatFeet(bedLengthFt)} foot bed.`,
+      );
     }
 
     if (zone.endFt <= zone.startFt) {
@@ -60,18 +68,24 @@ export function validateSunZoneCoverage(
     }
 
     if (zone.startFt < expectedStart - EPSILON) {
-      throw new Error("Sun zones must not overlap.");
+      throw new Error(
+        `Sun zones overlap from ${formatFeet(zone.startFt)} to ${formatFeet(Math.min(expectedStart, zone.endFt))} feet.`,
+      );
     }
 
     if (zone.startFt > expectedStart + EPSILON) {
-      throw new Error("Sun zones must cover the bed without gaps.");
+      throw new Error(
+        `Sun zones leave a gap from ${formatFeet(expectedStart)} to ${formatFeet(zone.startFt)} feet.`,
+      );
     }
 
     expectedStart = zone.endFt;
   }
 
   if (!nearlyEqual(expectedStart, bedLengthFt)) {
-    throw new Error("Sun zones must cover the bed without gaps.");
+    throw new Error(
+      `Sun zones leave a gap from ${formatFeet(expectedStart)} to ${formatFeet(bedLengthFt)} feet.`,
+    );
   }
 
   return sortedZones;
