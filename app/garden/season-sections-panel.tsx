@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 
 import {
@@ -190,6 +191,14 @@ function HistorySections({
             <p className="mt-1 text-sm text-neutral-800">
               {section.sunExposureDisplay}
               {section.sunExposureSource === "override" ? " · override" : ""}
+            </p>
+            <p className="mt-2">
+              <Link
+                href={`/garden/${section.id}`}
+                className="text-sm font-semibold text-green-800 hover:underline"
+              >
+                View plantings
+              </Link>
             </p>
           </div>
         ))
@@ -513,7 +522,19 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
                         : " · derived"}
                     </p>
                   ) : null}
-                  {saved ? <OverrideControls section={saved} /> : null}
+                  {saved ? (
+                    <>
+                      <p className="mt-2">
+                        <Link
+                          href={`/garden/${saved.id}`}
+                          className="text-sm font-semibold text-green-800 hover:underline"
+                        >
+                          Record plantings
+                        </Link>
+                      </p>
+                      <OverrideControls section={saved} />
+                    </>
+                  ) : null}
                 </fieldset>
               );
             })}
