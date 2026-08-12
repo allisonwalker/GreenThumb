@@ -72,7 +72,17 @@ For each task/sub-issue:
 - Required config/secrets/env vars are missing.
 - Your change breaks existing tests and you can't make them pass without a spec decision from the user.
 
-## 5. Wrap up
+## 5. Commit the completed work
+
+After implementation and validation pass, always commit the ticket's changes before wrapping up:
+
+1. Review `git status` and the staged and unstaged diff. Keep unrelated pre-existing changes out of the commit, and never commit secrets or credential files.
+2. Ask the user plainly: **"What commit message should I use?"** Do not invent, propose, or select the final message for them, and wait for their reply.
+3. Stage only the files that belong to this ticket, commit using the user's exact message, then run `git status` to verify the commit succeeded.
+4. If there are no ticket changes to commit, or validation is not passing, say so instead of creating an empty or knowingly broken commit.
+5. Do not push unless the user explicitly asks.
+
+## 6. Wrap up
 
 Once every task for the ticket is implemented, tested, and passing:
 
@@ -91,7 +101,7 @@ Once every task for the ticket is implemented, tested, and passing:
    - Anything to know before it ships — tradeoffs, follow-ups, things intentionally left out (including if the architecture doc was too thin to guide this task).
    - What they need to do next: review, approve a design choice, provide missing info.
 
-## 6. Hand off the next ticket
+## 7. Hand off the next ticket
 
 Close with a **Natural next step** block. With this ticket in Ready for Review, the next move is a review pass or the next Ready-for-Dev ticket — and each ticket gets its own session so context stays clean:
 
