@@ -179,3 +179,92 @@ export function deriveSectionSunExposure(
     mix,
   };
 }
+
+export type SectionRangeInput = {
+  name: string;
+  startFt: number;
+  endFt: number;
+};
+
+export function validateSectionCoverage(
+  sections: readonly SectionRangeInput[],
+  bedLengthFt = 50,
+) {
+  if (bedLengthFt <= 0) {
+    throw new Error("Bed length must be positive.");
+  }
+
+  if (sections.length === 0) {
+    throw new Error(
+      `Sections leave a gap from 0 to ${formatFeet(bedLengthFt)} feet.`,
+    );
+  }
+
+  const sorted = [...sections].sort(
+    (left, right) => left.startFt - right.startFt,
+  );
+  let expectedStart = 0;
+
+  for (const section of sorted) {
+    const rangeLabel = `${section.name || "Unnamed section"} (${formatFeet(section.startFt)}–${formatFeet(section.endFt)} ft)`;
+
+    if (section.startFt < -EPSILON || section.endFt > bedLengthFt + EPSILON) {
+      throw new Error(
+        `${rangeLabel} must stay within the 0–${formatFeet(bedLengthFt)} foot bed.`,
+      );
+    }
+
+    if (section.endFt <= section.startFt) {
+      throw new Error(
+        `${rangeLabel} must have a positive length (end after start).`,
+      );
+    }
+
+    if (section.startFt < expectedStart - EPSILON) {
+      throw new Error(
+        `${rangeLabel} overlaps the previous section from ${formatFeet(section.startFt)} to ${formatFeet(Math.min(expectedStart, section.endFt))} feet.`,
+      );
+    }
+
+    if (section.startFt > expectedStart + EPSILON) {
+      throw new Error(
+        `Sections leave a gap from ${formatFeet(expectedStart)} to ${formatFeet(section.startFt)} feet before ${rangeLabel}.`,
+      );
+    }
+
+    expectedStart = section.endFt;
+  }
+
+  if (!nearlyEqual(expectedStart, bedLengthFt)) {
+    throw new Error(
+      `Sections leave a gap from ${formatFeet(expectedStart)} to ${formatFeet(bedLengthFt)} feet.`,
+    );
+  }
+
+  return sorted;
+}
+
+export function formatSectionSunExposureDisplay(
+  exposure: string,
+  mix: SunExposureMix | null | undefined,
+): string {
+  const label = exposure.replaceAll("_", " ");
+
+  if (!mix) {
+    return label;
+  }
+
+  const mixParts = SUN_EXPOSURES.flatMap((key) => {
+    const entry = mix[key];
+    if (!entry) {
+      return [];
+    }
+    return [`${formatFeet(entry.feet)} ft ${key.replaceAll("_", " ")}`];
+  });
+
+  if (mixParts.length <= 1) {
+    return label;
+  }
+
+  return `${label} (${mixParts.join(", ")})`;
+}
