@@ -11,8 +11,10 @@ export function getDatabase() {
   }
 
   client ??= postgres(databaseUrl, {
-    max: 1,
+    max: 4,
     prepare: false,
+    idle_timeout: 20,
+    connect_timeout: 10,
   });
 
   return drizzle(client);
