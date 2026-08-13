@@ -34,15 +34,19 @@ function StatusLine({
 }
 
 function PlantingHeading({
+  cropId,
   cropName,
   variety,
 }: {
+  cropId: string;
   cropName: string;
   variety: string | null;
 }) {
   return (
     <h3 className="font-semibold">
-      {cropName}
+      <Link href={`/catalog/${cropId}`} className="hover:underline">
+        {cropName}
+      </Link>
       {variety ? (
         <span className="font-normal text-neutral-600"> · {variety}</span>
       ) : null}
@@ -90,7 +94,8 @@ export function LocationPlantingsPanel({
         <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
           <h2 className="text-xl font-semibold">Add a planting</h2>
           <p className="mt-1 text-sm text-neutral-600">
-            Crop names are free text — no catalogue. Harvest windows come later.
+            Crop name attaches this planting to a shared care row. Variety stays
+            here. Matching will skip a task if that crop field is still blank.
           </p>
           <form action={addAction} className="mt-5 space-y-4">
             <input type="hidden" name="locationId" value={page.location.id} />
@@ -172,6 +177,7 @@ export function LocationPlantingsPanel({
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <PlantingHeading
+                    cropId={planting.cropId}
                     cropName={planting.cropName}
                     variety={planting.variety}
                   />
@@ -236,6 +242,7 @@ export function LocationPlantingsPanel({
                 className="rounded-xl border bg-neutral-50 px-4 py-3"
               >
                 <PlantingHeading
+                  cropId={planting.cropId}
                   cropName={planting.cropName}
                   variety={planting.variety}
                 />

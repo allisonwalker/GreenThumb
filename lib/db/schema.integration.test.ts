@@ -191,14 +191,20 @@ describeDatabase("garden schema integration", () => {
         sun_exposure_source: "override",
       });
 
+      const [crop] = await transaction<{ id: string }[]>`
+        insert into crop (name, slug, source)
+        values ('Tomato', 'tomato', 'stub')
+        returning id
+      `;
       const [planting] = await transaction<{ id: string }[]>`
         insert into planting (
           location_id,
+          crop_id,
           crop_name,
           method,
           planted_on
         )
-        values (${derivedSection.id}, 'Tomato', 'transplant', '2026-05-01')
+        values (${derivedSection.id}, ${crop.id}, 'Tomato', 'transplant', '2026-05-01')
         returning id
       `;
       await transaction`
@@ -549,6 +555,109 @@ describeDatabase("garden schema integration", () => {
     });
   });
 
+  it("keeps one crop row per slug and requires planting.crop_id", async () => {
+    await expectRollback(async (transaction) => {
+      const [garden] = await transaction<{ id: string }[]>`
+        insert into garden (
+          latitude,
+          longitude,
+          timezone,
+          hardiness_zone
+        )
+        values (45.52, -122.68, 'America/Los_Angeles', '8b')
+        returning id
+      `;
+      const [pot] = await transaction<{ id: string }[]>`
+        insert into location (
+          garden_id,
+          kind,
+          name,
+          sun_exposure,
+          sun_exposure_source,
+          volume_gal,
+          material,
+          soil_type,
+          dryness_factor
+        )
+        values (
+          ${garden.id},
+          'pot',
+          'Pot 1',
+          'full_sun',
+          'override',
+          10,
+          'terracotta',
+          'potting mix',
+          1.5
+        )
+        returning id
+      `;
+      const [tomato] = await transaction<{ id: string }[]>`
+        insert into crop (name, slug, source, watering_interval_days)
+        values ('Tomato', 'tomato', 'stub', 3)
+        returning id
+      `;
+      const [pepper] = await transaction<{ id: string }[]>`
+        insert into crop (name, slug, source)
+        values ('Pepper', 'pepper', 'stub')
+        returning id
+      `;
+
+      await transaction`
+        insert into planting (
+          location_id, crop_id, crop_name, method, planted_on
+        )
+        values
+          (${pot.id}, ${tomato.id}, 'tomato', 'transplant', '2026-05-01'),
+          (${pot.id}, ${tomato.id}, 'Tomato', 'seed', '2026-05-02'),
+          (${pot.id}, ${pepper.id}, 'Pepper', 'transplant', '2026-05-03')
+      `;
+
+      const shared = await transaction<{ crop_id: string }[]>`
+        select crop_id from planting where crop_name in ('tomato', 'Tomato')
+      `;
+      const peppers = await transaction<{ crop_id: string }[]>`
+        select crop_id from planting where crop_name = 'Pepper'
+      `;
+      expect(shared).toHaveLength(2);
+      expect(shared[0]?.crop_id).toBe(tomato.id);
+      expect(shared[1]?.crop_id).toBe(tomato.id);
+      expect(peppers[0]?.crop_id).toBe(pepper.id);
+
+      await expect(
+        transaction`
+          insert into crop (name, slug, source)
+          values ('TOMATO', 'tomato', 'stub')
+        `,
+      ).rejects.toThrow();
+
+      await expect(
+        transaction`
+          insert into crop (name, slug, source, watering_interval_days)
+          values ('Kale', 'kale', 'stub', 0)
+        `,
+      ).rejects.toThrow(/crop_watering_interval_positive/);
+
+      await expect(
+        transaction`
+          insert into crop (name, slug, source, sun_preference)
+          values ('Basil', 'basil', 'stub', 'bright_indirect')
+        `,
+      ).rejects.toThrow();
+
+      await expect(
+        transaction`
+          insert into planting (
+            location_id, crop_name, method, planted_on
+          )
+          values (${pot.id}, 'Orphan', 'seed', '2026-05-04')
+        `,
+      ).rejects.toThrow();
+
+      throw new Error(rollbackMessage);
+    });
+  });
+
   it("uses timestamptz for every timestamp column", async () => {
     const timestampWithoutTimeZone = await client!<
       { table_name: string; column_name: string }[]
@@ -568,6 +677,7 @@ describeDatabase("garden schema integration", () => {
           'weather_day',
           'weather_fetch',
           'agent_run',
+          'crop',
           'recommendation'
         )
         and data_type = 'timestamp without time zone'

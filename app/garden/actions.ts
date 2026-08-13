@@ -198,6 +198,7 @@ export async function addPlanting(
     await addPlantingRecord(input);
     revalidatePath("/garden");
     revalidatePath(`/garden/${input.locationId}`);
+    revalidatePath("/catalog");
     return { status: "success", message: "Planting added." };
   } catch (error) {
     console.error("Adding a planting failed.", error);

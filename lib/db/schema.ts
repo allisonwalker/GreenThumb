@@ -4,6 +4,7 @@ import {
   check,
   date,
   index,
+  integer,
   jsonb,
   numeric,
   pgEnum,
@@ -14,6 +15,8 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+
+import type { CropPruning, CropTimeEstimates } from "@/lib/crops/types";
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -62,6 +65,12 @@ export const actionTypeEnum = pgEnum("action_type", [
   "planted",
   "observed",
   "treated",
+]);
+
+export const cropSourceEnum = pgEnum("crop_source", [
+  "generated",
+  "edited",
+  "stub",
 ]);
 
 export const weatherDayKindEnum = pgEnum("weather_day_kind", [
@@ -287,6 +296,75 @@ export const locations = pgTable(
   ],
 );
 
+export const crops = pgTable(
+  "crop",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    wateringIntervalDays: integer("watering_interval_days"),
+    fertilizingIntervalDays: integer("fertilizing_interval_days"),
+    pruning: jsonb("pruning").$type<CropPruning>(),
+    frostSensitive: boolean("frost_sensitive"),
+    sunPreference: sunExposureEnum("sun_preference"),
+    plantWindowStart: text("plant_window_start"),
+    plantWindowEnd: text("plant_window_end"),
+    daysToHarvestMin: integer("days_to_harvest_min"),
+    daysToHarvestMax: integer("days_to_harvest_max"),
+    timeEstimates: jsonb("time_estimates").$type<CropTimeEstimates>(),
+    source: cropSourceEnum("source").notNull(),
+    generatedByProvider: text("generated_by_provider"),
+    generatedByModel: text("generated_by_model"),
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("crop_slug_idx").on(table.slug),
+    check("crop_name_not_blank", sql`length(trim(${table.name})) > 0`),
+    check("crop_slug_not_blank", sql`length(trim(${table.slug})) > 0`),
+    check(
+      "crop_watering_interval_positive",
+      sql`${table.wateringIntervalDays} is null or ${table.wateringIntervalDays} > 0`,
+    ),
+    check(
+      "crop_fertilizing_interval_positive",
+      sql`${table.fertilizingIntervalDays} is null or ${table.fertilizingIntervalDays} > 0`,
+    ),
+    check(
+      "crop_harvest_days_positive",
+      sql`(
+        (${table.daysToHarvestMin} is null or ${table.daysToHarvestMin} > 0)
+        and (${table.daysToHarvestMax} is null or ${table.daysToHarvestMax} > 0)
+        and (
+          ${table.daysToHarvestMin} is null
+          or ${table.daysToHarvestMax} is null
+          or ${table.daysToHarvestMax} >= ${table.daysToHarvestMin}
+        )
+      )`,
+    ),
+    check(
+      "crop_plant_window_format",
+      sql`(
+        ${table.plantWindowStart} is null
+        or ${table.plantWindowStart} ~ '^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'
+      ) and (
+        ${table.plantWindowEnd} is null
+        or ${table.plantWindowEnd} ~ '^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'
+      )`,
+    ),
+    check(
+      "crop_pruning_object",
+      sql`${table.pruning} is null
+        or jsonb_typeof(${table.pruning}) = 'object'`,
+    ),
+    check(
+      "crop_time_estimates_object",
+      sql`${table.timeEstimates} is null
+        or jsonb_typeof(${table.timeEstimates}) = 'object'`,
+    ),
+  ],
+);
+
 export const plantings = pgTable(
   "planting",
   {
@@ -294,6 +372,9 @@ export const plantings = pgTable(
     locationId: uuid("location_id")
       .notNull()
       .references(() => locations.id, { onDelete: "restrict" }),
+    cropId: uuid("crop_id")
+      .notNull()
+      .references(() => crops.id, { onDelete: "restrict" }),
     cropName: text("crop_name").notNull(),
     variety: text("variety"),
     method: plantingMethodEnum("method").notNull(),
@@ -312,6 +393,7 @@ export const plantings = pgTable(
   },
   (table) => [
     index("planting_location_idx").on(table.locationId),
+    index("planting_crop_idx").on(table.cropId),
     check(
       "planting_valid_dates",
       sql`${table.removedOn} is null or ${table.removedOn} >= ${table.plantedOn}`,

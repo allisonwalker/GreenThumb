@@ -2,6 +2,7 @@ import "server-only";
 
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 
+import { resolveOrCreateStubCrop } from "@/lib/crops/repository";
 import { getDatabase } from "@/lib/db/client";
 import {
   currentLocations,
@@ -27,6 +28,7 @@ export type CurrentLocationSummary = {
 
 export type PlantingRecord = {
   id: string;
+  cropId: string;
   cropName: string;
   variety: string | null;
   method: "seed" | "transplant";
@@ -67,6 +69,7 @@ function locationDetail(row: {
 function toPlantingRecord(
   row: {
     id: string;
+    cropId: string;
     cropName: string;
     variety: string | null;
     method: "seed" | "transplant";
@@ -78,6 +81,7 @@ function toPlantingRecord(
 ): PlantingRecord {
   return {
     id: row.id,
+    cropId: row.cropId,
     cropName: row.cropName,
     variety: row.variety,
     method: row.method,
@@ -166,6 +170,7 @@ export async function getLocationPlantingsPage(
   const rows = await database
     .select({
       id: plantings.id,
+      cropId: plantings.cropId,
       cropName: plantings.cropName,
       variety: plantings.variety,
       method: plantings.method,
@@ -209,8 +214,11 @@ export async function addPlantingRecord(input: AddPlantingInput) {
     );
   }
 
+  const crop = await resolveOrCreateStubCrop(input.cropName);
+
   await database.insert(plantings).values({
     locationId: input.locationId,
+    cropId: crop.id,
     cropName: input.cropName,
     variety: input.variety,
     method: input.method,
