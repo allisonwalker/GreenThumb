@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { ASK_SYSTEM_PROMPT, systemPromptForKind } from "./prompts";
 import { runAgent } from "./run";
 import type { AgentRunStore } from "./record";
 import type { LlmClient } from "@/lib/llm/types";
@@ -67,6 +68,56 @@ describe("runAgent", () => {
     expect(READ_TOOL_NAMES.every((name) => name.startsWith("get_"))).toBe(
       true,
     );
+    expect(READ_TOOL_NAMES).toContain("get_crop_catalog");
     expect(READ_TOOL_NAMES).not.toContain("propose_recommendation");
+  });
+
+  it("uses the Ask prompt for kind=ask and records that kind", async () => {
+    expect(systemPromptForKind("ask")).toBe(ASK_SYSTEM_PROMPT);
+    expect(systemPromptForKind("scheduled_checkin")).not.toBe(ASK_SYSTEM_PROMPT);
+
+    const created: unknown[] = [];
+    const store: AgentRunStore = {
+      async create(input) {
+        created.push(input);
+        return {
+          id: "run-ask",
+          kind: input.kind,
+          trigger: input.trigger,
+          status: "running",
+          provider: input.provider,
+          model: input.model,
+        };
+      },
+      async finalize() {},
+    };
+
+    const client: LlmClient = {
+      provider: "gemini",
+      model: "gemini-flash-latest",
+      async complete() {
+        return {
+          text: "I need to look that up.",
+          toolCalls: [],
+          inputTokens: 10,
+          outputTokens: 5,
+          stopReason: "end",
+        };
+      },
+    };
+
+    const result = await runAgent({
+      kind: "ask",
+      trigger: "unit",
+      prompt: "Should I water the peppers today?",
+      client,
+      store,
+      recordRun: true,
+      bounds: { maxIterations: 1, maxTokens: 1_000, timeoutMs: 5_000 },
+    });
+
+    expect(created[0]).toMatchObject({ kind: "ask" });
+    expect(result.status).toBe("succeeded");
+    expect(result.toolTrace).toEqual([]);
   });
 });

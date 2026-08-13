@@ -74,7 +74,7 @@ export function createCurrentLocationsStore(): CurrentLocationsStore {
 
 export async function getCurrentLocations(
   context: ToolExecutionContext = {},
-  store: CurrentLocationsStore = createCurrentLocationsStore(),
+  store?: CurrentLocationsStore,
 ): Promise<CurrentLocation[]> {
-  return store.list(context.gardenId);
+  return (store ?? createCurrentLocationsStore()).list(context.gardenId);
 }

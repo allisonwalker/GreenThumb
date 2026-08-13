@@ -77,9 +77,11 @@ export function createOpenRecommendationsStore(): OpenRecommendationsStore {
 
 export async function getOpenRecommendations(
   context: ToolExecutionContext = {},
-  store: OpenRecommendationsStore = createOpenRecommendationsStore(),
+  store?: OpenRecommendationsStore,
   profileStore = createGardenProfileStore(),
 ): Promise<OpenRecommendation[]> {
-  const profile = await profileStore.getProfile(context.gardenId);
-  return store.list(profile.gardenId);
+  const profile = await (profileStore ?? createGardenProfileStore()).getProfile(
+    context.gardenId,
+  );
+  return (store ?? createOpenRecommendationsStore()).list(profile.gardenId);
 }

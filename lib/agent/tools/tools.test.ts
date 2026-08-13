@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  FORBIDDEN_WRITE_TOOL_NAMES,
   READ_TOOL_NAMES,
   agentToolDefinitions,
   createToolRegistry,
   getCareHistory,
+  getCropCatalog,
   getCurrentLocations,
   getGardenNotes,
   getGardenProfile,
@@ -14,24 +16,33 @@ import {
 } from "./index";
 
 describe("agent read tools", () => {
-  it("exposes exactly the seven read-only tools and no writers", () => {
+  it("exposes exactly the eight read-only tools and no writers", () => {
     expect(READ_TOOL_NAMES).toEqual([
       "get_garden_profile",
       "get_current_locations",
       "get_plantings",
+      "get_crop_catalog",
       "get_care_history",
       "get_weather",
       "get_garden_notes",
       "get_open_recommendations",
+    ]);
+    expect(FORBIDDEN_WRITE_TOOL_NAMES).toEqual([
+      "propose_recommendation",
+      "save_harvest_estimate",
     ]);
     expect(agentToolDefinitions.map((tool) => tool.name)).toEqual([
       ...READ_TOOL_NAMES,
     ]);
     expect(
       agentToolDefinitions.some((tool) =>
-        /propose|save|write|update|delete|insert/i.test(tool.name),
+        /propose|save|write|update|delete|insert|draft|generate_crop|crop_draft/i.test(
+          tool.name,
+        ),
       ),
     ).toBe(false);
+    expect(READ_TOOL_NAMES).not.toContain("draft_crop_row");
+    expect(READ_TOOL_NAMES).not.toContain("draftCropRow");
   });
 
   it("returns garden profile from an injectable store", async () => {
@@ -247,6 +258,38 @@ describe("agent read tools", () => {
     expect(open).toEqual([]);
   });
 
+  it("returns crop catalog rows from an injectable store", async () => {
+    const catalog = await getCropCatalog(
+      { query: "pepper" },
+      {
+        list: async ({ query }) => {
+          expect(query).toBe("pepper");
+          return [
+            {
+              id: "c1",
+              name: "peppers",
+              slug: "peppers",
+              wateringIntervalDays: 3,
+              fertilizingIntervalDays: null,
+              pruning: { needed: false },
+              frostSensitive: true,
+              sunPreference: "full_sun",
+              plantWindowStart: null,
+              plantWindowEnd: null,
+              daysToHarvestMin: null,
+              daysToHarvestMax: null,
+              timeEstimates: null,
+              notes: null,
+              source: "edited",
+            },
+          ];
+        },
+      },
+    );
+
+    expect(catalog.crops[0]?.sunPreference).toBe("full_sun");
+  });
+
   it("routes tool calls through the registry", async () => {
     const registry = createToolRegistry({});
     await expect(
@@ -256,5 +299,51 @@ describe("agent read tools", () => {
         input: {},
       }),
     ).rejects.toThrow(/Unknown tool/);
+    await expect(
+      registry.execute({
+        id: "y",
+        name: "propose_recommendation",
+        input: {},
+      }),
+    ).rejects.toThrow(/Unknown tool/);
+  });
+
+  it("executes get_crop_catalog from the registry", async () => {
+    const registry = createToolRegistry(
+      {},
+      {
+        cropCatalogStore: {
+          list: async () => [
+            {
+              id: "c1",
+              name: "peppers",
+              slug: "peppers",
+              wateringIntervalDays: 3,
+              fertilizingIntervalDays: null,
+              pruning: null,
+              frostSensitive: true,
+              sunPreference: "part_sun",
+              plantWindowStart: null,
+              plantWindowEnd: null,
+              daysToHarvestMin: null,
+              daysToHarvestMax: null,
+              timeEstimates: null,
+              notes: null,
+              source: "stub",
+            },
+          ],
+        },
+      },
+    );
+
+    const result = await registry.execute({
+      id: "z",
+      name: "get_crop_catalog",
+      input: { query: "peppers" },
+    });
+
+    expect(result).toMatchObject({
+      crops: [{ name: "peppers", sunPreference: "part_sun" }],
+    });
   });
 });

@@ -1,5 +1,5 @@
 import { resolveAgentBounds, type AgentBounds } from "./bounds";
-import { buildUserMessage, DEFAULT_SYSTEM_PROMPT } from "./prompts";
+import { buildUserMessage, systemPromptForKind } from "./prompts";
 import {
   createAgentRunStore,
   statusFromStopReason,
@@ -9,6 +9,8 @@ import {
 import {
   createToolRegistry,
   type ToolExecutionContext,
+  type ToolRegistry,
+  type ToolRegistryDependencies,
 } from "./tools";
 import {
   createLlmClient,
@@ -23,6 +25,8 @@ export type RunAgentOptions = {
   prompt?: string;
   systemPrompt?: string;
   context?: ToolExecutionContext;
+  toolDependencies?: ToolRegistryDependencies;
+  registry?: ToolRegistry;
   bounds?: Partial<AgentBounds>;
   client?: LlmClient;
   store?: AgentRunStore;
@@ -43,7 +47,9 @@ export async function runAgent(
 ): Promise<RunAgentResult> {
   const bounds = resolveAgentBounds(options.bounds);
   const client = options.client ?? createLlmClient();
-  const registry = createToolRegistry(options.context ?? {});
+  const registry =
+    options.registry ??
+    createToolRegistry(options.context ?? {}, options.toolDependencies ?? {});
   const shouldRecord = options.recordRun ?? true;
   const store = options.store ?? createAgentRunStore();
 
@@ -60,7 +66,7 @@ export async function runAgent(
 
   const loopResult = await runToolLoop({
     client,
-    system: options.systemPrompt ?? DEFAULT_SYSTEM_PROMPT,
+    system: options.systemPrompt ?? systemPromptForKind(options.kind),
     userMessage: buildUserMessage({
       kind: options.kind,
       prompt: options.prompt,

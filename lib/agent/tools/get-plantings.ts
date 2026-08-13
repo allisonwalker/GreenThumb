@@ -90,11 +90,13 @@ export function createPlantingsStore(): PlantingsStore {
 
 export async function getPlantings(
   context: ToolExecutionContext = {},
-  store: PlantingsStore = createPlantingsStore(),
+  store?: PlantingsStore,
   profileStore = createGardenProfileStore(),
 ): Promise<PlantingSummary[]> {
-  const profile = await profileStore.getProfile(context.gardenId);
-  return store.list({
+  const profile = await (profileStore ?? createGardenProfileStore()).getProfile(
+    context.gardenId,
+  );
+  return (store ?? createPlantingsStore()).list({
     gardenId: profile.gardenId,
     timezone: profile.timezone,
     now: context.now ?? new Date(),
