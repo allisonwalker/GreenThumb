@@ -3,6 +3,7 @@ import {
   boolean,
   check,
   date,
+  foreignKey,
   index,
   jsonb,
   numeric,
@@ -339,6 +340,7 @@ export const actionLogs = pgTable(
       .defaultNow()
       .notNull(),
     detail: text("detail"),
+    voidsId: uuid("voids_id"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -348,6 +350,12 @@ export const actionLogs = pgTable(
       table.locationId,
       table.occurredAt,
     ),
+    uniqueIndex("action_log_voids_id_idx").on(table.voidsId),
+    foreignKey({
+      columns: [table.voidsId],
+      foreignColumns: [table.id],
+      name: "action_log_voids_id_action_log_id_fk",
+    }),
     check(
       "action_log_has_subject",
       sql`${table.locationId} is not null or ${table.plantingId} is not null`,
