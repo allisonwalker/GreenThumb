@@ -11,8 +11,11 @@ export function getDatabase() {
   }
 
   client ??= postgres(databaseUrl, {
-    max: 1,
+    // Concurrent RSC loads and Promise.all queries queue forever if this is 1.
+    max: 5,
     prepare: false,
+    idle_timeout: 20,
+    connect_timeout: 10,
   });
 
   return drizzle(client);
