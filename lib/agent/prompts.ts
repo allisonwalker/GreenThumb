@@ -34,9 +34,28 @@ export function systemPromptForKind(kind: string): string {
 export function buildUserMessage(input: {
   kind: string;
   prompt?: string;
+  history?: Array<{ role: "user" | "assistant"; content: string }>;
 }): string {
-  if (input.prompt?.trim()) {
-    return input.prompt.trim();
+  const current = input.prompt?.trim();
+  const history = input.history?.filter((turn) => turn.content.trim()) ?? [];
+
+  if (current && history.length > 0) {
+    const historyBlock = history
+      .map((turn) => `${turn.role}: ${turn.content.trim()}`)
+      .join("\n");
+    return [
+      "<conversation_history>",
+      historyBlock,
+      "</conversation_history>",
+      "",
+      "<current_question>",
+      current,
+      "</current_question>",
+    ].join("\n");
+  }
+
+  if (current) {
+    return current;
   }
 
   if (input.kind === "scheduled_checkin") {

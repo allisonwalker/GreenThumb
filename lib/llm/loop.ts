@@ -59,15 +59,20 @@ export async function runToolLoop(
         256,
         options.maxTokens - (inputTokens + outputTokens),
       );
-      const turn = await options.client.complete({
-        system: options.system,
-        messages,
-        tools: options.tools,
-        maxOutputTokens: Math.min(
-          DEFAULT_OUTPUT_TOKENS_PER_TURN,
-          remainingTokens,
-        ),
-      });
+      const turn = await options.client.complete(
+        {
+          system: options.system,
+          messages,
+          tools: options.tools,
+          maxOutputTokens: Math.min(
+            DEFAULT_OUTPUT_TOKENS_PER_TURN,
+            remainingTokens,
+          ),
+        },
+        options.onTextDelta
+          ? { onTextDelta: options.onTextDelta }
+          : undefined,
+      );
 
       inputTokens += turn.inputTokens;
       outputTokens += turn.outputTokens;

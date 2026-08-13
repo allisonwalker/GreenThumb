@@ -1,13 +1,11 @@
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { loadAskMessages } from "@/lib/agent/ask-turn";
 import { requirePageUser } from "@/lib/auth/session";
 
-export default async function AskPage() {
-  await requirePageUser();
+import { AskThread } from "./ask-thread";
 
-  return (
-    <PlaceholderPage
-      title="Ask"
-      description="Garden questions grounded in your weather and care history will go here."
-    />
-  );
+export default async function AskPage() {
+  const identity = await requirePageUser();
+  const messages = await loadAskMessages(identity.id);
+
+  return <AskThread initialMessages={messages} />;
 }

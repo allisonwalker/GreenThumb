@@ -677,6 +677,8 @@ describeDatabase("garden schema integration", () => {
           'weather_day',
           'weather_fetch',
           'agent_run',
+          'conversation',
+          'message',
           'crop',
           'recommendation'
         )
@@ -684,5 +686,44 @@ describeDatabase("garden schema integration", () => {
     `;
 
     expect(timestampWithoutTimeZone).toEqual([]);
+  });
+
+  it("stores Ask messages and links assistant rows to agent_run", async () => {
+    await expectRollback(async (transaction) => {
+      const [user] = await transaction<{ id: string }[]>`
+        insert into app_user (id, email)
+        values ('11111111-1111-4111-8111-111111111111', 'ask@example.com')
+        returning id
+      `;
+      const [run] = await transaction<{ id: string }[]>`
+        insert into agent_run (kind, trigger, provider, model)
+        values ('ask', 'ask', 'gemini', 'gemini-flash-latest')
+        returning id
+      `;
+      const [conversation] = await transaction<{ id: string }[]>`
+        insert into conversation (user_id, kind)
+        values (${user.id}, 'ask')
+        returning id
+      `;
+      await transaction`
+        insert into message (conversation_id, role, content)
+        values (${conversation.id}, 'user', 'Do peppers want sun?')
+      `;
+      const [assistant] = await transaction<{ agent_run_id: string | null }[]>`
+        insert into message (conversation_id, role, content, agent_run_id)
+        values (${conversation.id}, 'assistant', 'Yes — catalog says full_sun.', ${run.id})
+        returning agent_run_id
+      `;
+      expect(assistant.agent_run_id).toBe(run.id);
+
+      await expect(
+        transaction`
+          insert into message (conversation_id, role, content, agent_run_id)
+          values (${conversation.id}, 'user', 'Thanks', ${run.id})
+        `,
+      ).rejects.toThrow();
+
+      throw new Error(rollbackMessage);
+    });
   });
 });

@@ -64,7 +64,50 @@ export function createGeminiClient(
   return {
     provider: "gemini",
     model: modelName,
-    async complete(request) {
+    async complete(request, options) {
+      const body = JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: request.system }],
+        },
+        contents: toGeminiContents(request.messages),
+        tools: [
+          {
+            functionDeclarations: request.tools.map(toFunctionDeclaration),
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens: request.maxOutputTokens,
+        },
+      });
+
+      if (options?.onTextDelta) {
+        const url = new URL(
+          `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:streamGenerateContent`,
+        );
+        url.searchParams.set("alt", "sse");
+        url.searchParams.set("key", apiKey);
+
+        const response = await fetchImplementation(url, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body,
+        });
+
+        if (!response.ok) {
+          const payload = (await response.json()) as GeminiResponse;
+          throw new Error(
+            payload.error?.message ??
+              `Gemini request failed (${response.status})`,
+          );
+        }
+        if (!response.body) {
+          throw new Error("Gemini stream returned no body");
+        }
+
+        const payloads = await readGeminiSse(response.body, options.onTextDelta);
+        return fromGeminiResponse(mergeGeminiStreamChunks(payloads));
+      }
+
       const url = new URL(
         `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`,
       );
@@ -73,20 +116,7 @@ export function createGeminiClient(
       const response = await fetchImplementation(url, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: request.system }],
-          },
-          contents: toGeminiContents(request.messages),
-          tools: [
-            {
-              functionDeclarations: request.tools.map(toFunctionDeclaration),
-            },
-          ],
-          generationConfig: {
-            maxOutputTokens: request.maxOutputTokens,
-          },
-        }),
+        body,
       });
 
       const payload = (await response.json()) as GeminiResponse;
@@ -99,6 +129,124 @@ export function createGeminiClient(
 
       return fromGeminiResponse(payload);
     },
+  };
+}
+
+export async function readGeminiSse(
+  body: ReadableStream<Uint8Array>,
+  onTextDelta?: (delta: string) => void,
+): Promise<GeminiResponse[]> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  const payloads: GeminiResponse[] = [];
+
+  const consume = (chunk: string) => {
+    for (const payload of parseGeminiStreamChunk(chunk)) {
+      payloads.push(payload);
+      for (const part of payload.candidates?.[0]?.content?.parts ?? []) {
+        if (typeof part.text === "string" && part.text.length > 0) {
+          onTextDelta?.(part.text);
+        }
+      }
+    }
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    buffer += decoder.decode(value, { stream: true });
+    buffer = flushGeminiStreamBuffer(buffer, consume);
+  }
+
+  if (buffer.trim()) {
+    consume(buffer);
+  }
+
+  return payloads;
+}
+
+/** Gemini SSE uses CRLF. Treat each `data:` line as its own JSON object. */
+export function parseGeminiStreamChunk(chunk: string): GeminiResponse[] {
+  const normalized = chunk.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const payloads: GeminiResponse[] = [];
+
+  for (const line of normalized.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith(":")) {
+      continue;
+    }
+    const raw = trimmed.startsWith("data:")
+      ? trimmed.slice("data:".length).trim()
+      : trimmed;
+    if (!raw || raw === "[DONE]") {
+      continue;
+    }
+    if (!raw.startsWith("{") && !raw.startsWith("[")) {
+      continue;
+    }
+    payloads.push(JSON.parse(raw) as GeminiResponse);
+  }
+
+  return payloads;
+}
+
+function flushGeminiStreamBuffer(
+  buffer: string,
+  consume: (chunk: string) => void,
+): string {
+  const normalized = buffer.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const events = normalized.split("\n\n");
+  const rest = events.pop() ?? "";
+  for (const event of events) {
+    consume(event);
+  }
+  return rest;
+}
+
+export function mergeGeminiStreamChunks(
+  payloads: GeminiResponse[],
+): GeminiResponse {
+  const parts: GeminiPart[] = [];
+  let finishReason: string | undefined;
+  let usage: GeminiResponse["usageMetadata"];
+  let error: GeminiResponse["error"];
+
+  for (const payload of payloads) {
+    if (payload.error) {
+      error = payload.error;
+    }
+    const candidate = payload.candidates?.[0];
+    if (candidate?.content?.parts) {
+      for (const part of candidate.content.parts) {
+        const last = parts[parts.length - 1];
+        if (
+          typeof part.text === "string" &&
+          last &&
+          typeof last.text === "string" &&
+          !part.functionCall &&
+          !last.functionCall
+        ) {
+          last.text += part.text;
+          continue;
+        }
+        parts.push({ ...part });
+      }
+    }
+    if (candidate?.finishReason) {
+      finishReason = candidate.finishReason;
+    }
+    if (payload.usageMetadata) {
+      usage = payload.usageMetadata;
+    }
+  }
+
+  return {
+    candidates: [{ content: { parts }, finishReason }],
+    usageMetadata: usage,
+    error,
   };
 }
 

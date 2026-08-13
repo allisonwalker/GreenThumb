@@ -35,8 +35,8 @@ export function createAnthropicClient(
   return {
     provider: "anthropic",
     model,
-    async complete(request) {
-      const response = await client.messages.create({
+    async complete(request, options) {
+      const params = {
         model,
         max_tokens: request.maxOutputTokens,
         system: request.system,
@@ -46,8 +46,18 @@ export function createAnthropicClient(
           input_schema: tool.inputSchema as Anthropic.Tool.InputSchema,
         })),
         messages: toAnthropicMessages(request.messages),
-      });
+      };
 
+      if (options?.onTextDelta) {
+        const stream = client.messages.stream(params);
+        stream.on("text", (delta) => {
+          options.onTextDelta?.(delta);
+        });
+        const response = await stream.finalMessage();
+        return fromAnthropicResponse(response);
+      }
+
+      const response = await client.messages.create(params);
       return fromAnthropicResponse(response);
     },
   };

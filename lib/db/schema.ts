@@ -93,6 +93,13 @@ export const agentRunStatusEnum = pgEnum("agent_run_status", [
   "budget_exceeded",
 ]);
 
+export const conversationKindEnum = pgEnum("conversation_kind", [
+  "ask",
+  "time_budget",
+]);
+
+export const messageRoleEnum = pgEnum("message_role", ["user", "assistant"]);
+
 export const recommendationUrgencyEnum = pgEnum("recommendation_urgency", [
   "now",
   "today",
@@ -579,6 +586,49 @@ export const agentRuns = pgTable(
     check(
       "agent_run_nonnegative_tokens",
       sql`${table.inputTokens} >= 0 and ${table.outputTokens} >= 0 and ${table.estimatedCostUsd} >= 0`,
+    ),
+  ],
+);
+
+export const conversations = pgTable(
+  "conversation",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull(),
+    kind: conversationKindEnum("kind").notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("conversation_user_kind_idx").on(table.userId, table.kind),
+    index("conversation_user_updated_idx").on(table.userId, table.updatedAt),
+  ],
+);
+
+export const messages = pgTable(
+  "message",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    role: messageRoleEnum("role").notNull(),
+    content: text("content").notNull(),
+    agentRunId: uuid("agent_run_id").references(() => agentRuns.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("message_conversation_created_idx").on(
+      table.conversationId,
+      table.createdAt,
+    ),
+    check("message_content_not_blank", sql`length(trim(${table.content})) > 0`),
+    check(
+      "message_agent_run_assistant_only",
+      sql`${table.role} = 'assistant' or ${table.agentRunId} is null`,
     ),
   ],
 );

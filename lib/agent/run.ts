@@ -23,6 +23,7 @@ export type RunAgentOptions = {
   kind: AgentRunKind;
   trigger: string;
   prompt?: string;
+  history?: Array<{ role: "user" | "assistant"; content: string }>;
   systemPrompt?: string;
   context?: ToolExecutionContext;
   toolDependencies?: ToolRegistryDependencies;
@@ -31,6 +32,7 @@ export type RunAgentOptions = {
   client?: LlmClient;
   store?: AgentRunStore;
   recordRun?: boolean;
+  onTextDelta?: (delta: string) => void;
 };
 
 export type RunAgentResult = RunToolLoopResult & {
@@ -70,12 +72,14 @@ export async function runAgent(
     userMessage: buildUserMessage({
       kind: options.kind,
       prompt: options.prompt,
+      history: options.history,
     }),
     tools: registry.definitions,
     executeTool: registry.execute,
     maxIterations: bounds.maxIterations,
     maxTokens: bounds.maxTokens,
     timeoutMs: bounds.timeoutMs,
+    onTextDelta: options.onTextDelta,
   });
 
   const status = statusFromStopReason(loopResult.stopReason);

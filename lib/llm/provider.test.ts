@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { toGeminiContents, toGeminiParameters } from "./gemini";
-import { createLlmClient, resolveLlmProvider } from "./index";
+import {
+  createGeminiClient,
+  parseGeminiStreamChunk,
+  toGeminiContents,
+  toGeminiParameters,
+} from "./gemini";
+import { createLlmClient, fallbackLlmProvider, resolveLlmProvider } from "./index";
 
 describe("LLM provider seam", () => {
   it("defaults to gemini and accepts anthropic without code changes", () => {
@@ -25,6 +30,11 @@ describe("LLM provider seam", () => {
     expect(gemini.model).toBe("gemini-flash-latest");
     expect(anthropic.provider).toBe("anthropic");
     expect(anthropic.model).toBe("claude-test");
+  });
+
+  it("names the other provider for failover", () => {
+    expect(fallbackLlmProvider("gemini")).toBe("anthropic");
+    expect(fallbackLlmProvider("anthropic")).toBe("gemini");
   });
 
   it("strips Gemini-unsupported JSON Schema keys from tool parameters", () => {
@@ -83,5 +93,54 @@ describe("LLM provider seam", () => {
         },
       ],
     });
+  });
+
+  it("parses Gemini CRLF SSE without gluing two JSON objects together", () => {
+    const crlf = [
+      'data: {"candidates":[{"content":{"parts":[{"text":"Pep"}]}}]}\r\n',
+      "\r\n",
+      'data: {"candidates":[{"content":{"parts":[{"text":"pers"}]},"finishReason":"STOP"}]}\r\n',
+      "\r\n",
+    ].join("");
+
+    const payloads = parseGeminiStreamChunk(crlf);
+    expect(payloads).toHaveLength(2);
+    expect(
+      payloads.map(
+        (payload) => payload.candidates?.[0]?.content?.parts?.[0]?.text,
+      ),
+    ).toEqual(["Pep", "pers"]);
+  });
+
+  it("streams Gemini SSE text deltas through complete()", async () => {
+    const sse = [
+      'data: {"candidates":[{"content":{"parts":[{"text":"Pep"}]}}]}\r\n\r\n',
+      'data: {"candidates":[{"content":{"parts":[{"text":"pers"}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":4,"candidatesTokenCount":2}}\r\n\r\n',
+    ].join("");
+    const deltas: string[] = [];
+    const client = createGeminiClient({
+      apiKey: "test-gemini-key",
+      model: "gemini-flash-latest",
+      fetchImplementation: async () =>
+        new Response(sse, {
+          status: 200,
+          headers: { "content-type": "text/event-stream" },
+        }),
+    });
+
+    const result = await client.complete(
+      {
+        system: "test",
+        messages: [{ role: "user", content: "hi" }],
+        tools: [],
+        maxOutputTokens: 64,
+      },
+      { onTextDelta: (delta) => deltas.push(delta) },
+    );
+
+    expect(deltas).toEqual(["Pep", "pers"]);
+    expect(result.text).toBe("Peppers");
+    expect(result.inputTokens).toBe(4);
+    expect(result.outputTokens).toBe(2);
   });
 });

@@ -120,4 +120,22 @@ describe("runAgent", () => {
     expect(result.status).toBe("succeeded");
     expect(result.toolTrace).toEqual([]);
   });
+
+  it("puts prior Ask turns in a delimited history section", async () => {
+    const { buildUserMessage } = await import("./prompts");
+    const message = buildUserMessage({
+      kind: "ask",
+      prompt: "What about the pots?",
+      history: [
+        { role: "user", content: "Should I water the peppers?" },
+        { role: "assistant", content: "There is an open watering task." },
+      ],
+    });
+
+    expect(message).toContain("<conversation_history>");
+    expect(message).toContain("</conversation_history>");
+    expect(message).toContain("<current_question>");
+    expect(message).toContain("What about the pots?");
+    expect(message).toContain("Should I water the peppers?");
+  });
 });

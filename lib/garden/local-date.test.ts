@@ -4,6 +4,7 @@ import {
   addCalendarDays,
   daysBetween,
   localDateString,
+  startOfLocalDay,
 } from "./local-date";
 
 describe("garden local date helpers", () => {
@@ -22,5 +23,12 @@ describe("garden local date helpers", () => {
     expect(addCalendarDays("2026-08-08", -7)).toBe("2026-08-01");
     expect(addCalendarDays("2026-08-08", 7)).toBe("2026-08-15");
     expect(daysBetween("2026-06-01", "2026-08-08")).toBe(68);
+  });
+
+  it("starts the Pacific calendar day at 07:00 UTC during PDT", () => {
+    const afternoon = new Date("2026-08-13T22:00:00.000Z");
+    expect(startOfLocalDay(afternoon, "America/Los_Angeles").toISOString()).toBe(
+      "2026-08-13T07:00:00.000Z",
+    );
   });
 });

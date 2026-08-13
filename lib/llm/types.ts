@@ -62,10 +62,17 @@ export type ProviderTurnResult = {
   providerContent?: unknown;
 };
 
+export type CompleteOptions = {
+  onTextDelta?: (delta: string) => void;
+};
+
 export type LlmClient = {
   provider: LlmProviderName;
   model: string;
-  complete(request: ProviderTurnRequest): Promise<ProviderTurnResult>;
+  complete(
+    request: ProviderTurnRequest,
+    options?: CompleteOptions,
+  ): Promise<ProviderTurnResult>;
 };
 
 export type RunToolLoopStopReason =
@@ -85,6 +92,7 @@ export type RunToolLoopOptions = {
   maxTokens: number;
   timeoutMs: number;
   now?: () => number;
+  onTextDelta?: (delta: string) => void;
 };
 
 export type RunToolLoopResult = {
