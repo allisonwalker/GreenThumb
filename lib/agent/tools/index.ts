@@ -136,7 +136,7 @@ export const agentToolDefinitions: ToolDefinition[] = [
   {
     name: "get_open_recommendations",
     description:
-      "Return the already-computed open Today list. Read this instead of recomputing care. Do not invent tasks that are not in the result.",
+      "Return the already-computed open Today list, including estimated_minutes from the crop row when that action has a time estimate (null if missing). Read this instead of recomputing care. Do not invent tasks that are not in the result.",
     inputSchema: { ...emptyObjectSchema },
   },
 ];

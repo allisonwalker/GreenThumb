@@ -7,7 +7,12 @@ import {
 } from "@/lib/db/schema";
 import type { LlmProviderName, RunToolLoopStopReason } from "@/lib/llm/types";
 
-export type AgentRunKind = "scheduled_checkin" | "ask" | "script" | "test";
+export type AgentRunKind =
+  | "scheduled_checkin"
+  | "ask"
+  | "script"
+  | "test"
+  | "time_budget";
 export type AgentRunStatus =
   | "running"
   | "succeeded"

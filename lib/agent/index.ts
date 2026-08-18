@@ -1,7 +1,12 @@
 export { runAgent } from "./run";
 export type { RunAgentOptions, RunAgentResult } from "./run";
 export { DEFAULT_AGENT_BOUNDS, resolveAgentBounds } from "./bounds";
-export { ASK_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT, systemPromptForKind } from "./prompts";
+export {
+  ASK_SYSTEM_PROMPT,
+  DEFAULT_SYSTEM_PROMPT,
+  TIME_BUDGET_SYSTEM_PROMPT,
+  systemPromptForKind,
+} from "./prompts";
 export {
   DAILY_QA_CAP_MESSAGE,
   DEFAULT_DAILY_QA_CAP,

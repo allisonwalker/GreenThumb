@@ -83,6 +83,7 @@ export const agentRunKindEnum = pgEnum("agent_run_kind", [
   "ask",
   "script",
   "test",
+  "time_budget",
 ]);
 
 export const agentRunStatusEnum = pgEnum("agent_run_status", [

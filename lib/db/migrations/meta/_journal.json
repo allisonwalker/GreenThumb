@@ -50,6 +50,13 @@
       "when": 1786661832731,
       "tag": "0006_stale_tombstone",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786665000000,
+      "tag": "0007_time_budget_kind",
+      "breakpoints": true
     }
   ]
 }

@@ -726,4 +726,16 @@ describeDatabase("garden schema integration", () => {
       throw new Error(rollbackMessage);
     });
   });
+
+  it("accepts time_budget as an agent_run kind", async () => {
+    await expectRollback(async (transaction) => {
+      const [run] = await transaction<{ kind: string }[]>`
+        insert into agent_run (kind, trigger, provider, model)
+        values ('time_budget', 'eval', 'gemini', 'gemini-flash-latest')
+        returning kind
+      `;
+      expect(run.kind).toBe("time_budget");
+      throw new Error(rollbackMessage);
+    });
+  });
 });

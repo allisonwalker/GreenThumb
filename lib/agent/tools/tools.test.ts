@@ -14,6 +14,7 @@ import {
   getPlantings,
   getWeather,
 } from "./index";
+import { estimatedMinutesForAction } from "./get-open-recommendations";
 
 describe("agent read tools", () => {
   it("exposes exactly the eight read-only tools and no writers", () => {
@@ -345,5 +346,13 @@ describe("agent read tools", () => {
     expect(result).toMatchObject({
       crops: [{ name: "peppers", sunPreference: "part_sun" }],
     });
+  });
+
+  it("reads estimated minutes from the crop time_estimates for an action", () => {
+    expect(
+      estimatedMinutesForAction({ watered: 8, fertilized: 12 }, "watered"),
+    ).toBe(8);
+    expect(estimatedMinutesForAction({ watered: 8 }, "pruned")).toBeNull();
+    expect(estimatedMinutesForAction(null, "watered")).toBeNull();
   });
 });

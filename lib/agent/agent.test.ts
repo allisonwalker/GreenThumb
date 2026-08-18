@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { ASK_SYSTEM_PROMPT, systemPromptForKind } from "./prompts";
+import {
+  ASK_SYSTEM_PROMPT,
+  TIME_BUDGET_SYSTEM_PROMPT,
+  systemPromptForKind,
+} from "./prompts";
 import { runAgent } from "./run";
 import type { AgentRunStore } from "./record";
 import type { LlmClient } from "@/lib/llm/types";
@@ -75,6 +79,7 @@ describe("runAgent", () => {
   it("uses the Ask prompt for kind=ask and records that kind", async () => {
     expect(systemPromptForKind("ask")).toBe(ASK_SYSTEM_PROMPT);
     expect(systemPromptForKind("scheduled_checkin")).not.toBe(ASK_SYSTEM_PROMPT);
+    expect(systemPromptForKind("time_budget")).not.toBe(ASK_SYSTEM_PROMPT);
 
     const created: unknown[] = [];
     const store: AgentRunStore = {
@@ -119,6 +124,57 @@ describe("runAgent", () => {
     expect(created[0]).toMatchObject({ kind: "ask" });
     expect(result.status).toBe("succeeded");
     expect(result.toolTrace).toEqual([]);
+  });
+
+  it("uses the time-budget prompt for kind=time_budget and records that kind", async () => {
+    expect(systemPromptForKind("time_budget")).toBe(TIME_BUDGET_SYSTEM_PROMPT);
+    expect(TIME_BUDGET_SYSTEM_PROMPT).not.toBe(ASK_SYSTEM_PROMPT);
+
+    const created: unknown[] = [];
+    let seenSystem = "";
+    const store: AgentRunStore = {
+      async create(input) {
+        created.push(input);
+        return {
+          id: "run-time-budget",
+          kind: input.kind,
+          trigger: input.trigger,
+          status: "running",
+          provider: input.provider,
+          model: input.model,
+        };
+      },
+      async finalize() {},
+    };
+
+    const client: LlmClient = {
+      provider: "gemini",
+      model: "gemini-flash-latest",
+      async complete(request) {
+        seenSystem = request.system;
+        return {
+          text: "Must-do vs if you have time.",
+          toolCalls: [],
+          inputTokens: 10,
+          outputTokens: 5,
+          stopReason: "end",
+        };
+      },
+    };
+
+    const result = await runAgent({
+      kind: "time_budget",
+      trigger: "unit",
+      prompt: "I have two hours Saturday.",
+      client,
+      store,
+      recordRun: true,
+      bounds: { maxIterations: 1, maxTokens: 1_000, timeoutMs: 5_000 },
+    });
+
+    expect(created[0]).toMatchObject({ kind: "time_budget" });
+    expect(seenSystem).toBe(TIME_BUDGET_SYSTEM_PROMPT);
+    expect(result.status).toBe("succeeded");
   });
 
   it("puts prior Ask turns in a delimited history section", async () => {

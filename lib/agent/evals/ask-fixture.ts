@@ -97,6 +97,7 @@ export const askEvalOpenRecommendation: OpenRecommendation = {
     facts: ["Rain is forecast in the next 24 hours"],
     inferences: [],
   },
+  estimatedMinutes: 8,
   status: "open",
   dueBy: null,
   createdAt: "2026-08-13T12:00:00.000Z",

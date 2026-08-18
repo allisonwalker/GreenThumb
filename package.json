@@ -13,7 +13,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.ts",
     "agent:run": "tsx --env-file-if-exists=.env.local scripts/run-agent.ts",
-    "eval:ask": "tsx --env-file-if-exists=.env.local scripts/eval-ask.ts"
+    "eval:ask": "tsx --env-file-if-exists=.env.local scripts/eval-ask.ts",
+    "eval:time-budget": "tsx --env-file-if-exists=.env.local scripts/eval-time-budget.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",
