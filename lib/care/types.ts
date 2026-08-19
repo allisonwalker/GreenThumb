@@ -74,6 +74,13 @@ export type OpenCareRecommendation = {
   createdAt: string;
 };
 
+export const MATCHING_OWNED_ACTION_TYPES = [
+  "watered",
+  "fertilized",
+  "pruned",
+  "treated",
+] as const satisfies readonly MatchingTaskInput["actionType"][];
+
 export type PersistMatchingInput = {
   trigger: CareRunTrigger;
   asOf: Date;

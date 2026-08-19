@@ -20,7 +20,7 @@ export default async function TodayPage() {
   } catch (error) {
     console.error("Today matching failed", error);
     matchingError =
-      "Could not refresh today's watering list. Showing the last saved tasks.";
+      "Could not refresh today's care list. Showing the last saved tasks.";
   }
 
   const open = await listOpenRecommendationsForSingletonGarden();

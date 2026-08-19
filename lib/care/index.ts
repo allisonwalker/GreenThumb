@@ -12,6 +12,7 @@ export { listOpenRecommendations, listOpenRecommendationsForSingletonGarden } fr
 export { groupOpenByUrgency, planCarePersist } from "./persist-decisions";
 export { runCareMatching } from "./run";
 export {
+  MATCHING_OWNED_ACTION_TYPES,
   URGENCY_LABELS,
   type MatchingTaskInput,
   type OpenCareRecommendation,

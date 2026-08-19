@@ -3,7 +3,7 @@ import "server-only";
 import { evaluateCareList } from "./evaluate";
 import { loadCareMatchingSnapshot } from "./load-inputs";
 import { persistMatchingRecommendations } from "./persist";
-import type { CareRunTrigger } from "./types";
+import { MATCHING_OWNED_ACTION_TYPES, type CareRunTrigger } from "./types";
 
 export async function runCareMatching(input: {
   trigger?: CareRunTrigger;
@@ -21,7 +21,7 @@ export async function runCareMatching(input: {
     asOf,
     timeZone: snapshot.timeZone,
     tasks,
-    ownedActionTypes: ["watered"],
+    ownedActionTypes: [...MATCHING_OWNED_ACTION_TYPES],
     weatherFetchId: snapshot.weatherFetchId,
   });
 

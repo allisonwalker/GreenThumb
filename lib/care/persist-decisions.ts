@@ -40,33 +40,36 @@ export function planCarePersist(input: {
       row.status !== "expired",
   );
   const latest = new Map<string, ExistingRecommendation>();
+  const openByKey = new Map<string, ExistingRecommendation[]>();
   const chronological = [...live].sort(
     (left, right) => left.updatedAt.getTime() - right.updatedAt.getTime(),
   );
   for (const row of chronological) {
-    latest.set(taskKey(row.locationId, row.actionType), row);
+    const key = taskKey(row.locationId, row.actionType);
+    latest.set(key, row);
+    if (row.status === "open") {
+      const opens = openByKey.get(key) ?? [];
+      opens.push(row);
+      openByKey.set(key, opens);
+    }
   }
 
   const supersedeIds: string[] = [];
   const inserts: MatchingTaskInput[] = [];
 
   for (const task of input.tasks) {
-    const previous = latest.get(taskKey(task.locationId, task.actionType));
-    if (!previous) {
-      inserts.push(task);
-      continue;
-    }
-    if (previous.status === "open") {
-      supersedeIds.push(previous.id);
-      inserts.push(task);
-      continue;
-    }
+    const key = taskKey(task.locationId, task.actionType);
+    const previous = latest.get(key);
+    const opens = openByKey.get(key) ?? [];
     if (
+      previous &&
       (previous.status === "done" || previous.status === "dismissed") &&
       shouldSkipRestate(previous, today, input.timeZone)
     ) {
+      supersedeIds.push(...opens.map((row) => row.id));
       continue;
     }
+    supersedeIds.push(...opens.map((row) => row.id));
     inserts.push(task);
   }
 

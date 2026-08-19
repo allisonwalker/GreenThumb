@@ -29,7 +29,12 @@ describe("care persist modules", () => {
       new URL("./load-inputs.ts", import.meta.url),
       "utf8",
     );
-    const source = `${persist}\n${listOpen}\n${decisions}\n${evaluate}\n${watering}\n${copy}\n${run}\n${load}`;
+    const cadence = readFileSync(
+      new URL("./cadence.ts", import.meta.url),
+      "utf8",
+    );
+    const frost = readFileSync(new URL("./frost.ts", import.meta.url), "utf8");
+    const source = `${persist}\n${listOpen}\n${decisions}\n${evaluate}\n${watering}\n${cadence}\n${frost}\n${copy}\n${run}\n${load}`;
 
     expect(source).not.toMatch(/lib\/llm/);
     expect(source).not.toMatch(/lib\/agent/);

@@ -20,6 +20,14 @@ export type CareMatchingSnapshot = EvaluateCareListInput & {
   weatherFetchId: string | null;
 };
 
+const CARE_LOG_ACTIONS = [
+  "watered",
+  "fertilized",
+  "pruned",
+  "treated",
+  "observed",
+] as const;
+
 export async function loadCareMatchingSnapshot(
   asOf: Date = new Date(),
 ): Promise<CareMatchingSnapshot | null> {
@@ -48,6 +56,9 @@ export async function loadCareMatchingSnapshot(
       cropId: crops.id,
       cropName: crops.name,
       wateringIntervalDays: crops.wateringIntervalDays,
+      fertilizingIntervalDays: crops.fertilizingIntervalDays,
+      pruning: crops.pruning,
+      frostSensitive: crops.frostSensitive,
       timeEstimates: crops.timeEstimates,
     })
     .from(plantings)
@@ -70,7 +81,15 @@ export async function loadCareMatchingSnapshot(
         cropId: row.cropId,
         cropName: row.cropName,
         wateringIntervalDays: row.wateringIntervalDays,
-        estimatedMinutes: minutesForWater(row.timeEstimates),
+        fertilizingIntervalDays: row.fertilizingIntervalDays,
+        pruning: row.pruning,
+        frostSensitive: row.frostSensitive,
+        estimatedMinutes: minutesFor(row.timeEstimates, "watered"),
+        fertilizeMinutes: minutesFor(row.timeEstimates, "fertilized"),
+        pruneMinutes: minutesFor(row.timeEstimates, "pruned"),
+        frostMinutes:
+          minutesFor(row.timeEstimates, "treated") ??
+          minutesFor(row.timeEstimates, "observed"),
         plantedOn: row.plantedOn,
       },
     ];
@@ -80,7 +99,12 @@ export async function loadCareMatchingSnapshot(
     ...new Set(matchedPlantings.map((row) => row.locationId)),
   ];
   const plantingIds = matchedPlantings.map((row) => row.plantingId);
-  const log = await loadWateredLog(database, locationIds, plantingIds, garden.timezone);
+  const log = await loadCareLog(
+    database,
+    locationIds,
+    plantingIds,
+    garden.timezone,
+  );
 
   return {
     today,
@@ -90,6 +114,7 @@ export async function loadCareMatchingSnapshot(
       date: day.date,
       precipitationMm: day.precipitationMm,
       et0Mm: day.et0Mm,
+      temperatureMinC: day.temperatureMinC,
     })),
     log,
     weatherFetchId: weather.days[0]?.weatherFetchId ?? null,
@@ -104,7 +129,7 @@ async function loadWeather(asOf: Date) {
   return refreshWeatherCache({ now: asOf });
 }
 
-async function loadWateredLog(
+async function loadCareLog(
   database: ReturnType<typeof getDatabase>,
   locationIds: string[],
   plantingIds: string[],
@@ -132,7 +157,7 @@ async function loadWateredLog(
       occurredAt: actionLogs.occurredAt,
     })
     .from(actionLogs)
-    .where(and(eq(actionLogs.actionType, "watered"), subject));
+    .where(and(inArray(actionLogs.actionType, [...CARE_LOG_ACTIONS]), subject));
 
   return rows.map((row) => ({
     plantingId: row.plantingId,
@@ -142,9 +167,10 @@ async function loadWateredLog(
   }));
 }
 
-function minutesForWater(
-  estimates: { watered?: number } | null,
+function minutesFor(
+  estimates: Record<string, number | undefined> | null,
+  action: string,
 ): number | null {
-  const minutes = estimates?.watered;
+  const minutes = estimates?.[action];
   return typeof minutes === "number" && minutes > 0 ? minutes : null;
 }

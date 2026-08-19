@@ -1,6 +1,8 @@
 import { addCalendarDays, endOfLocalDay } from "@/lib/garden/local-date";
 
-import type { MatchingTaskInput } from "./types";
+import type { CadenceNeed } from "./cadence";
+import type { FrostNeed } from "./frost";
+import type { MatchingTaskInput, RecommendationUrgency } from "./types";
 import { formatInchesFromMm, type WateringNeed } from "./watering";
 
 export const OPEN_METEO_ATTRIBUTION =
@@ -76,6 +78,116 @@ export function wateringTask(
   };
 }
 
+const CADENCE_HEADLINE: Record<
+  CadenceNeed["actionType"],
+  Record<"now" | "today", string>
+> = {
+  fertilized: { now: "fertilize now", today: "fertilize today" },
+  pruned: { now: "prune now", today: "prune today" },
+};
+
+const CADENCE_NOUN: Record<CadenceNeed["actionType"], string> = {
+  fertilized: "fertilizer",
+  pruned: "pruning",
+};
+
+const CADENCE_PAST: Record<CadenceNeed["actionType"], string> = {
+  fertilized: "fertilized",
+  pruned: "pruned",
+};
+
+export function cadenceTask(
+  need: CadenceNeed,
+  today: string,
+  timeZone: string,
+): MatchingTaskInput {
+  const verb = CADENCE_HEADLINE[need.actionType][need.urgency === "now" ? "now" : "today"];
+  const noun = CADENCE_NOUN[need.actionType];
+  const past = CADENCE_PAST[need.actionType];
+  const last = lastCadencePhrase(need, past);
+  const cadence = `${need.planting.cropName} want ${noun} every ${need.intervalDays} days`;
+  const pruneNotes =
+    need.actionType === "pruned" && need.planting.pruning?.needed
+      ? need.planting.pruning.notes
+      : null;
+
+  return {
+    locationId: need.planting.locationId,
+    plantingId: need.planting.plantingId,
+    cropId: need.planting.cropId,
+    actionType: need.actionType,
+    urgency: need.urgency,
+    headline: `${need.planting.locationName} — ${verb}`,
+    rationale: pruneNotes
+      ? `${last}, ${cadence} (${pruneNotes})`
+      : `${last}, ${cadence}`,
+    evidence: {
+      facts: [
+        {
+          source: need.lastSource === "action_log" ? "care log" : "planting",
+          figure:
+            need.lastSource === "action_log"
+              ? `last ${past} ${need.lastOn}`
+              : `planted ${need.lastOn} (no ${past} log)`,
+        },
+        {
+          source: "crop catalog",
+          figure: `${noun} every ${need.intervalDays} days`,
+        },
+        ...(pruneNotes
+          ? [{ source: "crop catalog", figure: pruneNotes }]
+          : []),
+      ],
+    },
+    estimatedMinutes:
+      need.actionType === "fertilized"
+        ? need.planting.fertilizeMinutes
+        : need.planting.pruneMinutes,
+    dueBy: dueByFor(need.urgency, today, timeZone),
+  };
+}
+
+export function frostTask(
+  need: FrostNeed,
+  today: string,
+  timeZone: string,
+): MatchingTaskInput {
+  const low = formatCelsius(need.tonightMinC);
+  const headlineVerb = need.urgency === "now" ? "cover tonight" : "cover today";
+  return {
+    locationId: need.planting.locationId,
+    plantingId: need.planting.plantingId,
+    cropId: need.planting.cropId,
+    actionType: "treated",
+    urgency: need.urgency,
+    headline: `${need.planting.locationName} — ${headlineVerb}`,
+    rationale: `${need.planting.cropName} are frost-sensitive, forecast low ${low}`,
+    evidence: {
+      facts: [
+        {
+          source: "crop catalog",
+          figure: "frost_sensitive true",
+        },
+        {
+          source: "weather cache",
+          figure: `forecast min ${low}`,
+        },
+        {
+          source: "matching rule",
+          figure: `frost threshold ${formatCelsius(need.thresholdC)}`,
+        },
+      ],
+    },
+    estimatedMinutes: need.planting.frostMinutes,
+    dueBy: dueByFor(need.urgency, today, timeZone),
+  };
+}
+
+export function formatCelsius(celsius: number): string {
+  const rounded = Math.round(celsius * 10) / 10;
+  return `${rounded.toFixed(1)}°C`;
+}
+
 function lastWateredPhrase(need: WateringNeed): string {
   if (need.lastWateredSource === "planted_on") {
     return need.daysSince === 0
@@ -87,8 +199,19 @@ function lastWateredPhrase(need: WateringNeed): string {
     : `last watered ${dayPhrase(need.daysSince)}`;
 }
 
+function lastCadencePhrase(need: CadenceNeed, past: string): string {
+  if (need.lastSource === "planted_on") {
+    return need.daysSince === 0
+      ? `planted today, not yet ${past}`
+      : `planted ${dayPhrase(need.daysSince)}, not yet ${past}`;
+  }
+  return need.daysSince === 0
+    ? `last ${past} today`
+    : `last ${past} ${dayPhrase(need.daysSince)}`;
+}
+
 function dueByFor(
-  urgency: WateringNeed["urgency"],
+  urgency: RecommendationUrgency,
   today: string,
   timeZone: string,
 ): Date {

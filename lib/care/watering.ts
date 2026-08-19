@@ -1,3 +1,4 @@
+import type { CropPruning } from "@/lib/crops/types";
 import { addCalendarDays, daysBetween } from "@/lib/garden/local-date";
 
 import { RECOMMENDATION_URGENCIES } from "./types";
@@ -23,6 +24,7 @@ export type CareWeatherDay = {
   date: string;
   precipitationMm: number;
   et0Mm: number;
+  temperatureMinC: number;
 };
 
 export type CareLogEvent = {
@@ -40,7 +42,13 @@ export type CarePlantingInput = {
   cropId: string;
   cropName: string;
   wateringIntervalDays: number | null;
+  fertilizingIntervalDays: number | null;
+  pruning: CropPruning | null;
+  frostSensitive: boolean | null;
   estimatedMinutes: number | null;
+  fertilizeMinutes: number | null;
+  pruneMinutes: number | null;
+  frostMinutes: number | null;
   plantedOn: string;
 };
 
@@ -84,7 +92,7 @@ export function evaluateWateringPlanting(input: {
     return null;
   }
 
-  const last = lastWatered(input.planting, input.log);
+  const last = lastCareAction(input.planting, input.log, "watered");
   const daysSince = daysBetween(last.occurredOn, input.today);
   if (daysSince < 0) {
     return null;
@@ -149,13 +157,14 @@ export function preferWateringNeed(
   return candidate.netDays > current.netDays ? candidate : current;
 }
 
-function lastWatered(
+export function lastCareAction(
   planting: CarePlantingInput,
   log: CareLogEvent[],
+  actionType: string,
 ): { occurredOn: string; source: "action_log" | "planted_on" } {
   let latest: string | null = null;
   for (const event of log) {
-    if (event.actionType !== "watered") {
+    if (event.actionType !== actionType) {
       continue;
     }
     const samePlanting = event.plantingId === planting.plantingId;
@@ -171,6 +180,14 @@ function lastWatered(
     return { occurredOn: latest, source: "action_log" };
   }
   return { occurredOn: planting.plantedOn, source: "planted_on" };
+}
+
+export function weatherByDateMap(days: CareWeatherDay[]) {
+  const map = new Map<string, CareWeatherDay>();
+  for (const day of days) {
+    map.set(day.date, day);
+  }
+  return map;
 }
 
 function et0ScaleFromWindow(days: CareWeatherDay[]): number {
@@ -196,14 +213,6 @@ function urgencyForRain(
     return "now";
   }
   return "today";
-}
-
-function weatherByDateMap(days: CareWeatherDay[]) {
-  const map = new Map<string, CareWeatherDay>();
-  for (const day of days) {
-    map.set(day.date, day);
-  }
-  return map;
 }
 
 function datesAfter(startDate: string, endDate: string): string[] {

@@ -70,6 +70,53 @@ describe("planCarePersist", () => {
     expect(plan.inserts).toEqual([incoming]);
   });
 
+  it("supersedes every open watering row for a location, not only the latest", () => {
+    const incoming = task({ headline: "Section 3 — water today" });
+    const plan = planCarePersist({
+      existing: [
+        existing({
+          id: "open-older",
+          updatedAt: new Date("2026-08-19T12:00:00.000Z"),
+        }),
+        existing({
+          id: "open-newer",
+          updatedAt: new Date("2026-08-19T18:00:00.000Z"),
+        }),
+      ],
+      tasks: [incoming],
+      asOf: AS_OF,
+      timeZone: TIME_ZONE,
+      ownedActionTypes: ["watered"],
+    });
+
+    expect(plan.supersedeIds.sort()).toEqual(["open-newer", "open-older"]);
+    expect(plan.expireIds).toEqual([]);
+    expect(plan.inserts).toEqual([incoming]);
+  });
+
+  it("closes leftover open watering when the latest row was already done today", () => {
+    const plan = planCarePersist({
+      existing: [
+        existing({
+          id: "open-leftover",
+          updatedAt: new Date("2026-08-19T12:00:00.000Z"),
+        }),
+        existing({
+          id: "done-today",
+          status: "done",
+          resolvedAt: new Date("2026-08-19T16:00:00.000Z"),
+          updatedAt: new Date("2026-08-19T16:00:00.000Z"),
+        }),
+      ],
+      tasks: [task()],
+      asOf: AS_OF,
+      timeZone: TIME_ZONE,
+    });
+
+    expect(plan.inserts).toEqual([]);
+    expect(plan.supersedeIds).toEqual(["open-leftover"]);
+  });
+
   it("does not restate a row marked done on the same garden-local day", () => {
     const plan = planCarePersist({
       existing: [
@@ -185,6 +232,27 @@ describe("planCarePersist", () => {
     expect(taskKey(LOCATION, "watered")).not.toBe(
       taskKey(LOCATION, "fertilized"),
     );
+  });
+
+  it("supersedes fertilize independently of watering at the same location", () => {
+    const incoming = task({
+      actionType: "fertilized",
+      headline: "Section 3 — fertilize today",
+    });
+    const plan = planCarePersist({
+      existing: [
+        existing({ id: "water-open", actionType: "watered" }),
+        existing({ id: "fert-open", actionType: "fertilized" }),
+      ],
+      tasks: [incoming],
+      asOf: AS_OF,
+      timeZone: TIME_ZONE,
+      ownedActionTypes: ["watered", "fertilized", "pruned", "treated"],
+    });
+
+    expect(plan.supersedeIds).toEqual(["fert-open"]);
+    expect(plan.expireIds).toEqual(["water-open"]);
+    expect(plan.inserts).toEqual([incoming]);
   });
 });
 

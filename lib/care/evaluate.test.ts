@@ -31,7 +31,13 @@ function planting(
     cropId: "crop-tomato",
     cropName: "tomatoes",
     wateringIntervalDays: 3,
+    fertilizingIntervalDays: null,
+    pruning: null,
+    frostSensitive: null,
     estimatedMinutes: 10,
+    fertilizeMinutes: 20,
+    pruneMinutes: 15,
+    frostMinutes: 8,
     plantedOn: "2026-06-01",
     ...overrides,
   };
@@ -50,6 +56,8 @@ function weatherWindow(input: {
   upcomingMm?: number;
   weekRainMm?: number;
   et0Mm?: number;
+  todayMinC?: number;
+  tomorrowMinC?: number;
 }): CareWeatherDay[] {
   const upcomingMm = input.upcomingMm ?? 0;
   const weekRainMm = input.weekRainMm ?? 0;
@@ -65,10 +73,18 @@ function weatherWindow(input: {
     if (date === "2026-08-20") {
       precipitationMm = upcomingMm;
     }
+    let temperatureMinC = 12;
+    if (date === TODAY) {
+      temperatureMinC = input.todayMinC ?? 12;
+    }
+    if (date === addCalendarDays(TODAY, 1)) {
+      temperatureMinC = input.tomorrowMinC ?? 12;
+    }
     days.push({
       date,
       precipitationMm,
       et0Mm: date <= TODAY ? et0Mm : 0,
+      temperatureMinC,
     });
   }
   return days;
@@ -234,11 +250,195 @@ describe("evaluateCareList watering", () => {
   });
 });
 
+describe("evaluateCareList fertilize, prune, and frost", () => {
+  function catalogOnlyPlanting(
+    overrides: Partial<CarePlantingInput> = {},
+  ): CarePlantingInput {
+    return planting({
+      wateringIntervalDays: null,
+      ...overrides,
+    });
+  }
+
+  it("emits a fertilize task when the interval has elapsed and skips pruning none", () => {
+    const tasks = evaluateCareList({
+      today: TODAY,
+      timeZone: TIME_ZONE,
+      plantings: [
+        catalogOnlyPlanting({
+          fertilizingIntervalDays: 14,
+          fertilizeMinutes: 20,
+          pruning: { needed: false },
+        }),
+      ],
+      weatherDays: weatherWindow({}),
+      log: [
+        {
+          plantingId: "plant-tomato",
+          locationId: SECTION_ID,
+          actionType: "fertilized",
+          occurredOn: "2026-08-01",
+        },
+      ],
+    });
+
+    expect(tasks).toHaveLength(1);
+    const task = tasks[0]!;
+    expect(task.actionType).toBe("fertilized");
+    expect(task.urgency).toBe("today");
+    expect(task.headline).toBe("Section 3 — fertilize today");
+    expect(task.rationale).toBe(
+      "last fertilized 18 days ago, tomatoes want fertilizer every 14 days",
+    );
+    expect(task.estimatedMinutes).toBe(20);
+    expect(task.evidence.facts).toEqual(
+      expect.arrayContaining([
+        { source: "care log", figure: "last fertilized 2026-08-01" },
+        { source: "crop catalog", figure: "fertilizer every 14 days" },
+      ]),
+    );
+    expect(tasks.some((row) => row.actionType === "pruned")).toBe(false);
+  });
+
+  it("emits a prune task when pruning is needed and the interval has elapsed", () => {
+    const tasks = evaluateCareList({
+      today: TODAY,
+      timeZone: TIME_ZONE,
+      plantings: [
+        catalogOnlyPlanting({
+          pruning: {
+            needed: true,
+            intervalDays: 21,
+            notes: "pinch suckers",
+          },
+          pruneMinutes: 15,
+        }),
+      ],
+      weatherDays: weatherWindow({}),
+      log: [
+        {
+          plantingId: "plant-tomato",
+          locationId: SECTION_ID,
+          actionType: "pruned",
+          occurredOn: "2026-07-01",
+        },
+      ],
+    });
+
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0]?.actionType).toBe("pruned");
+    expect(tasks[0]?.headline).toBe("Section 3 — prune now");
+    expect(tasks[0]?.rationale).toContain("pinch suckers");
+    expect(tasks[0]?.evidence.facts).toEqual(
+      expect.arrayContaining([
+        { source: "care log", figure: "last pruned 2026-07-01" },
+        { source: "crop catalog", figure: "pruning every 21 days" },
+        { source: "crop catalog", figure: "pinch suckers" },
+      ]),
+    );
+  });
+
+  it("skips a task type when its catalog field is missing rather than inventing a cadence", () => {
+    const tasks = evaluateCareList({
+      today: TODAY,
+      timeZone: TIME_ZONE,
+      plantings: [
+        catalogOnlyPlanting({
+          fertilizingIntervalDays: null,
+          pruning: { needed: true, intervalDays: null, notes: null },
+          frostSensitive: null,
+        }),
+      ],
+      weatherDays: weatherWindow({ todayMinC: -2 }),
+      log: [],
+    });
+
+    expect(tasks).toEqual([]);
+  });
+
+  it("shows a frost task with urgency now for a sensitive crop when tonight is at or below threshold", () => {
+    const tasks = evaluateCareList({
+      today: TODAY,
+      timeZone: TIME_ZONE,
+      plantings: [
+        catalogOnlyPlanting({
+          frostSensitive: true,
+          frostMinutes: 8,
+        }),
+      ],
+      weatherDays: weatherWindow({ todayMinC: -1 }),
+      log: [],
+    });
+
+    expect(tasks).toHaveLength(1);
+    const task = tasks[0]!;
+    expect(task.actionType).toBe("treated");
+    expect(task.urgency).toBe("now");
+    expect(task.headline).toBe("Section 3 — cover tonight");
+    expect(task.rationale).toBe(
+      "tomatoes are frost-sensitive, forecast low -1.0°C",
+    );
+    expect(task.estimatedMinutes).toBe(8);
+    expect(task.evidence.facts).toEqual(
+      expect.arrayContaining([
+        { source: "crop catalog", figure: "frost_sensitive true" },
+        { source: "weather cache", figure: "forecast min -1.0°C" },
+        { source: "matching rule", figure: "frost threshold 0.0°C" },
+      ]),
+    );
+  });
+
+  it("does not show a frost task for a crop that is not frost-sensitive", () => {
+    const tasks = evaluateCareList({
+      today: TODAY,
+      timeZone: TIME_ZONE,
+      plantings: [catalogOnlyPlanting({ frostSensitive: false })],
+      weatherDays: weatherWindow({ todayMinC: -4 }),
+      log: [],
+    });
+
+    expect(tasks).toEqual([]);
+  });
+
+  it("does not call a model: copy is templated from catalog, weather, and log", () => {
+    const tasks = evaluateCareList({
+      today: TODAY,
+      timeZone: TIME_ZONE,
+      plantings: [
+        catalogOnlyPlanting({
+          fertilizingIntervalDays: 14,
+          frostSensitive: true,
+        }),
+      ],
+      weatherDays: weatherWindow({ todayMinC: 0 }),
+      log: [
+        {
+          plantingId: "plant-tomato",
+          locationId: SECTION_ID,
+          actionType: "fertilized",
+          occurredOn: "2026-08-01",
+        },
+      ],
+    });
+
+    expect(tasks.map((task) => task.actionType).sort()).toEqual([
+      "fertilized",
+      "treated",
+    ]);
+    for (const task of tasks) {
+      expect(task).not.toHaveProperty("confidence");
+      expect(task.evidence).not.toHaveProperty("inferences");
+    }
+  });
+});
+
 describe("matching compute path has no model", () => {
   it("does not import an LLM provider or the agent", () => {
     const files = [
       "evaluate.ts",
       "watering.ts",
+      "cadence.ts",
+      "frost.ts",
       "copy.ts",
       "run.ts",
       "load-inputs.ts",
