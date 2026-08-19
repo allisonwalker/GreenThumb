@@ -8,13 +8,16 @@ import { actionLogs, careRuns, recommendations } from "@/lib/db/schema";
 import { planCarePersist } from "./persist-decisions";
 import type { ExistingRecommendation, PersistMatchingInput } from "./types";
 
-type Database = ReturnType<typeof getDatabase>;
+type AppDatabase = ReturnType<typeof getDatabase>;
+type Database =
+  | AppDatabase
+  | Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 
 const NOT_OPEN = "That task is no longer open.";
 
 export async function persistMatchingRecommendations(
   input: PersistMatchingInput,
-  database: Database = getDatabase(),
+  database: AppDatabase = getDatabase(),
 ) {
   return database.transaction((tx) => persistMatchingOnDb(tx, input));
 }
@@ -136,7 +139,7 @@ export async function markRecommendationDone(
     userId: string;
     occurredAt?: Date;
   },
-  database: Database = getDatabase(),
+  database: AppDatabase = getDatabase(),
 ) {
   return database.transaction((tx) => markRecommendationDoneOnDb(tx, input));
 }
@@ -202,7 +205,7 @@ export async function dismissRecommendation(
     userId: string;
     occurredAt?: Date;
   },
-  database: Database = getDatabase(),
+  database: AppDatabase = getDatabase(),
 ) {
   return database.transaction((tx) => dismissRecommendationOnDb(tx, input));
 }

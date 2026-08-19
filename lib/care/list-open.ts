@@ -13,7 +13,11 @@ import {
 import { RECOMMENDATION_URGENCIES } from "./types";
 import type { OpenCareRecommendation } from "./types";
 
-type Database = ReturnType<typeof getDatabase>;
+type Database =
+  | ReturnType<typeof getDatabase>
+  | Parameters<
+      Parameters<ReturnType<typeof getDatabase>["transaction"]>[0]
+    >[0];
 
 export async function listOpenRecommendationsForSingletonGarden(
   database: Database = getDatabase(),
