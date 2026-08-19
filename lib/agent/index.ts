@@ -14,6 +14,7 @@ export {
   resolveDailyQaCap,
 } from "./qa-cap";
 export { runAskTurn, loadAskMessages } from "./ask-turn";
+export { formatTimeBudgetPrompt } from "./time-budget-prompt";
 export {
   FORBIDDEN_WRITE_TOOL_NAMES,
   READ_TOOL_NAMES,

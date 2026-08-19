@@ -1,9 +1,10 @@
-import { ASK_SYSTEM_PROMPT } from "./prompts";
 import {
   createConversationStore,
+  type ConversationKind,
   type ConversationStore,
   type MessageRecord,
 } from "./conversation";
+import { systemPromptForKind } from "./prompts";
 import { friendlyAskError, isLlmQuotaError } from "./ask-errors";
 import {
   DAILY_QA_CAP_MESSAGE,
@@ -22,6 +23,7 @@ export type AskTurnInput = {
   userId: string;
   prompt: string;
   timezone: string;
+  kind?: ConversationKind;
   onEvent: (event: AskStreamEvent) => void;
 };
 
@@ -47,19 +49,29 @@ export async function runAskTurn(
   const now = dependencies.now?.() ?? new Date();
   const cap = dependencies.dailyQaCap ?? resolveDailyQaCap();
   const since = startOfLocalDay(now, input.timezone);
+  const kind = input.kind ?? "ask";
 
-  const conversation = await store.getOrCreate(input.userId, "ask");
+  const conversation = await store.getOrCreate(input.userId, kind);
   const history = await store.listMessages(conversation.id);
   const priorTurns = history.slice(-HISTORY_LIMIT).map((message) => ({
     role: message.role,
     content: message.content,
   }));
-  const askedToday = await store.countUserMessagesSince({
-    userId: input.userId,
-    kind: "ask",
-    role: "user",
-    since,
-  });
+  const [askCount, timeBudgetCount] = await Promise.all([
+    store.countUserMessagesSince({
+      userId: input.userId,
+      kind: "ask",
+      role: "user",
+      since,
+    }),
+    store.countUserMessagesSince({
+      userId: input.userId,
+      kind: "time_budget",
+      role: "user",
+      since,
+    }),
+  ]);
+  const askedToday = askCount + timeBudgetCount;
 
   const userMessage = await store.appendMessage({
     conversationId: conversation.id,
@@ -91,11 +103,11 @@ export async function runAskTurn(
   let result;
   try {
     result = await executeAgent({
-      kind: "ask",
-      trigger: "ask",
+      kind,
+      trigger: kind,
       prompt,
       history: priorTurns,
-      systemPrompt: ASK_SYSTEM_PROMPT,
+      systemPrompt: systemPromptForKind(kind),
       client,
       onTextDelta,
     });
@@ -126,11 +138,11 @@ export async function runAskTurn(
     streamed = "";
     try {
       result = await executeAgent({
-        kind: "ask",
-        trigger: "ask",
+        kind,
+        trigger: kind,
         prompt,
         history: priorTurns,
-        systemPrompt: ASK_SYSTEM_PROMPT,
+        systemPrompt: systemPromptForKind(kind),
         client: fallbackClient,
         onTextDelta,
       });
@@ -217,9 +229,10 @@ async function emitAssistantReply(input: {
 
 export async function loadAskMessages(
   userId: string,
+  kind: ConversationKind = "ask",
   store: ConversationStore = createConversationStore(),
 ): Promise<MessageRecord[]> {
-  const conversation = await store.getOrCreate(userId, "ask");
+  const conversation = await store.getOrCreate(userId, kind);
   return store.listMessages(conversation.id);
 }
 

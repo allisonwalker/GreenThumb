@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ASK_SYSTEM_PROMPT } from "./prompts";
+import { ASK_SYSTEM_PROMPT, TIME_BUDGET_SYSTEM_PROMPT } from "./prompts";
 import { runAskTurn } from "./ask-turn";
 import { DAILY_QA_CAP_MESSAGE } from "./qa-cap";
 import type { ConversationStore, MessageRecord } from "./conversation";
@@ -169,6 +169,91 @@ describe("runAskTurn", () => {
     });
   });
 
+  it("streams kind=time_budget through the same engine with the time-budget prompt", async () => {
+    const store = memoryStore();
+    const events: AskStreamEvent[] = [];
+    const runAgent = vi.fn(async (options: RunAgentOptions) => {
+      options.onTextDelta?.("Must-do\nWater the peppers.");
+      return succeededResult({
+        finalText: "Must-do\nWater the peppers.",
+        agentRunId: "run-budget-1",
+      });
+    });
+
+    await runAskTurn(
+      {
+        userId: "user-1",
+        prompt: "I have two hours Saturday.",
+        kind: "time_budget",
+        timezone: "America/Los_Angeles",
+        onEvent: (event) => events.push(event),
+      },
+      { conversationStore: store, runAgent, dailyQaCap: 20 },
+    );
+
+    expect(runAgent).toHaveBeenCalledTimes(1);
+    expect(runAgent.mock.calls[0]?.[0]).toMatchObject({
+      kind: "time_budget",
+      trigger: "time_budget",
+      prompt: "I have two hours Saturday.",
+      systemPrompt: TIME_BUDGET_SYSTEM_PROMPT,
+    });
+    expect(TIME_BUDGET_SYSTEM_PROMPT).not.toBe(ASK_SYSTEM_PROMPT);
+    expect(events.at(-1)).toMatchObject({
+      type: "done",
+      agentRunId: "run-budget-1",
+      stopReason: "completed",
+    });
+    const conversation = await store.getOrCreate("user-1", "time_budget");
+    expect(
+      store.messages.filter((message) => message.conversationId === conversation.id),
+    ).toHaveLength(2);
+  });
+
+  it("shares the daily Q&A cap across Ask and time-budget and does not call the model", async () => {
+    const store = memoryStore();
+    const askConversation = await store.getOrCreate("user-1", "ask");
+    await store.appendMessage({
+      conversationId: askConversation.id,
+      role: "user",
+      content: "Do peppers want sun?",
+    });
+    const budgetConversation = await store.getOrCreate("user-1", "time_budget");
+    await store.appendMessage({
+      conversationId: budgetConversation.id,
+      role: "user",
+      content: "I have one hour Saturday.",
+    });
+    const runAgent = vi.fn();
+    const events: AskStreamEvent[] = [];
+
+    await runAskTurn(
+      {
+        userId: "user-1",
+        prompt: "I have two hours Saturday.",
+        kind: "time_budget",
+        timezone: "America/Los_Angeles",
+        onEvent: (event) => events.push(event),
+      },
+      {
+        conversationStore: store,
+        runAgent,
+        dailyQaCap: 2,
+        now: () => new Date("2026-08-13T20:00:00.000Z"),
+      },
+    );
+
+    expect(runAgent).not.toHaveBeenCalled();
+    expect(events).toEqual([
+      { type: "token", text: DAILY_QA_CAP_MESSAGE },
+      expect.objectContaining({
+        type: "done",
+        agentRunId: null,
+        stopReason: "daily_qa_cap",
+      }),
+    ]);
+  });
+
   it("does not persist recommendations from the Ask path", async () => {
     const store = memoryStore();
     const writes: string[] = [];
@@ -193,6 +278,34 @@ describe("runAskTurn", () => {
         /recommendation|watered|logged/i.test(message.content),
       ),
     ).toBe(false);
+  });
+
+  it("does not persist recommendations from the time-budget path", async () => {
+    const store = memoryStore();
+    const writes: string[] = [];
+    const runAgent = vi.fn(async (options: RunAgentOptions) => {
+      writes.push(`kind:${options.kind}`);
+      return succeededResult({
+        finalText: "Must-do\nWater the peppers.\n\nIf you have time\nPrune the basil.",
+      });
+    });
+
+    await runAskTurn(
+      {
+        userId: "user-1",
+        prompt: "I have two hours Saturday.",
+        kind: "time_budget",
+        timezone: "America/Los_Angeles",
+        onEvent: () => {},
+      },
+      { conversationStore: store, runAgent },
+    );
+
+    expect(writes).toEqual(["kind:time_budget"]);
+    expect(store.messages.map((message) => message.role)).toEqual([
+      "user",
+      "assistant",
+    ]);
   });
 
   it("replaces a Gemini quota error with a short retry message", async () => {

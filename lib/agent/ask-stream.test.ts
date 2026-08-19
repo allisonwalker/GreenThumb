@@ -48,6 +48,19 @@ describe("Ask request body", () => {
     });
     expect(parseAskRequestBody({ prompt: " Do peppers want sun? " })).toEqual({
       prompt: "Do peppers want sun?",
+      kind: "ask",
     });
+    expect(
+      parseAskRequestBody({
+        prompt: "I have two hours Saturday.",
+        kind: "time_budget",
+      }),
+    ).toEqual({
+      prompt: "I have two hours Saturday.",
+      kind: "time_budget",
+    });
+    expect(
+      parseAskRequestBody({ prompt: "I have two hours Saturday.", kind: "write" }),
+    ).toEqual({ error: "Expected kind to be ask or time_budget." });
   });
 });

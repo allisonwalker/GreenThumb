@@ -33,6 +33,7 @@ export async function POST(request: Request) {
         await runAskTurn({
           userId: auth.identity.id,
           prompt: body.prompt,
+          kind: body.kind,
           timezone: profile.timezone,
           onEvent: (event) => {
             controller.enqueue(encoder.encode(encodeAskStreamEvent(event)));
