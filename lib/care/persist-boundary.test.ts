@@ -15,7 +15,21 @@ describe("care persist modules", () => {
       new URL("./persist-decisions.ts", import.meta.url),
       "utf8",
     );
-    const source = `${persist}\n${listOpen}\n${decisions}`;
+    const evaluate = readFileSync(
+      new URL("./evaluate.ts", import.meta.url),
+      "utf8",
+    );
+    const watering = readFileSync(
+      new URL("./watering.ts", import.meta.url),
+      "utf8",
+    );
+    const copy = readFileSync(new URL("./copy.ts", import.meta.url), "utf8");
+    const run = readFileSync(new URL("./run.ts", import.meta.url), "utf8");
+    const load = readFileSync(
+      new URL("./load-inputs.ts", import.meta.url),
+      "utf8",
+    );
+    const source = `${persist}\n${listOpen}\n${decisions}\n${evaluate}\n${watering}\n${copy}\n${run}\n${load}`;
 
     expect(source).not.toMatch(/lib\/llm/);
     expect(source).not.toMatch(/lib\/agent/);

@@ -16,6 +16,7 @@ export function planCarePersist(input: {
   tasks: MatchingTaskInput[];
   asOf: Date;
   timeZone: string;
+  ownedActionTypes?: MatchingTaskInput["actionType"][];
 }): {
   expireIds: string[];
   supersedeIds: string[];
@@ -67,6 +68,26 @@ export function planCarePersist(input: {
       continue;
     }
     inserts.push(task);
+  }
+
+  const incomingKeys = new Set(
+    input.tasks.map((task) => taskKey(task.locationId, task.actionType)),
+  );
+  const owned = new Set(input.ownedActionTypes ?? []);
+  const retiring = new Set(supersedeIds);
+
+  for (const row of input.existing) {
+    if (
+      row.status !== "open" ||
+      expired.has(row.id) ||
+      retiring.has(row.id) ||
+      !owned.has(row.actionType as MatchingTaskInput["actionType"]) ||
+      incomingKeys.has(taskKey(row.locationId, row.actionType))
+    ) {
+      continue;
+    }
+    expireIds.push(row.id);
+    expired.add(row.id);
   }
 
   return { expireIds, supersedeIds, inserts };

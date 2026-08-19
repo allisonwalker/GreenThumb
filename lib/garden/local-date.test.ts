@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   addCalendarDays,
   daysBetween,
+  endOfLocalDay,
   localDateString,
   startOfLocalDay,
 } from "./local-date";
@@ -29,6 +30,12 @@ describe("garden local date helpers", () => {
     const afternoon = new Date("2026-08-13T22:00:00.000Z");
     expect(startOfLocalDay(afternoon, "America/Los_Angeles").toISOString()).toBe(
       "2026-08-13T07:00:00.000Z",
+    );
+  });
+
+  it("ends the Pacific calendar day just before the next local midnight", () => {
+    expect(endOfLocalDay("2026-08-19", "America/Los_Angeles").toISOString()).toBe(
+      "2026-08-20T06:59:59.999Z",
     );
   });
 });

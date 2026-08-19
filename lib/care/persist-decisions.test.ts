@@ -152,6 +152,35 @@ describe("planCarePersist", () => {
     expect(plan.inserts).toHaveLength(1);
   });
 
+  it("expires open owned-action rows that matching no longer emits", () => {
+    const plan = planCarePersist({
+      existing: [existing({ id: "no-longer-due" })],
+      tasks: [],
+      asOf: AS_OF,
+      timeZone: TIME_ZONE,
+      ownedActionTypes: ["watered"],
+    });
+
+    expect(plan.expireIds).toEqual(["no-longer-due"]);
+    expect(plan.inserts).toEqual([]);
+  });
+
+  it("does not expire open rows for action types this run does not own", () => {
+    const fertilize = existing({
+      id: "fertilize-open",
+      actionType: "fertilized",
+    });
+    const plan = planCarePersist({
+      existing: [fertilize],
+      tasks: [],
+      asOf: AS_OF,
+      timeZone: TIME_ZONE,
+      ownedActionTypes: ["watered"],
+    });
+
+    expect(plan.expireIds).toEqual([]);
+  });
+
   it("keys location and action together so other actions stay independent", () => {
     expect(taskKey(LOCATION, "watered")).not.toBe(
       taskKey(LOCATION, "fertilized"),

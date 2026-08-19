@@ -79,6 +79,8 @@ export type PersistMatchingInput = {
   asOf: Date;
   timeZone: string;
   tasks: MatchingTaskInput[];
+  /** Open rows of these action types that matching did not restate are expired. */
+  ownedActionTypes?: MatchingTaskInput["actionType"][];
   weatherFetchId?: string | null;
   simulatedWeather?: unknown;
 };

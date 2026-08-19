@@ -1,14 +1,28 @@
 import Link from "next/link";
 
 import { requirePageUser } from "@/lib/auth/session";
+import { MICROCLIMATE_LIMITATION } from "@/lib/care/copy";
 import { listOpenRecommendationsForSingletonGarden } from "@/lib/care/list-open";
 import { groupOpenByUrgency } from "@/lib/care/persist-decisions";
+import { runCareMatching } from "@/lib/care/run";
 import { URGENCY_LABELS } from "@/lib/care/types";
 
 import { RecommendationCard } from "./recommendation-card";
 
+export const dynamic = "force-dynamic";
+
 export default async function TodayPage() {
   await requirePageUser();
+
+  let matchingError: string | null = null;
+  try {
+    await runCareMatching({ trigger: "manual" });
+  } catch (error) {
+    console.error("Today matching failed", error);
+    matchingError =
+      "Could not refresh today's watering list. Showing the last saved tasks.";
+  }
+
   const open = await listOpenRecommendationsForSingletonGarden();
   const groups = groupOpenByUrgency(open);
 
@@ -26,6 +40,12 @@ export default async function TodayPage() {
           next matching run does not ask again. Dismiss leaves the log alone.
         </p>
       </header>
+
+      {matchingError ? (
+        <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-neutral-800">
+          {matchingError}
+        </p>
+      ) : null}
 
       {groups.length === 0 ? (
         <p className="rounded-2xl border bg-white px-4 py-6 text-neutral-600 shadow-sm">
@@ -59,6 +79,20 @@ export default async function TodayPage() {
         and we will cut the open list into must-do vs if-you-have-time. That
         screen does not change Today — mark work done here.
       </p>
+
+      <footer className="space-y-2 text-sm text-neutral-500">
+        <p>
+          Weather data by{" "}
+          <a
+            href="https://open-meteo.com/"
+            className="underline hover:text-neutral-800"
+          >
+            Open-Meteo
+          </a>{" "}
+          (CC BY 4.0).
+        </p>
+        <p>{MICROCLIMATE_LIMITATION}</p>
+      </footer>
     </div>
   );
 }

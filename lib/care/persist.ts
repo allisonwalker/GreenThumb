@@ -68,6 +68,7 @@ export async function persistMatchingOnDb(
     tasks: input.tasks,
     asOf: input.asOf,
     timeZone: input.timeZone,
+    ownedActionTypes: input.ownedActionTypes,
   });
 
   if (plan.expireIds.length > 0) {

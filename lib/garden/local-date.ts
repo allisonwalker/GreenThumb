@@ -45,6 +45,17 @@ export function startOfLocalDay(instant: Date, timeZone: string): Date {
   );
 }
 
+/** Last UTC instant that still falls on `date` in `timeZone`. */
+export function endOfLocalDay(date: string, timeZone: string): Date {
+  return new Date(
+    utcInstantFromLocalDateTime(
+      addCalendarDays(date, 1),
+      "00:00:00",
+      timeZone,
+    ).getTime() - 1,
+  );
+}
+
 function utcInstantFromLocalDateTime(
   date: string,
   time: string,
