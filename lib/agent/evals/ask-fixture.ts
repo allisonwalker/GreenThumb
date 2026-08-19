@@ -92,15 +92,16 @@ export const askEvalOpenRecommendation: OpenRecommendation = {
   urgency: "today",
   headline: ASK_EVAL_SKIP_HEADLINE,
   rationale: ASK_EVAL_SKIP_RATIONALE,
-  confidence: 0.9,
+  confidence: null,
   evidence: {
-    facts: ["Rain is forecast in the next 24 hours"],
-    inferences: [],
+    facts: [{ source: "eval", figure: "Rain is forecast in the next 24 hours" }],
   },
   estimatedMinutes: 8,
   status: "open",
   dueBy: null,
   createdAt: "2026-08-13T12:00:00.000Z",
+  careRunId: null,
+  cropId: null,
 };
 
 const rainCache: CachedWeather = {

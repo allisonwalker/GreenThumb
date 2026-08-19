@@ -680,7 +680,8 @@ describeDatabase("garden schema integration", () => {
           'conversation',
           'message',
           'crop',
-          'recommendation'
+          'recommendation',
+          'care_run'
         )
         and data_type = 'timestamp without time zone'
     `;
@@ -735,6 +736,110 @@ describeDatabase("garden schema integration", () => {
         returning kind
       `;
       expect(run.kind).toBe("time_budget");
+      throw new Error(rollbackMessage);
+    });
+  });
+
+  it("persists a matching recommendation on care_run with no agent_run_id", async () => {
+    await expectRollback(async (transaction) => {
+      const [garden] = await transaction<{ id: string }[]>`
+        select id from garden limit 1
+      `;
+      expect(garden).toBeTruthy();
+      const [pot] = await transaction<{ id: string }[]>`
+        insert into location (
+          garden_id,
+          kind,
+          name,
+          sun_exposure,
+          sun_exposure_source,
+          volume_gal,
+          material,
+          soil_type,
+          dryness_factor
+        )
+        values (
+          ${garden.id},
+          'pot',
+          'ALL-20 persist pot',
+          'full_sun',
+          'override',
+          10,
+          'terracotta',
+          'potting mix',
+          1.5
+        )
+        returning id
+      `;
+      const [run] = await transaction<{ id: string }[]>`
+        insert into care_run (trigger, status, task_count)
+        values ('manual', 'succeeded', 1)
+        returning id
+      `;
+      const [row] = await transaction<
+        {
+          agent_run_id: string | null;
+          care_run_id: string;
+          confidence: string | null;
+        }[]
+      >`
+        insert into recommendation (
+          care_run_id,
+          location_id,
+          action_type,
+          urgency,
+          headline,
+          rationale,
+          evidence,
+          status
+        )
+        values (
+          ${run.id},
+          ${pot.id},
+          'watered',
+          'today',
+          'Water Pot 1',
+          'last watered 4 days ago',
+          '{"facts":[{"source":"action_log","figure":"2026-08-15"}]}'::jsonb,
+          'open'
+        )
+        returning agent_run_id, care_run_id, confidence
+      `;
+
+      expect(row.agent_run_id).toBeNull();
+      expect(row.care_run_id).toBe(run.id);
+      expect(row.confidence).toBeNull();
+
+      const open = await transaction<{ headline: string }[]>`
+        select headline
+        from recommendation
+        join location on location.id = recommendation.location_id
+        where recommendation.status = 'open'
+          and location.garden_id = ${garden.id}
+      `;
+      expect(open).toEqual([{ headline: "Water Pot 1" }]);
+
+      await expect(
+        transaction`
+          insert into recommendation (
+            location_id,
+            action_type,
+            urgency,
+            headline,
+            rationale,
+            evidence
+          )
+          values (
+            ${pot.id},
+            'watered',
+            'today',
+            'No run',
+            'missing run ids',
+            '{"facts":[]}'::jsonb
+          )
+        `,
+      ).rejects.toThrow();
+
       throw new Error(rollbackMessage);
     });
   });

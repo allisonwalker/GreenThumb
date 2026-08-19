@@ -12,6 +12,7 @@ export const PUBLIC_TABLE_NAMES = [
   "app_metadata",
   "app_user",
   "bed",
+  "care_run",
   "conversation",
   "crop",
   "garden",

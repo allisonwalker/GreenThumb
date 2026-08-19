@@ -116,9 +116,26 @@ export const recommendationStatusEnum = pgEnum("recommendation_status", [
   "expired",
 ]);
 
+export const careRunTriggerEnum = pgEnum("care_run_trigger", [
+  "scheduled",
+  "manual",
+  "after_write",
+  "simulated",
+]);
+
+export const careRunStatusEnum = pgEnum("care_run_status", [
+  "running",
+  "succeeded",
+  "failed",
+]);
+
+export type RecommendationEvidenceFact = {
+  source: string;
+  figure: string;
+};
+
 export type RecommendationEvidence = {
-  facts: string[];
-  inferences: string[];
+  facts: RecommendationEvidenceFact[];
 };
 
 export type AgentToolTraceEntry = {
@@ -634,25 +651,57 @@ export const messages = pgTable(
   ],
 );
 
+export const careRuns = pgTable(
+  "care_run",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    trigger: careRunTriggerEnum("trigger").notNull(),
+    status: careRunStatusEnum("status").default("running").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    weatherFetchId: uuid("weather_fetch_id").references(
+      () => weatherFetches.id,
+      { onDelete: "set null" },
+    ),
+    simulatedWeather: jsonb("simulated_weather").$type<unknown>(),
+    taskCount: integer("task_count").default(0).notNull(),
+    error: text("error"),
+    ...timestamps,
+  },
+  (table) => [
+    index("care_run_started_idx").on(table.startedAt),
+    check("care_run_nonnegative_task_count", sql`${table.taskCount} >= 0`),
+  ],
+);
+
 export const recommendations = pgTable(
   "recommendation",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    agentRunId: uuid("agent_run_id")
-      .notNull()
-      .references(() => agentRuns.id, { onDelete: "restrict" }),
+    careRunId: uuid("care_run_id").references(() => careRuns.id, {
+      onDelete: "restrict",
+    }),
+    agentRunId: uuid("agent_run_id").references(() => agentRuns.id, {
+      onDelete: "restrict",
+    }),
     locationId: uuid("location_id")
       .notNull()
       .references(() => locations.id, { onDelete: "restrict" }),
     plantingId: uuid("planting_id").references(() => plantings.id, {
       onDelete: "restrict",
     }),
+    cropId: uuid("crop_id").references(() => crops.id, {
+      onDelete: "restrict",
+    }),
     actionType: actionTypeEnum("action_type").notNull(),
     urgency: recommendationUrgencyEnum("urgency").notNull(),
     headline: text("headline").notNull(),
     rationale: text("rationale").notNull(),
-    confidence: numeric("confidence", { precision: 4, scale: 3 }).notNull(),
+    confidence: numeric("confidence", { precision: 4, scale: 3 }),
     evidence: jsonb("evidence").$type<RecommendationEvidence>().notNull(),
+    estimatedMinutes: integer("estimated_minutes"),
     status: recommendationStatusEnum("status").default("open").notNull(),
     dueBy: timestamp("due_by", { withTimezone: true }),
     resolvedAt: timestamp("resolved_at", { withTimezone: true }),
@@ -669,9 +718,18 @@ export const recommendations = pgTable(
       table.locationId,
       table.status,
     ),
+    index("recommendation_care_run_idx").on(table.careRunId),
+    check(
+      "recommendation_has_run",
+      sql`${table.careRunId} is not null or ${table.agentRunId} is not null`,
+    ),
     check(
       "recommendation_confidence_range",
-      sql`${table.confidence} between 0 and 1`,
+      sql`${table.confidence} is null or ${table.confidence} between 0 and 1`,
+    ),
+    check(
+      "recommendation_estimated_minutes_range",
+      sql`${table.estimatedMinutes} is null or ${table.estimatedMinutes} between 1 and 480`,
     ),
     check("recommendation_headline_not_blank", sql`length(trim(${table.headline})) > 0`),
   ],

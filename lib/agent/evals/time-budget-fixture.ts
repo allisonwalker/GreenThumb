@@ -1,10 +1,11 @@
+import type { RecommendationUrgency } from "@/lib/care/types";
 import type { CachedWeather } from "@/lib/weather";
 
+import type { CropCatalogRow } from "../tools/get-crop-catalog";
+import type { CurrentLocation } from "../tools/get-current-locations";
 import type { GardenProfile } from "../tools/get-garden-profile";
 import type { OpenRecommendation } from "../tools/get-open-recommendations";
 import type { PlantingSummary } from "../tools/get-plantings";
-import type { CropCatalogRow } from "../tools/get-crop-catalog";
-import type { CurrentLocation } from "../tools/get-current-locations";
 import {
   createToolRegistry,
   type ToolRegistry,
@@ -345,7 +346,7 @@ function openRec(input: {
   locationName: string;
   plantingId: string;
   actionType: string;
-  urgency: string;
+  urgency: RecommendationUrgency;
   headline: string;
   estimatedMinutes: number | null;
 }): OpenRecommendation {
@@ -358,11 +359,15 @@ function openRec(input: {
     urgency: input.urgency,
     headline: input.headline,
     rationale: `${input.headline} is on today's matching list.`,
-    confidence: 0.9,
-    evidence: { facts: ["Seeded for time-budget eval"], inferences: [] },
+    confidence: null,
+    evidence: {
+      facts: [{ source: "eval", figure: "Seeded for time-budget eval" }],
+    },
     estimatedMinutes: input.estimatedMinutes,
     status: "open",
     dueBy: null,
     createdAt: "2026-08-13T12:00:00.000Z",
+    careRunId: null,
+    cropId: null,
   };
 }
