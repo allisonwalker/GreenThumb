@@ -286,9 +286,6 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
   const [drafts, setDrafts] = useState<DraftSection[]>(() =>
     toDrafts(board.currentSeason?.sections ?? [], board.bedLengthFt),
   );
-  const [historySeasonId, setHistorySeasonId] = useState(
-    board.pastSeasons[0]?.id ?? "",
-  );
 
   const savedById = useMemo(() => {
     const map = new Map<string, SeasonSectionRecord>();
@@ -297,9 +294,6 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
     }
     return map;
   }, [board.currentSeason]);
-
-  const historySeason =
-    board.pastSeasons.find((season) => season.id === historySeasonId) ?? null;
 
   function updateDraft(clientKey: string, change: Partial<DraftSection>) {
     setDrafts((current) =>
@@ -557,37 +551,49 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
           </form>
         </section>
       ) : null}
-
-      {board.pastSeasons.length > 0 ? (
-        <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold">Previous seasons</h2>
-            <p className="mt-1 text-sm text-neutral-600">
-              Read-only history of earlier section cuts and their exposures.
-            </p>
-          </div>
-          <label className="block text-sm font-semibold text-neutral-800">
-            Season
-            <select
-              className={fieldClass}
-              value={historySeasonId}
-              onChange={(event) => setHistorySeasonId(event.target.value)}
-            >
-              {board.pastSeasons.map((season) => (
-                <option key={season.id} value={season.id}>
-                  {season.name} ({season.startsOn} → {season.endsOn})
-                </option>
-              ))}
-            </select>
-          </label>
-          {historySeason ? (
-            <HistorySections
-              season={historySeason}
-              bedLengthFt={board.bedLengthFt}
-            />
-          ) : null}
-        </section>
-      ) : null}
     </div>
+  );
+}
+
+export function PreviousSeasonsPanel({ board }: { board: SeasonBoardRecord }) {
+  const [historySeasonId, setHistorySeasonId] = useState(
+    board.pastSeasons[0]?.id ?? "",
+  );
+  const historySeason =
+    board.pastSeasons.find((season) => season.id === historySeasonId) ?? null;
+
+  if (board.pastSeasons.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="rounded-2xl border bg-white p-5 pb-28 shadow-sm sm:p-6 md:pb-6">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold">Previous seasons</h2>
+        <p className="mt-1 text-sm text-neutral-600">
+          Read-only history of earlier section cuts and their exposures.
+        </p>
+      </div>
+      <label className="block text-sm font-semibold text-neutral-800">
+        Season
+        <select
+          className={fieldClass}
+          value={historySeasonId}
+          onChange={(event) => setHistorySeasonId(event.target.value)}
+        >
+          {board.pastSeasons.map((season) => (
+            <option key={season.id} value={season.id}>
+              {season.name} ({season.startsOn} → {season.endsOn})
+            </option>
+          ))}
+        </select>
+      </label>
+      {historySeason ? (
+        <HistorySections
+          season={historySeason}
+          bedLengthFt={board.bedLengthFt}
+        />
+      ) : null}
+    </section>
   );
 }

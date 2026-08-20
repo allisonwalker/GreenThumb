@@ -5,7 +5,10 @@ import { getSeasonBoardRecord } from "@/lib/garden/season-repository";
 
 import { CurrentLocationsPanel } from "./current-locations-panel";
 import { GardenProfileForm } from "./garden-profile-form";
-import { SeasonSectionsPanel } from "./season-sections-panel";
+import {
+  PreviousSeasonsPanel,
+  SeasonSectionsPanel,
+} from "./season-sections-panel";
 
 export default async function GardenPage() {
   await requirePageUser();
@@ -50,6 +53,10 @@ export default async function GardenPage() {
       )}
 
       <CurrentLocationsPanel locations={currentLocations} />
+
+      {seasonBoard && seasonBoard.pastSeasons.length > 0 ? (
+        <PreviousSeasonsPanel board={seasonBoard} />
+      ) : null}
     </div>
   );
 }
