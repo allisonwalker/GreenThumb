@@ -66,6 +66,23 @@ export type CompleteOptions = {
   onTextDelta?: (delta: string) => void;
 };
 
+export type GenerateJsonRequest = {
+  system: string;
+  user: string;
+  schema: JsonSchema;
+  /** Soft cap for this single model call's output tokens. */
+  maxOutputTokens: number;
+  /** Hard wall-clock bound for the single call. */
+  timeoutMs: number;
+};
+
+export type GenerateJsonResult = {
+  text: string;
+  inputTokens: number;
+  outputTokens: number;
+  stopReason: "end" | "max_tokens";
+};
+
 export type LlmClient = {
   provider: LlmProviderName;
   model: string;
@@ -73,6 +90,11 @@ export type LlmClient = {
     request: ProviderTurnRequest,
     options?: CompleteOptions,
   ): Promise<ProviderTurnResult>;
+  /**
+   * One-shot structured JSON generate. No tools, no grounding, no chat loop.
+   * Crop draft uses Gemini even when Ask uses Anthropic.
+   */
+  generateJson(request: GenerateJsonRequest): Promise<GenerateJsonResult>;
 };
 
 export type RunToolLoopStopReason =

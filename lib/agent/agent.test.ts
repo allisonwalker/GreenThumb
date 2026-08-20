@@ -41,6 +41,9 @@ describe("runAgent", () => {
           stopReason: "end",
         };
       },
+      async generateJson() {
+        throw new Error("generateJson not used in agent loop tests");
+      },
     };
 
     const result = await runAgent({
@@ -109,6 +112,9 @@ describe("runAgent", () => {
           stopReason: "end",
         };
       },
+      async generateJson() {
+        throw new Error("generateJson not used in agent loop tests");
+      },
     };
 
     const result = await runAgent({
@@ -159,6 +165,9 @@ describe("runAgent", () => {
           outputTokens: 5,
           stopReason: "end",
         };
+      },
+      async generateJson() {
+        throw new Error("generateJson not used in agent loop tests");
       },
     };
 

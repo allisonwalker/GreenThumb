@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useActionState } from "react";
 
+import { cropAttributionFromRecord } from "@/lib/crops/attribution";
 import { cropIdentityLabel } from "@/lib/crops/slug";
 import { TIME_ESTIMATE_ACTIONS, type CropRecord } from "@/lib/crops/types";
 import { pruningFormValue } from "@/lib/crops/validation";
 import { SUN_EXPOSURES } from "@/lib/garden/sun-exposure";
 
-import { saveCrop } from "../actions";
+import { draftCropWithGemini, saveCrop } from "../actions";
 
 const fieldClass =
   "mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-base shadow-sm outline-none focus:border-green-700 focus:ring-2 focus:ring-green-200";
@@ -24,18 +25,12 @@ const TIME_ESTIMATE_LABELS: Record<(typeof TIME_ESTIMATE_ACTIONS)[number], strin
   treated: "Frost cover (treat)",
 };
 
-function sourceCopy(source: CropRecord["source"]) {
-  if (source === "stub") {
-    return "Stub — fields can stay blank until you know them.";
-  }
-  if (source === "edited") {
-    return "Edited — last save was yours.";
-  }
-  return "Generated — not yet edited.";
-}
-
 export function CropEditForm({ crop }: { crop: CropRecord }) {
   const [state, formAction, pending] = useActionState(saveCrop, initialState);
+  const [draftState, draftAction, draftPending] = useActionState(
+    draftCropWithGemini,
+    initialState,
+  );
   const pruning = pruningFormValue(crop.pruning);
 
   return (
@@ -52,11 +47,36 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
         <p className="mt-2 text-neutral-600">
           Slug <span className="font-mono text-sm">{crop.slug}</span> is
           computed from name and variety. Saving a colliding identity fails and
-          does not persist. Saving this form marks the row as edited.
+          does not persist. Saving this form marks the row as edited without
+          clearing Gemini attribution.
         </p>
         <p className="mt-2 text-sm font-medium text-green-800">
-          {sourceCopy(crop.source)}
+          {cropAttributionFromRecord(crop)}
         </p>
+        {crop.source === "stub" ? (
+          <form action={draftAction} className="mt-4">
+            <input type="hidden" name="id" value={crop.id} />
+            <button
+              type="submit"
+              disabled={draftPending}
+              className="min-h-11 rounded-lg border border-green-800 px-4 text-sm font-semibold text-green-900 hover:bg-green-50 disabled:opacity-60"
+            >
+              {draftPending ? "Drafting…" : "Draft with Gemini"}
+            </button>
+            <p
+              aria-live="polite"
+              className={
+                draftState.status === "error"
+                  ? "mt-2 text-sm font-medium text-red-700"
+                  : "mt-2 text-sm font-medium text-green-800"
+              }
+            >
+              {draftState.status === "idle"
+                ? "One structured Gemini call — not a chat tool."
+                : draftState.message}
+            </p>
+          </form>
+        ) : null}
       </header>
 
       <form action={formAction} className="space-y-6">

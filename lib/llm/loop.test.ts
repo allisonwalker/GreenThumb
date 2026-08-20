@@ -23,6 +23,9 @@ function mockClient(
       }
       return turn;
     },
+    async generateJson() {
+      throw new Error("generateJson not used in tool-loop tests");
+    },
   };
 }
 
@@ -180,6 +183,9 @@ describe("runToolLoop bounds", () => {
             outputTokens: 2,
             stopReason: "end",
           };
+        },
+        async generateJson() {
+          throw new Error("generateJson not used in tool-loop tests");
         },
       },
       system: "test",

@@ -14,12 +14,12 @@ const initialState = { status: "idle" as const };
 
 function sourceLabel(source: CropListItem["source"]) {
   if (source === "stub") {
-    return "Stub — fill in care details";
+    return "Stub";
   }
   if (source === "edited") {
     return "Edited";
   }
-  return "Generated";
+  return "Drafted by Gemini";
 }
 
 export function CatalogList({ crops }: { crops: CropListItem[] }) {
@@ -39,11 +39,12 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
   return (
     <div className="space-y-8">
       <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="text-xl font-semibold">Add a stub crop</h2>
+        <h2 className="text-xl font-semibold">Add a crop</h2>
         <p className="mt-1 text-sm text-neutral-600">
-          Use this when you want a care row before a planting exists. A later
-          planting with the same name and variety reuses this row. Tomato and
-          Tomato / Sungold are different rows.
+          First sight of a name and variety drafts care with Gemini when the
+          budget allows. A later planting with the same combination reuses this
+          row with no model call. Tomato and Tomato / Sungold are different
+          rows.
         </p>
         <form action={createAction} className="mt-4 space-y-3">
           <label className="block text-sm font-medium">
@@ -75,7 +76,7 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
               }
             >
               {createState.status === "idle"
-                ? "No model call — this is a blank row you can edit."
+                ? "New combinations make one Gemini draft call."
                 : createState.message}
             </p>
             <button

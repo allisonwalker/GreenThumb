@@ -12,13 +12,21 @@ export type AgentRunKind =
   | "ask"
   | "script"
   | "test"
-  | "time_budget";
+  | "time_budget"
+  | "crop_draft";
 export type AgentRunStatus =
   | "running"
   | "succeeded"
   | "failed"
   | "timed_out"
   | "budget_exceeded";
+
+export type AgentRunStopReason =
+  | RunToolLoopStopReason
+  | "monthly_cap"
+  | "daily_qa_cap"
+  | "invalid_json"
+  | "validation_failed";
 
 export type AgentRunRecord = {
   id: string;
@@ -35,6 +43,7 @@ export type AgentRunStore = {
     trigger: string;
     provider: LlmProviderName;
     model: string;
+    userId?: string | null;
   }): Promise<AgentRunRecord>;
   finalize(input: {
     id: string;
@@ -46,7 +55,7 @@ export type AgentRunStore = {
     weatherFetchId?: string | null;
     finalText?: string | null;
     error?: string | null;
-    stopReason: RunToolLoopStopReason;
+    stopReason: AgentRunStopReason;
     finishedAt?: Date;
   }): Promise<void>;
 };
@@ -63,6 +72,7 @@ export function createAgentRunStore(): AgentRunStore {
           status: "running",
           provider: input.provider,
           model: input.model,
+          userId: input.userId ?? null,
           toolCalls: [],
         })
         .returning({

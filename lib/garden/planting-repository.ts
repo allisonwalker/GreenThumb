@@ -2,7 +2,12 @@ import "server-only";
 
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 
-import { resolveCropForPlanting } from "@/lib/crops/repository";
+import { DuplicateCropError } from "@/lib/crops/identity";
+import {
+  createStubCropRecord,
+  resolveCrop,
+} from "@/lib/crops/repository";
+import type { CropRecord } from "@/lib/crops/types";
 import { getDatabase } from "@/lib/db/client";
 import {
   currentLocations,
@@ -214,7 +219,16 @@ export async function addPlantingRecord(input: AddPlantingInput) {
     );
   }
 
-  const crop = await resolveCropForPlanting(input.cropName, input.variety);
+  const { crop, created: cropWasCreated } = await resolveOrCreateCropForPlanting(
+    input.cropName,
+    input.variety,
+  );
+
+  if (!crop?.id) {
+    throw new Error(
+      "Could not resolve or create a catalog crop for this planting.",
+    );
+  }
 
   await database.insert(plantings).values({
     locationId: input.locationId,
@@ -225,6 +239,34 @@ export async function addPlantingRecord(input: AddPlantingInput) {
     plantedOn: input.plantedOn,
     status: "growing",
   });
+
+  return { crop, created: cropWasCreated };
+}
+
+async function resolveOrCreateCropForPlanting(
+  name: string,
+  variety: string | null,
+): Promise<{ crop: CropRecord; created: boolean }> {
+  const existing = await resolveCrop(name, variety);
+  if (existing?.id) {
+    return { crop: existing, created: false };
+  }
+
+  try {
+    const cropRecord = await createStubCropRecord(name, variety);
+    if (!cropRecord?.id) {
+      throw new Error("The crop row could not be created.");
+    }
+    return { crop: cropRecord, created: true };
+  } catch (error) {
+    if (error instanceof DuplicateCropError) {
+      const raced = await resolveCrop(name, variety);
+      if (raced?.id) {
+        return { crop: raced, created: false };
+      }
+    }
+    throw error;
+  }
 }
 
 export async function removePlantingRecord(input: RemovePlantingInput) {

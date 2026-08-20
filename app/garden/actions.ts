@@ -181,7 +181,7 @@ export async function addPlanting(
   _previousState: PlantingFormState,
   formData: FormData,
 ): Promise<PlantingFormState> {
-  await requirePageUser();
+  const identity = await requirePageUser();
 
   let input;
   try {
@@ -195,11 +195,40 @@ export async function addPlanting(
   }
 
   try {
-    await addPlantingRecord(input);
+    const result = await addPlantingRecord(input);
+    const crop = result.crop;
+    const created = result.created;
+    if (!crop?.id) {
+      return {
+        status: "error",
+        message: "Could not resolve or create a catalog crop for this planting.",
+      };
+    }
+
+    let message = "Planting added.";
+
+    if (created) {
+      const { draftCropCare } = await import("@/lib/crops/draft");
+      const draft = await draftCropCare({
+        cropId: crop.id,
+        trigger: "planting_first_sight",
+        userId: identity.id,
+      });
+      if (draft.outcome === "generated") {
+        message = "Planting added. Care fields drafted by Gemini.";
+      } else if (draft.outcome === "stub_monthly_cap") {
+        message = `Planting added with a blank care stub. ${draft.message}`;
+      } else {
+        message =
+          "Planting added with a blank care stub — Gemini could not fill care fields.";
+      }
+    }
+
     revalidatePath("/garden");
     revalidatePath(`/garden/${input.locationId}`);
     revalidatePath("/catalog");
-    return { status: "success", message: "Planting added." };
+    revalidatePath(`/catalog/${crop.id}`);
+    return { status: "success", message };
   } catch (error) {
     console.error("Adding a planting failed.", error);
     return {

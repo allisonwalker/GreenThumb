@@ -84,6 +84,7 @@ export const agentRunKindEnum = pgEnum("agent_run_kind", [
   "script",
   "test",
   "time_budget",
+  "crop_draft",
 ]);
 
 export const agentRunStatusEnum = pgEnum("agent_run_status", [
@@ -573,6 +574,9 @@ export const agentRuns = pgTable(
     status: agentRunStatusEnum("status").default("running").notNull(),
     provider: text("provider").notNull(),
     model: text("model").notNull(),
+    userId: uuid("user_id").references(() => appUsers.id, {
+      onDelete: "set null",
+    }),
     startedAt: timestamp("started_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -606,6 +610,11 @@ export const agentRuns = pgTable(
   (table) => [
     index("agent_run_started_idx").on(table.startedAt),
     index("agent_run_provider_started_idx").on(table.provider, table.startedAt),
+    index("agent_run_user_kind_started_idx").on(
+      table.userId,
+      table.kind,
+      table.startedAt,
+    ),
     check(
       "agent_run_nonnegative_tokens",
       sql`${table.inputTokens} >= 0 and ${table.outputTokens} >= 0 and ${table.estimatedCostUsd} >= 0`,
