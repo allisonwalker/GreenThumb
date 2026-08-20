@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ASK_EVAL_PROMPTS,
   ASK_SYSTEM_PROMPT,
   TIME_BUDGET_SYSTEM_PROMPT,
   systemPromptForKind,
@@ -83,6 +84,13 @@ describe("runAgent", () => {
     expect(systemPromptForKind("ask")).toBe(ASK_SYSTEM_PROMPT);
     expect(systemPromptForKind("scheduled_checkin")).not.toBe(ASK_SYSTEM_PROMPT);
     expect(systemPromptForKind("time_budget")).not.toBe(ASK_SYSTEM_PROMPT);
+    expect(ASK_EVAL_PROMPTS["ask-sys-v2"]).toContain(
+      "If the question does not name a crop or location",
+    );
+    expect(ASK_EVAL_PROMPTS["ask-sys-v3"]).toContain("still call tools, then ask");
+    expect(ASK_EVAL_PROMPTS["ask-sys-v1"]).not.toContain(
+      "If the question does not name a crop or location",
+    );
 
     const created: unknown[] = [];
     const store: AgentRunStore = {

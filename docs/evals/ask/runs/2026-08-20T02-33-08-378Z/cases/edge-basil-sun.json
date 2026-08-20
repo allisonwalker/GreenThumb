@@ -1,0 +1,34 @@
+{
+  "caseId": "edge-basil-sun",
+  "tags": [
+    "catalog",
+    "abstain"
+  ],
+  "category": "edge",
+  "holdout": false,
+  "prompt": "Does basil want full sun?",
+  "promptVersion": "ask-sys-v3",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 3444,
+  "outputTokens": 224,
+  "estimatedCostUsd": 0.009128,
+  "latencyMs": 6267,
+  "toolTrace": [
+    "get_crop_catalog"
+  ],
+  "finalText": "The catalog row for **basil** exists, but its `sun_preference` field is **empty (null)** — so I can't cite a value from your garden's records. I won't guess from general knowledge.\n\nHere's what the catalog *does* tell us about basil in your garden:\n\n| Field | Value |\n|---|---|\n| Watering interval | Every 2 days |\n| Frost sensitive | Yes |\n| Plant window | May 1 – Jul 15 |\n| Days to harvest | 30–50 days |\n\nIf you'd like to know the sun preference, you (or whoever manages your garden records) would need to fill in that field in the crop catalog. Would you like help with anything else?",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": "skipped",
+    "C5": true
+  },
+  "ok": true,
+  "failures": []
+}

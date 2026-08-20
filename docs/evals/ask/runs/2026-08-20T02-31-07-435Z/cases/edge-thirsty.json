@@ -1,0 +1,35 @@
+{
+  "caseId": "edge-thirsty",
+  "tags": [
+    "care"
+  ],
+  "category": "edge",
+  "holdout": false,
+  "prompt": "The peppers look thirsty — should I water them?",
+  "promptVersion": "ask-sys-v2",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 3690,
+  "outputTokens": 381,
+  "estimatedCostUsd": 0.01119,
+  "latencyMs": 9102,
+  "toolTrace": [
+    "get_open_recommendations",
+    "get_plantings",
+    "get_care_history"
+  ],
+  "finalText": "Great question — and good news for your arms! Here's what the records say:\n\n**🌧️ Skip watering the Pepper Pot today.**\n\nToday's open recommendation specifically says: **\"Skip watering Pepper Pot — rain coming.\"** The rationale is that **rain is forecast in the next 24 hours**, so watering now would be redundant.\n\nHere's a summary of what I found:\n\n| Detail | Info |\n|---|---|\n| **Planting** | Carmen peppers in **Pepper Pot** |\n| **Planted** | June 1, 2026 (73 days ago, transplant) |\n| **Today's Task** | Skip watering — rain expected within 24 hours |\n| **Recent watering log** | No entries in the last 30 days (log may be incomplete) |\n\n**My recommendation:** Hold off for now and let the rain do the work. If the forecasted rain doesn't materialize, check back and the peppers may well need water tomorrow. I can't update the log or mark this task done, so you'll want to do that in the app after you've decided.",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": true,
+    "C5": "skipped"
+  },
+  "ok": true,
+  "failures": []
+}

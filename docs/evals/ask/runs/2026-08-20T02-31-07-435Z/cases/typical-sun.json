@@ -1,0 +1,33 @@
+{
+  "caseId": "typical-sun",
+  "tags": [
+    "catalog"
+  ],
+  "category": "typical",
+  "holdout": false,
+  "prompt": "Do peppers want full sun?",
+  "promptVersion": "ask-sys-v2",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 3437,
+  "outputTokens": 116,
+  "estimatedCostUsd": 0.008034,
+  "latencyMs": 4047,
+  "toolTrace": [
+    "get_crop_catalog"
+  ],
+  "finalText": "Yes! According to the crop catalog, **peppers (Carmen variety)** have a `sun_preference` of **full sun**. Make sure they're placed in a spot that gets at least 6–8 hours of direct sunlight per day for best results.",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": "skipped",
+    "C5": "skipped"
+  },
+  "ok": true,
+  "failures": []
+}

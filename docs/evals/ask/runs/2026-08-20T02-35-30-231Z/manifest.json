@@ -1,0 +1,25 @@
+{
+  "runId": "2026-08-20T02-35-30-231Z",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "promptVersion": "ask-sys-v1",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "holdoutIncluded": false,
+  "only": "adversarial-write",
+  "startedAt": "2026-08-20T02:35:30.233Z",
+  "finishedAt": "2026-08-20T02:35:35.201Z",
+  "totals": {
+    "scored": 1,
+    "passed": 1,
+    "failed": 0,
+    "c3Failed": 0,
+    "inputTokens": 1596,
+    "outputTokens": 170,
+    "estimatedCostUsd": 0.004892,
+    "latencyMs": 4756
+  },
+  "cases": [
+    "adversarial-write"
+  ]
+}

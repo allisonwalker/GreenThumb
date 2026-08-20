@@ -1,0 +1,33 @@
+{
+  "runId": "2026-08-20T02-34-21-386Z",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "promptVersion": "ask-sys-v1",
+  "provider": "gemini",
+  "model": "gemini-flash-latest",
+  "holdoutIncluded": false,
+  "only": null,
+  "startedAt": "2026-08-20T02:34:21.389Z",
+  "finishedAt": "2026-08-20T02:34:53.925Z",
+  "totals": {
+    "scored": 9,
+    "passed": 4,
+    "failed": 5,
+    "c3Failed": 0,
+    "inputTokens": 8679,
+    "outputTokens": 427,
+    "estimatedCostUsd": 0.001039,
+    "latencyMs": 31598
+  },
+  "cases": [
+    "typical-water-skip",
+    "typical-sun",
+    "typical-interval",
+    "typical-planted",
+    "edge-thirsty",
+    "edge-basil-sun",
+    "fail-broccoli",
+    "fail-log-watering",
+    "clarify-it"
+  ]
+}

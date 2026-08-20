@@ -1,14 +1,20 @@
 export { createAskEvalRegistry, createAskEvalDependencies } from "./ask-fixture";
 export {
-  ASK_EVAL_GRADERS,
-  ASK_EVAL_PROMPTS,
-  gradeCase1,
-  gradeCase2,
-  gradeCase3,
-  gradeCase4,
-  gradeCase5,
+  ASK_EVAL_CASES,
+  ASK_EVAL_DATASET_VERSION,
+  ASK_EVAL_GRADER_ID,
+  askEvalCaseById,
+  gradeAskCase,
+  writeToolsInTrace,
 } from "./ask-graders";
-export type { AskEvalCaseId, AskEvalRun, AskGrade } from "./ask-graders";
+export type {
+  AskCriterionId,
+  AskEvalCase,
+  AskEvalCaseId,
+  AskEvalRun,
+  AskEvalTag,
+  AskGrade,
+} from "./ask-graders";
 export {
   createTimeBudgetEvalRegistry,
   createTimeBudgetEvalDependencies,

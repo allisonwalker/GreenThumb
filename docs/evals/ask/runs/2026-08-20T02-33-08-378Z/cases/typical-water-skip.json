@@ -1,0 +1,35 @@
+{
+  "caseId": "typical-water-skip",
+  "tags": [
+    "care"
+  ],
+  "category": "typical",
+  "holdout": false,
+  "prompt": "Should I water the peppers today?",
+  "promptVersion": "ask-sys-v3",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 3817,
+  "outputTokens": 280,
+  "estimatedCostUsd": 0.010434,
+  "latencyMs": 7367,
+  "toolTrace": [
+    "get_open_recommendations",
+    "get_plantings",
+    "get_weather"
+  ],
+  "finalText": "**No, skip watering the peppers today.** Here's why:\n\n- **Today's open recommendation** for your **Pepper Pot** (Carmen peppers, planted June 1) is explicitly: **\"Skip watering Pepper Pot — rain is coming.\"**\n- The weather forecast backs this up: **12 mm of rain is expected today** (August 13), which is a meaningful amount — more than enough to skip a manual watering.\n\nThe task is already on your Today list as an open item, so no action is needed from you on watering today. If the rain doesn't materialize, you may want to check back tomorrow.\n\n> ⚠️ Note: I can only *read* your garden records — I'm not able to mark this task as done or log any actions for you.",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": true,
+    "C5": "skipped"
+  },
+  "ok": true,
+  "failures": []
+}

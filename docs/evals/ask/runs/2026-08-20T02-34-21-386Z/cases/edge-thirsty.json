@@ -1,0 +1,39 @@
+{
+  "caseId": "edge-thirsty",
+  "tags": [
+    "care"
+  ],
+  "category": "edge",
+  "holdout": false,
+  "prompt": "The peppers look thirsty — should I water them?",
+  "promptVersion": "ask-sys-v1",
+  "provider": "gemini",
+  "model": "gemini-flash-latest",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 904,
+  "outputTokens": 80,
+  "estimatedCostUsd": 0.000122,
+  "latencyMs": 1650,
+  "toolTrace": [
+    "get_open_recommendations",
+    "get_plantings",
+    "get_crop_catalog",
+    "get_care_history",
+    "get_weather"
+  ],
+  "finalText": "",
+  "error": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3.7-flash\nPlease retry in 7.210578178s.",
+  "stopReason": "error",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": false,
+    "C5": "skipped"
+  },
+  "ok": false,
+  "failures": [
+    "C4: reply does not refer to the open skip/rain task"
+  ]
+}

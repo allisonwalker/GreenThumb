@@ -1,3 +1,4 @@
+import { cropMatchesQuery } from "@/lib/crops/slug";
 import type { CachedWeather } from "@/lib/weather";
 
 import type { GardenProfile } from "../tools/get-garden-profile";
@@ -13,7 +14,11 @@ import {
 
 export const ASK_EVAL_LOCATION_NAME = "Pepper Pot";
 export const ASK_EVAL_CROP_NAME = "peppers";
+export const ASK_EVAL_BASIL_CROP_NAME = "basil";
 export const ASK_EVAL_SUN_PREFERENCE = "full_sun";
+export const ASK_EVAL_WATERING_INTERVAL_DAYS = 3;
+export const ASK_EVAL_DAYS_TO_HARVEST_MIN = 60;
+export const ASK_EVAL_DAYS_TO_HARVEST_MAX = 80;
 export const ASK_EVAL_SKIP_HEADLINE =
   "Skip watering Pepper Pot — rain coming";
 export const ASK_EVAL_SKIP_RATIONALE =
@@ -22,6 +27,7 @@ export const ASK_EVAL_SKIP_RATIONALE =
 const GARDEN_ID = "ask-eval-garden";
 const LOCATION_ID = "ask-eval-pepper-pot";
 const CROP_ID = "ask-eval-peppers";
+const BASIL_CROP_ID = "ask-eval-basil";
 const PLANTING_ID = "ask-eval-pepper-planting";
 const RECOMMENDATION_ID = "ask-eval-skip-water";
 
@@ -57,16 +63,35 @@ export const askEvalCrop: CropCatalogRow = {
   name: ASK_EVAL_CROP_NAME,
   variety: "Carmen",
   slug: "peppers",
-  wateringIntervalDays: 3,
+  wateringIntervalDays: ASK_EVAL_WATERING_INTERVAL_DAYS,
   fertilizingIntervalDays: 14,
   pruning: { needed: false },
   frostSensitive: true,
   sunPreference: ASK_EVAL_SUN_PREFERENCE,
   plantWindowStart: "05-01",
   plantWindowEnd: "06-15",
-  daysToHarvestMin: 60,
-  daysToHarvestMax: 80,
+  daysToHarvestMin: ASK_EVAL_DAYS_TO_HARVEST_MIN,
+  daysToHarvestMax: ASK_EVAL_DAYS_TO_HARVEST_MAX,
   timeEstimates: { watered: 8 },
+  notes: null,
+  source: "edited",
+};
+
+export const askEvalBasilCrop: CropCatalogRow = {
+  id: BASIL_CROP_ID,
+  name: ASK_EVAL_BASIL_CROP_NAME,
+  variety: null,
+  slug: "basil",
+  wateringIntervalDays: 2,
+  fertilizingIntervalDays: null,
+  pruning: { needed: false },
+  frostSensitive: true,
+  sunPreference: null,
+  plantWindowStart: "05-01",
+  plantWindowEnd: "07-15",
+  daysToHarvestMin: 30,
+  daysToHarvestMax: 50,
+  timeEstimates: { watered: 5 },
   notes: null,
   source: "edited",
 };
@@ -136,17 +161,13 @@ export function createAskEvalDependencies(): ToolRegistryDependencies {
     },
     cropCatalogStore: {
       list: async ({ query } = { query: undefined }) => {
+        const rows = [askEvalCrop, askEvalBasilCrop];
         if (!query?.trim()) {
-          return [askEvalCrop];
+          return rows;
         }
-        const needle = query.trim().toLowerCase();
-        if (
-          askEvalCrop.name.includes(needle) ||
-          askEvalCrop.slug.includes(needle)
-        ) {
-          return [askEvalCrop];
-        }
-        return [];
+        return rows.filter((row) =>
+          cropMatchesQuery(row.name, row.slug, query, row.variety),
+        );
       },
     },
     careHistoryStore: {

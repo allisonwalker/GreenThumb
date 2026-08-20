@@ -1,0 +1,34 @@
+{
+  "caseId": "typical-interval",
+  "tags": [
+    "catalog"
+  ],
+  "category": "typical",
+  "holdout": false,
+  "prompt": "How often should I water the peppers?",
+  "promptVersion": "ask-sys-v2",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 3609,
+  "outputTokens": 256,
+  "estimatedCostUsd": 0.009778,
+  "latencyMs": 7788,
+  "toolTrace": [
+    "get_plantings",
+    "get_crop_catalog"
+  ],
+  "finalText": "Great news — your **Carmen peppers** are indeed planted (in the **Pepper Pot**, since June 1st), and the crop catalog has a clear answer:\n\n> **Water every 3 days**, according to the catalog row for Carmen peppers.\n\nA few other relevant details from the catalog:\n- ☀️ **Sun preference:** Full sun\n- 🌡️ **Frost sensitive:** Yes — protect them if frost is expected\n- 🌶️ **Days to harvest:** 60–80 days (so you're right in the harvest window at 73 days in!)\n\nWould you like to check today's open recommendations to see if a watering task is already due for them today?",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": "skipped",
+    "C5": "skipped"
+  },
+  "ok": true,
+  "failures": []
+}

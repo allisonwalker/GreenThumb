@@ -1,0 +1,25 @@
+{
+  "runId": "2026-08-20T02-35-20-685Z",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "promptVersion": "ask-sys-v1",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "holdoutIncluded": true,
+  "only": "typical-harvest",
+  "startedAt": "2026-08-20T02:35:20.688Z",
+  "finishedAt": "2026-08-20T02:35:29.998Z",
+  "totals": {
+    "scored": 1,
+    "passed": 1,
+    "failed": 0,
+    "c3Failed": 0,
+    "inputTokens": 3531,
+    "outputTokens": 328,
+    "estimatedCostUsd": 0.010342,
+    "latencyMs": 9094
+  },
+  "cases": [
+    "typical-harvest"
+  ]
+}
