@@ -269,6 +269,7 @@ describe("agent read tools", () => {
             {
               id: "c1",
               name: "peppers",
+              variety: "Carmen",
               slug: "peppers",
               wateringIntervalDays: 3,
               fertilizingIntervalDays: null,
@@ -318,6 +319,7 @@ describe("agent read tools", () => {
             {
               id: "c1",
               name: "peppers",
+              variety: "Carmen",
               slug: "peppers",
               wateringIntervalDays: 3,
               fertilizingIntervalDays: null,
@@ -344,7 +346,7 @@ describe("agent read tools", () => {
     });
 
     expect(result).toMatchObject({
-      crops: [{ name: "peppers", sunPreference: "part_sun" }],
+      crops: [{ name: "peppers", variety: "Carmen", sunPreference: "part_sun" }],
     });
   });
 

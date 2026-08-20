@@ -1,3 +1,4 @@
+import { cropCareCopyLabel } from "@/lib/crops/slug";
 import { addCalendarDays, endOfLocalDay } from "@/lib/garden/local-date";
 
 import type { CadenceNeed } from "./cadence";
@@ -26,7 +27,7 @@ export function wateringTask(
   const upcoming = formatInchesFromMm(need.upcomingRainMm);
   const week = formatInchesFromMm(need.weekRainMm);
   const lastWatered = lastWateredPhrase(need);
-  const cadence = `${need.planting.cropName} want water every ${need.planting.wateringIntervalDays} days`;
+  const cadence = `${cropCareCopyLabel(need.planting.cropName, need.planting.variety)} want water every ${need.planting.wateringIntervalDays} days`;
   const headline = `${need.planting.locationName} — ${URGENCY_HEADLINE[need.urgency]}`;
   const rationale =
     need.urgency === "monitor" || need.urgency === "this_week"
@@ -105,7 +106,7 @@ export function cadenceTask(
   const noun = CADENCE_NOUN[need.actionType];
   const past = CADENCE_PAST[need.actionType];
   const last = lastCadencePhrase(need, past);
-  const cadence = `${need.planting.cropName} want ${noun} every ${need.intervalDays} days`;
+  const cadence = `${cropCareCopyLabel(need.planting.cropName, need.planting.variety)} want ${noun} every ${need.intervalDays} days`;
   const pruneNotes =
     need.actionType === "pruned" && need.planting.pruning?.needed
       ? need.planting.pruning.notes
@@ -161,7 +162,7 @@ export function frostTask(
     actionType: "treated",
     urgency: need.urgency,
     headline: `${need.planting.locationName} — ${headlineVerb}`,
-    rationale: `${need.planting.cropName} are frost-sensitive, forecast low ${low}`,
+    rationale: `${cropCareCopyLabel(need.planting.cropName, need.planting.variety)} are frost-sensitive, forecast low ${low}`,
     evidence: {
       facts: [
         {

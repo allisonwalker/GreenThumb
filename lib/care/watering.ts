@@ -41,6 +41,7 @@ export type CarePlantingInput = {
   drynessFactor: number;
   cropId: string;
   cropName: string;
+  variety: string | null;
   wateringIntervalDays: number | null;
   fertilizingIntervalDays: number | null;
   pruning: CropPruning | null;

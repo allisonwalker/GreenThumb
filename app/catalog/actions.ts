@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requirePageUser } from "@/lib/auth/session";
+import { DuplicateCropError } from "@/lib/crops/identity";
 import {
-  resolveOrCreateStubCrop,
+  createStubCropRecord,
   saveCropRecord,
 } from "@/lib/crops/repository";
 import {
@@ -33,8 +34,15 @@ export async function createStubCrop(
 
   let crop;
   try {
-    crop = await resolveOrCreateStubCrop(input.name);
+    crop = await createStubCropRecord(input.name, input.variety);
   } catch (error) {
+    if (error instanceof DuplicateCropError) {
+      return {
+        status: "error",
+        message: error.message,
+        existingCropId: error.existingCropId,
+      };
+    }
     console.error("Creating a crop stub failed.", error);
     return {
       status: "error",
@@ -73,6 +81,13 @@ export async function saveCrop(
     revalidatePath(`/catalog/${input.id}`);
     return { status: "success", message: "Crop saved. Source is now edited." };
   } catch (error) {
+    if (error instanceof DuplicateCropError) {
+      return {
+        status: "error",
+        message: error.message,
+        existingCropId: error.existingCropId,
+      };
+    }
     console.error("Saving a crop failed.", error);
     return {
       status: "error",

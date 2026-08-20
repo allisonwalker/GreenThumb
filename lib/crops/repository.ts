@@ -5,7 +5,8 @@ import { asc, count, eq } from "drizzle-orm";
 import { getDatabase } from "@/lib/db/client";
 import { crops, plantings } from "@/lib/db/schema";
 
-import { cropSlug } from "./slug";
+import { DuplicateCropError } from "./identity";
+import { catalogSlug, normalizeVariety } from "./slug";
 import type {
   CropListItem,
   CropPruning,
@@ -43,6 +44,7 @@ function asPruning(value: CropPruning | null): CropPruning | null {
 function toCropRecord(row: {
   id: string;
   name: string;
+  variety: string | null;
   slug: string;
   wateringIntervalDays: number | null;
   fertilizingIntervalDays: number | null;
@@ -62,6 +64,7 @@ function toCropRecord(row: {
   return {
     id: row.id,
     name: row.name,
+    variety: row.variety,
     slug: row.slug,
     wateringIntervalDays: asInteger(row.wateringIntervalDays),
     fertilizingIntervalDays: asInteger(row.fertilizingIntervalDays),
@@ -80,12 +83,42 @@ function toCropRecord(row: {
   };
 }
 
+function isUniqueViolation(error: unknown): boolean {
+  let current: unknown = error;
+  for (let depth = 0; depth < 4; depth += 1) {
+    if (
+      typeof current === "object" &&
+      current !== null &&
+      "code" in current &&
+      (current as { code: unknown }).code === "23505"
+    ) {
+      return true;
+    }
+    if (typeof current !== "object" || current === null || !("cause" in current)) {
+      return false;
+    }
+    current = (current as { cause: unknown }).cause;
+  }
+  return false;
+}
+
+async function getCropBySlug(slug: string): Promise<CropRecord | null> {
+  const database = getDatabase();
+  const [row] = await database
+    .select()
+    .from(crops)
+    .where(eq(crops.slug, slug))
+    .limit(1);
+  return row ? toCropRecord(row) : null;
+}
+
 export async function listCropRecords(): Promise<CropListItem[]> {
   const database = getDatabase();
   const rows = await database
     .select({
       id: crops.id,
       name: crops.name,
+      variety: crops.variety,
       slug: crops.slug,
       source: crops.source,
       wateringIntervalDays: crops.wateringIntervalDays,
@@ -94,11 +127,12 @@ export async function listCropRecords(): Promise<CropListItem[]> {
     .from(crops)
     .leftJoin(plantings, eq(plantings.cropId, crops.id))
     .groupBy(crops.id)
-    .orderBy(asc(crops.name));
+    .orderBy(asc(crops.name), asc(crops.variety));
 
   return rows.map((row) => ({
     id: row.id,
     name: row.name,
+    variety: row.variety,
     slug: row.slug,
     source: row.source,
     wateringIntervalDays: asInteger(row.wateringIntervalDays),
@@ -117,67 +151,130 @@ export async function getCropRecord(id: string): Promise<CropRecord | null> {
   return row ? toCropRecord(row) : null;
 }
 
-export async function resolveOrCreateStubCrop(name: string) {
-  const database = getDatabase();
-  const slug = cropSlug(name);
+export async function resolveCrop(
+  name: string,
+  variety: string | null,
+): Promise<CropRecord | null> {
+  const slug = catalogSlug(name, normalizeVariety(variety));
+  return getCropBySlug(slug);
+}
+
+export async function createStubCropRecord(
+  name: string,
+  variety: string | null,
+): Promise<CropRecord> {
   const displayName = name.trim();
+  const normalizedVariety = normalizeVariety(variety);
+  const slug = catalogSlug(displayName, normalizedVariety);
 
-  const [existing] = await database
-    .select()
-    .from(crops)
-    .where(eq(crops.slug, slug))
-    .limit(1);
-
+  const existing = await getCropBySlug(slug);
   if (existing) {
-    return toCropRecord(existing);
+    throw new DuplicateCropError(existing);
   }
 
-  await database
-    .insert(crops)
-    .values({
-      name: displayName,
-      slug,
-      source: "stub",
-    })
-    .onConflictDoNothing();
+  const database = getDatabase();
+  try {
+    const [inserted] = await database
+      .insert(crops)
+      .values({
+        name: displayName,
+        variety: normalizedVariety,
+        slug,
+        source: "stub",
+      })
+      .returning();
 
-  const [resolved] = await database
-    .select()
-    .from(crops)
-    .where(eq(crops.slug, slug))
-    .limit(1);
+    if (!inserted) {
+      throw new Error("The crop row could not be created.");
+    }
 
-  if (!resolved) {
-    throw new Error("The crop row could not be created.");
+    return toCropRecord(inserted);
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      const collided = await getCropBySlug(slug);
+      if (collided) {
+        throw new DuplicateCropError(collided);
+      }
+    }
+    throw error;
+  }
+}
+
+export async function resolveCropForPlanting(
+  name: string,
+  variety: string | null,
+): Promise<CropRecord> {
+  const existing = await resolveCrop(name, variety);
+  if (existing) {
+    return existing;
   }
 
-  return toCropRecord(resolved);
+  try {
+    return await createStubCropRecord(name, variety);
+  } catch (error) {
+    if (error instanceof DuplicateCropError) {
+      const raced = await resolveCrop(name, variety);
+      if (raced) {
+        return raced;
+      }
+    }
+    throw error;
+  }
 }
 
 export async function saveCropRecord(input: CropEditInput) {
-  const database = getDatabase();
-  const updated = await database
-    .update(crops)
-    .set({
-      name: input.name,
-      wateringIntervalDays: input.wateringIntervalDays,
-      fertilizingIntervalDays: input.fertilizingIntervalDays,
-      pruning: input.pruning,
-      frostSensitive: input.frostSensitive,
-      sunPreference: input.sunPreference,
-      plantWindowStart: input.plantWindowStart,
-      plantWindowEnd: input.plantWindowEnd,
-      daysToHarvestMin: input.daysToHarvestMin,
-      daysToHarvestMax: input.daysToHarvestMax,
-      timeEstimates: input.timeEstimates,
-      notes: input.notes,
-      source: "edited",
-      updatedAt: new Date(),
-    })
-    .where(eq(crops.id, input.id))
-    .returning({ id: crops.id });
+  const variety = normalizeVariety(input.variety);
+  const slug = catalogSlug(input.name, variety);
+  const owner = await getCropBySlug(slug);
+  if (owner && owner.id !== input.id) {
+    throw new DuplicateCropError(owner);
+  }
 
-  if (updated.length === 0) {
-    throw new Error("Crop not found.");
+  const database = getDatabase();
+  try {
+    await database.transaction(async (tx) => {
+      const updated = await tx
+        .update(crops)
+        .set({
+          name: input.name,
+          variety,
+          slug,
+          wateringIntervalDays: input.wateringIntervalDays,
+          fertilizingIntervalDays: input.fertilizingIntervalDays,
+          pruning: input.pruning,
+          frostSensitive: input.frostSensitive,
+          sunPreference: input.sunPreference,
+          plantWindowStart: input.plantWindowStart,
+          plantWindowEnd: input.plantWindowEnd,
+          daysToHarvestMin: input.daysToHarvestMin,
+          daysToHarvestMax: input.daysToHarvestMax,
+          timeEstimates: input.timeEstimates,
+          notes: input.notes,
+          source: "edited",
+          updatedAt: new Date(),
+        })
+        .where(eq(crops.id, input.id))
+        .returning({ id: crops.id });
+
+      if (updated.length === 0) {
+        throw new Error("Crop not found.");
+      }
+
+      await tx
+        .update(plantings)
+        .set({
+          cropName: input.name,
+          variety,
+        })
+        .where(eq(plantings.cropId, input.id));
+    });
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      const collided = await getCropBySlug(slug);
+      if (collided && collided.id !== input.id) {
+        throw new DuplicateCropError(collided);
+      }
+    }
+    throw error;
   }
 }

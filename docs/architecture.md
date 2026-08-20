@@ -132,18 +132,24 @@ Derived exposure is cached on the section with an `override` hatch. `dryness_fac
 
 ### The new central call: crop row is the care knowledge
 
-Plant-care knowledge is **not** inferred at recommendation time. It is a **per-crop lookup row** the household can search and edit. Every tomato planting shares the tomato row. Variety stays on the planting (“Sungold”); cadence, frost, sun preference, windows, and minutes-per-task live on the crop.
+Plant-care knowledge is **not** inferred at recommendation time. It is a **per-crop lookup row** the household can search and edit. Tomato and Tomato / Sungold are different rows with their own numbers; two plantings of the same name + variety share one row.
 
 ```
-crop (one row per crop in this garden)
+crop (one row per crop name + optional variety in this garden)
   └─ planting[]  (this season's instances, each in a location)
         └─ action_log[]
         └─ recommendation[]   ← produced by matching, not by the LLM
 ```
 
-**When the first planting of a crop is saved:** if no crop row exists, the server runs a **one-shot structured generate** (not a tool loop), validates the result against the crop schema, and inserts the row. The user can edit immediately. Later plantings of the same crop reuse the row. If generation fails, insert a stub row the user must fill — matching skips a task type when its catalog field is missing rather than guessing.
+**When the first planting of a combination is saved:** if no crop row exists, insert a stub (ALL-71 drafts care later). The user can edit immediately. Later plantings of the same combination reuse the row. Matching skips a task type when its catalog field is missing rather than guessing.
 
-**Identity:** `crop.slug` is a normalized key (`tomato`, `pepper`) unique in the singleton garden. Display `name` is what they search. Do not key off free-text `planting.crop_name` alone.
+**Unique key:** `crop.slug` is unique. `catalogSlug(name, variety)` is `cropSlug(name)` when variety is null, otherwise `cropSlug(name) + "--" + cropSlug(variety)` (e.g. `tomato`, `tomato--sungold`, `cherry-tomato`). Blank variety stores `NULL`, never `''`. Do **not** use a nullable unique `(name_slug, variety)` pair — Postgres treats NULLs as distinct and would allow two unnamed Tomatoes. `cropSlug` collapses punctuation to a single hyphen, so `--` cannot appear inside one field.
+
+**Existing plantings:** keep `planting.variety` as a denormalized copy written from the catalog row at insert. Do not drop the column or make it the identity. The migration that adds `crop.variety` splits mixed-variety plantings that currently share one `crop_id`: group by normalized variety (`cropSlug(variety)` or `"none"`); copy a uniform variety onto the original row; if mixed, keep the original for the unnamed group (or one named group if none are unnamed), insert copies of current care fields for the other varieties, and re-point those plantings.
+
+**Identity edits:** saving name or variety recomputes `slug` with the same helper. A collision fails with a clear message and does not persist. Plantings that point at this row get `crop_name` / `variety` updated so lists and the log do not drift. Mechanical uniqueness only: "Cherry tomato" vs Tomato / Cherry stay two rows.
+
+**Identity:** do not key off free-text `planting.crop_name` alone. The FK is source of truth.
 
 ### Entities
 
@@ -158,8 +164,8 @@ crop (one row per crop in this garden)
 
 **Catalog layer** (new):
 
-- `crop` — one row per crop in this garden:
-  - `name`, `slug` (unique)
+- `crop` — one row per crop name + optional variety in this garden:
+  - `name`, nullable `variety`, `slug` (unique, from `catalogSlug`)
   - `watering_interval_days`
   - `fertilizing_interval_days`
   - `pruning` — needed? interval or notes (`none` is valid)
@@ -176,7 +182,7 @@ Pot vs bed dryness is **not** duplicated here; matching multiplies catalog water
 
 **Activity layer:**
 
-- `planting` — `location_id`, **`crop_id`**, optional `variety`, method, `planted_on`, `removed_on`, status. Keep `crop_name` only as a denormalized label if reads need it; the FK is source of truth.
+- `planting` — `location_id`, **`crop_id`**, denormalized `variety` copied from the catalog row, method, `planted_on`, `removed_on`, status. Keep `crop_name` only as a denormalized label if reads need it; the FK is source of truth.
 - Drop LLM harvest columns on planting (`harvest_window_*`, `harvest_confidence`, `harvest_rationale`, `harvest_estimating_model`) as the source of truth. Harvest window = `planted_on` + crop days-to-harvest, refined by logged `harvested` actions.
 - `action_log` — append-only ground truth. Users own it. Matching and conversation both read it.
 - `garden_note` — yard-specific corrections (“the far end floods”). Injected into **conversation** context. Matching does not parse notes; if a note should change watering, the fix is the crop row or a location note/`dryness_factor`.
@@ -247,11 +253,11 @@ These are the in-scope journeys. Everything else is a prompt or a screen on top 
 
 ```
 User records a planting (crop name + variety + location + planted_on)
-  └─ resolve crop by slug
-      ├─ exists → attach planting.crop_id
-      └─ missing → one-shot draftCropRow(name, zone, structured schema)
-                    └─ validate → insert crop (source=generated or stub)
-  └─ user can search / open / edit the row at any time
+  └─ resolve crop by catalogSlug(name, variety)
+      ├─ exists → attach planting.crop_id, copy catalog name/variety onto planting
+      └─ missing → insert stub crop (ALL-71 drafts care later)
+  └─ catalog add of a duplicate combination is an error that points at the existing row
+  └─ user can search / open / edit the row at any time (slug recomputed on identity save)
   └─ next matching run reads the edited fields
 ```
 
@@ -319,7 +325,7 @@ Unchanged: new `season`, new section intervals, sun re-derived from untouched `s
 - `get_garden_profile`
 - `get_current_locations`
 - `get_plantings`
-- `get_crop_catalog` *(new)*
+- `get_crop_catalog` *(new)* — must return `variety` and search name, variety, and slug so Ask/time-budget can tell Tomato from Tomato / Sungold. Matching template copy names the variety when present.
 - `get_care_history`
 - `get_weather`
 - `get_garden_notes`
@@ -384,7 +390,7 @@ Product and ops questions, not blockers for this shape:
 
 Resolved here, previously listed as architect questions:
 
-- Crop vs planting: FK `planting.crop_id` → one catalog row; variety on planting; generate on first sight.
+- Crop vs planting: FK `planting.crop_id` → one catalog row per name + optional variety; `planting.variety` is a denormalized copy; generate on first sight of a combination (ALL-71).
 - Daily check-in: matching + `care_run`, not `runAgent`.
 - Time estimates: on the crop row, copied onto each recommendation at compute time.
 - Sun vs sections: position-based sun, already in the schema.

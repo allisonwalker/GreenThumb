@@ -19,7 +19,20 @@ describe("parseCreateStubCropForm", () => {
   it("creates a stub from a crop name", () => {
     expect(parseCreateStubCropForm(form({ name: " Tomato " }))).toEqual({
       name: "Tomato",
+      variety: null,
     });
+  });
+
+  it("stores a trimmed variety and treats blank as null", () => {
+    expect(
+      parseCreateStubCropForm(form({ name: "Tomato", variety: " Sungold " })),
+    ).toEqual({
+      name: "Tomato",
+      variety: "Sungold",
+    });
+    expect(
+      parseCreateStubCropForm(form({ name: "Tomato", variety: "  " })).variety,
+    ).toBeNull();
   });
 
   it("rejects a blank name", () => {
@@ -43,6 +56,7 @@ describe("parseCropEditForm", () => {
     ).toEqual({
       id: "crop-1",
       name: "Tomato",
+      variety: null,
       wateringIntervalDays: 3,
       fertilizingIntervalDays: null,
       pruning: null,
@@ -91,6 +105,13 @@ describe("parseCropEditForm", () => {
     expect(() =>
       parseCropEditForm(form({ ...validEdit, minutes_watered: "9999" })),
     ).toThrow("Watered minutes must be between 1 and 480 minutes.");
+  });
+
+  it("stores variety on edit and treats blank as null", () => {
+    expect(
+      parseCropEditForm(form({ ...validEdit, variety: " Sungold " })).variety,
+    ).toBe("Sungold");
+    expect(parseCropEditForm(form({ ...validEdit, variety: "" })).variety).toBeNull();
   });
 
   it("accepts frost true/false and a known sun preference", () => {

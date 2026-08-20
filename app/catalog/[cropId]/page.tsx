@@ -20,7 +20,7 @@ export default async function CatalogCropPage({ params }: CropPageProps) {
 
   return (
     <CropEditForm
-      key={`${crop.id}-${crop.source}-${crop.wateringIntervalDays}`}
+      key={`${crop.id}-${crop.source}-${crop.slug}-${crop.variety}-${crop.wateringIntervalDays}`}
       crop={crop}
     />
   );

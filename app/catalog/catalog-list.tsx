@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 
-import { cropMatchesQuery } from "@/lib/crops/slug";
+import { cropIdentityLabel, cropMatchesQuery } from "@/lib/crops/slug";
 import type { CropListItem } from "@/lib/crops/types";
 
 import { createStubCrop } from "./actions";
@@ -30,7 +30,9 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
   );
   const matches = useMemo(
     () =>
-      crops.filter((crop) => cropMatchesQuery(crop.name, crop.slug, query)),
+      crops.filter((crop) =>
+        cropMatchesQuery(crop.name, crop.slug, query, crop.variety),
+      ),
     [crops, query],
   );
 
@@ -40,7 +42,8 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
         <h2 className="text-xl font-semibold">Add a stub crop</h2>
         <p className="mt-1 text-sm text-neutral-600">
           Use this when you want a care row before a planting exists. A later
-          planting with the same name reuses this row.
+          planting with the same name and variety reuses this row. Tomato and
+          Tomato / Sungold are different rows.
         </p>
         <form action={createAction} className="mt-4 space-y-3">
           <label className="block text-sm font-medium">
@@ -50,6 +53,15 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
               name="name"
               required
               placeholder="Tomato"
+              autoComplete="off"
+            />
+          </label>
+          <label className="block text-sm font-medium">
+            Variety (optional)
+            <input
+              className={fieldClass}
+              name="variety"
+              placeholder="Sungold"
               autoComplete="off"
             />
           </label>
@@ -74,19 +86,29 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
               {createPending ? "Creating…" : "Create stub"}
             </button>
           </div>
+          {createState.status === "error" && createState.existingCropId ? (
+            <p>
+              <Link
+                href={`/catalog/${createState.existingCropId}`}
+                className="text-sm font-semibold text-green-800 underline"
+              >
+                Open the existing row
+              </Link>
+            </p>
+          ) : null}
         </form>
       </section>
 
       <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-xl font-semibold">Search crops</h2>
         <label className="mt-4 block text-sm font-medium">
-          Search by name
+          Search by name, variety, or slug
           <input
             className={fieldClass}
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="tomato"
+            placeholder="tomato or sungold"
             autoComplete="off"
             aria-describedby="catalog-search-help"
           />
@@ -109,7 +131,7 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
                 >
                   <span>
                     <span className="font-semibold text-neutral-900">
-                      {crop.name}
+                      {cropIdentityLabel(crop.name, crop.variety)}
                     </span>
                     <span className="mt-1 block text-sm text-neutral-600 sm:mt-0 sm:inline sm:before:content-['·'] sm:before:mx-2">
                       {sourceLabel(crop.source)}

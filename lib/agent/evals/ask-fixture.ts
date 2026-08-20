@@ -55,6 +55,7 @@ export const askEvalLocation: CurrentLocation = {
 export const askEvalCrop: CropCatalogRow = {
   id: CROP_ID,
   name: ASK_EVAL_CROP_NAME,
+  variety: "Carmen",
   slug: "peppers",
   wateringIntervalDays: 3,
   fertilizingIntervalDays: 14,

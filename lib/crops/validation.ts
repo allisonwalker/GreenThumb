@@ -1,6 +1,6 @@
 import { SUN_EXPOSURES, type SunExposure } from "@/lib/garden/sun-exposure";
 
-import { cropSlug } from "./slug";
+import { catalogSlug, normalizeVariety } from "./slug";
 import {
   MINUTES_MAX,
   MINUTES_MIN,
@@ -13,15 +13,17 @@ import {
 export type CropFormState =
   | { status: "idle" }
   | { status: "success"; message: string }
-  | { status: "error"; message: string };
+  | { status: "error"; message: string; existingCropId?: string };
 
 export type CreateStubCropInput = {
   name: string;
+  variety: string | null;
 };
 
 export type CropEditInput = {
   id: string;
   name: string;
+  variety: string | null;
   wateringIntervalDays: number | null;
   fertilizingIntervalDays: number | null;
   pruning: CropPruning | null;
@@ -185,14 +187,16 @@ export function parseCreateStubCropForm(
   formData: FormData,
 ): CreateStubCropInput {
   const name = requiredText(formData, "name", "Crop name");
-  cropSlug(name);
-  return { name };
+  const variety = normalizeVariety(optionalText(formData, "variety"));
+  catalogSlug(name, variety);
+  return { name, variety };
 }
 
 export function parseCropEditForm(formData: FormData): CropEditInput {
   const id = requiredText(formData, "id", "Crop");
   const name = requiredText(formData, "name", "Crop name");
-  cropSlug(name);
+  const variety = normalizeVariety(optionalText(formData, "variety"));
+  catalogSlug(name, variety);
 
   const wateringIntervalDays = optionalPositiveInteger(
     formData,
@@ -228,6 +232,7 @@ export function parseCropEditForm(formData: FormData): CropEditInput {
   return {
     id,
     name,
+    variety,
     wateringIntervalDays,
     fertilizingIntervalDays,
     pruning: parsePruning(formData),

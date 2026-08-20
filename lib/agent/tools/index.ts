@@ -75,13 +75,13 @@ export const agentToolDefinitions: ToolDefinition[] = [
   {
     name: "get_crop_catalog",
     description:
-      "Return crop care rows (sun_preference, watering interval, frost, harvest window, time estimates). Optional query filters by name or slug. If a row or field is missing, say so — do not guess.",
+      "Return crop care rows (name, variety, slug, sun_preference, watering interval, frost, harvest window, time estimates). Optional query filters by name, variety, or slug. If a row or field is missing, say so — do not guess.",
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
-          description: "Optional crop name or slug to search for.",
+          description: "Optional crop name, variety, or slug to search for.",
         },
       },
       additionalProperties: false,

@@ -30,6 +30,7 @@ function planting(
     drynessFactor: 1,
     cropId: "crop-tomato",
     cropName: "tomatoes",
+    variety: null,
     wateringIntervalDays: 3,
     fertilizingIntervalDays: null,
     pruning: null,
@@ -134,6 +135,17 @@ describe("evaluateCareList watering", () => {
           figure: '0.0" rain coming today–tomorrow',
         },
       ]),
+    );
+  });
+
+  it("names the variety in watering copy when the catalog row has one", () => {
+    const tasks = evaluateCareList({
+      ...dryGarden(),
+      plantings: [planting({ variety: "Sungold" })],
+    });
+
+    expect(tasks[0]?.rationale).toBe(
+      'last watered 4 days ago, 0.1" rain this week, Sungold tomatoes want water every 3 days',
     );
   });
 

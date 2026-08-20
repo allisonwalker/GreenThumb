@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 
+import { cropIdentityLabel } from "@/lib/crops/slug";
 import { TIME_ESTIMATE_ACTIONS, type CropRecord } from "@/lib/crops/types";
 import { pruningFormValue } from "@/lib/crops/validation";
 import { SUN_EXPOSURES } from "@/lib/garden/sun-exposure";
@@ -46,12 +47,12 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
           </Link>
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-          {crop.name}
+          {cropIdentityLabel(crop.name, crop.variety)}
         </h1>
         <p className="mt-2 text-neutral-600">
-          Slug <span className="font-mono text-sm">{crop.slug}</span> is the
-          identity other plantings share. Saving this form marks the row as
-          edited.
+          Slug <span className="font-mono text-sm">{crop.slug}</span> is
+          computed from name and variety. Saving a colliding identity fails and
+          does not persist. Saving this form marks the row as edited.
         </p>
         <p className="mt-2 text-sm font-medium text-green-800">
           {sourceCopy(crop.source)}
@@ -62,17 +63,29 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
         <input type="hidden" name="id" value={crop.id} />
 
         <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="text-xl font-semibold">Name</h2>
-          <label className="mt-4 block text-sm font-medium">
-            Display name
-            <input
-              className={fieldClass}
-              name="name"
-              required
-              defaultValue={crop.name}
-              autoComplete="off"
-            />
-          </label>
+          <h2 className="text-xl font-semibold">Name and variety</h2>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-medium">
+              Display name
+              <input
+                className={fieldClass}
+                name="name"
+                required
+                defaultValue={crop.name}
+                autoComplete="off"
+              />
+            </label>
+            <label className="text-sm font-medium">
+              Variety (optional)
+              <input
+                className={fieldClass}
+                name="variety"
+                defaultValue={crop.variety ?? ""}
+                placeholder="Sungold"
+                autoComplete="off"
+              />
+            </label>
+          </div>
         </section>
 
         <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
@@ -264,18 +277,30 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
         </section>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p
-            aria-live="polite"
-            className={
-              state.status === "error"
-                ? "text-sm font-medium text-red-700"
-                : "text-sm font-medium text-green-800"
-            }
-          >
-            {state.status === "idle"
-              ? "Saving does not call a model."
-              : state.message}
-          </p>
+          <div className="space-y-2">
+            <p
+              aria-live="polite"
+              className={
+                state.status === "error"
+                  ? "text-sm font-medium text-red-700"
+                  : "text-sm font-medium text-green-800"
+              }
+            >
+              {state.status === "idle"
+                ? "Saving does not call a model."
+                : state.message}
+            </p>
+            {state.status === "error" && state.existingCropId ? (
+              <p>
+                <Link
+                  href={`/catalog/${state.existingCropId}`}
+                  className="text-sm font-semibold text-green-800 underline"
+                >
+                  Open the existing row
+                </Link>
+              </p>
+            ) : null}
+          </div>
           <button
             type="submit"
             disabled={pending}

@@ -304,6 +304,7 @@ function crop(
   return {
     id,
     name,
+    variety: null,
     slug,
     wateringIntervalDays: 3,
     fertilizingIntervalDays: 14,

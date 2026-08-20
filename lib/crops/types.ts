@@ -25,6 +25,7 @@ export type CropPruning =
 export type CropRecord = {
   id: string;
   name: string;
+  variety: string | null;
   slug: string;
   wateringIntervalDays: number | null;
   fertilizingIntervalDays: number | null;
@@ -45,6 +46,7 @@ export type CropRecord = {
 export type CropListItem = {
   id: string;
   name: string;
+  variety: string | null;
   slug: string;
   source: CropSource;
   wateringIntervalDays: number | null;

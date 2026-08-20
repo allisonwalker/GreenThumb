@@ -326,6 +326,7 @@ export const crops = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     name: text("name").notNull(),
+    variety: text("variety"),
     slug: text("slug").notNull(),
     wateringIntervalDays: integer("watering_interval_days"),
     fertilizingIntervalDays: integer("fertilizing_interval_days"),
@@ -346,6 +347,10 @@ export const crops = pgTable(
   (table) => [
     uniqueIndex("crop_slug_idx").on(table.slug),
     check("crop_name_not_blank", sql`length(trim(${table.name})) > 0`),
+    check(
+      "crop_variety_null_or_nonblank",
+      sql`${table.variety} is null or length(trim(${table.variety})) > 0`,
+    ),
     check("crop_slug_not_blank", sql`length(trim(${table.slug})) > 0`),
     check(
       "crop_watering_interval_positive",

@@ -10,6 +10,7 @@ import type { ToolExecutionContext } from "./types";
 export type CropCatalogRow = {
   id: string;
   name: string;
+  variety: string | null;
   slug: string;
   wateringIntervalDays: number | null;
   fertilizingIntervalDays: number | null;
@@ -41,6 +42,7 @@ export function createCropCatalogStore(): CropCatalogStore {
         .select({
           id: crops.id,
           name: crops.name,
+          variety: crops.variety,
           slug: crops.slug,
           wateringIntervalDays: crops.wateringIntervalDays,
           fertilizingIntervalDays: crops.fertilizingIntervalDays,
@@ -56,7 +58,7 @@ export function createCropCatalogStore(): CropCatalogStore {
           source: crops.source,
         })
         .from(crops)
-        .orderBy(asc(crops.name));
+        .orderBy(asc(crops.name), asc(crops.variety));
 
       const catalog = rows.map((row) => ({
         ...row,
@@ -68,7 +70,7 @@ export function createCropCatalogStore(): CropCatalogStore {
       }
 
       return catalog.filter((row) =>
-        cropMatchesQuery(row.name, row.slug, query),
+        cropMatchesQuery(row.name, row.slug, query, row.variety),
       );
     },
   };

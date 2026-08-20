@@ -17,9 +17,10 @@ export default async function CatalogPage() {
           Shared care rows
         </h1>
         <p className="mt-3 max-w-2xl text-neutral-600">
-          Every tomato planting uses one watering cadence. Search, open, and
-          edit a row here — matching will skip a task if that field is still
-          blank, rather than guessing.
+          Every tomato planting of the same variety shares one watering cadence.
+          Tomato and Tomato / Sungold are different rows. Search, open, and edit
+          here — matching will skip a task if that field is still blank, rather
+          than guessing.
         </p>
       </header>
       <CatalogList crops={crops} />

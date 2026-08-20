@@ -2,7 +2,7 @@ import "server-only";
 
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 
-import { resolveOrCreateStubCrop } from "@/lib/crops/repository";
+import { resolveCropForPlanting } from "@/lib/crops/repository";
 import { getDatabase } from "@/lib/db/client";
 import {
   currentLocations,
@@ -214,13 +214,13 @@ export async function addPlantingRecord(input: AddPlantingInput) {
     );
   }
 
-  const crop = await resolveOrCreateStubCrop(input.cropName);
+  const crop = await resolveCropForPlanting(input.cropName, input.variety);
 
   await database.insert(plantings).values({
     locationId: input.locationId,
     cropId: crop.id,
-    cropName: input.cropName,
-    variety: input.variety,
+    cropName: crop.name,
+    variety: crop.variety,
     method: input.method,
     plantedOn: input.plantedOn,
     status: "growing",

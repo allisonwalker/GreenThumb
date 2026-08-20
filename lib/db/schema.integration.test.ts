@@ -631,6 +631,27 @@ describeDatabase("garden schema integration", () => {
         `,
       ).rejects.toThrow();
 
+      const [sungold] = await transaction<{ id: string }[]>`
+        insert into crop (name, variety, slug, source, watering_interval_days)
+        values ('Tomato', 'Sungold', 'tomato--sungold', 'stub', 5)
+        returning id
+      `;
+      expect(sungold.id).not.toBe(tomato.id);
+
+      await expect(
+        transaction`
+          insert into crop (name, variety, slug, source)
+          values ('Tomato', null, 'tomato', 'stub')
+        `,
+      ).rejects.toThrow();
+
+      await expect(
+        transaction`
+          insert into crop (name, variety, slug, source)
+          values ('Tomato', '', 'tomato-blank', 'stub')
+        `,
+      ).rejects.toThrow(/crop_variety_null_or_nonblank/);
+
       await expect(
         transaction`
           insert into crop (name, slug, source, watering_interval_days)
