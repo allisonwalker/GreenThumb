@@ -115,6 +115,67 @@ export function zonedDateTimeToUtc(
   return instant;
 }
 
+/** UTC instant of local midnight for `instant`'s calendar date in `timeZone`. */
+export function startOfLocalDay(instant: Date, timeZone: string): Date {
+  return zonedDateTimeToUtc(
+    `${localDateString(instant, timeZone)}T00:00:00`,
+    timeZone,
+  );
+}
+
+/** Last UTC instant that still falls on `date` in `timeZone`. */
+export function endOfLocalDay(date: string, timeZone: string): Date {
+  return new Date(
+    zonedDateTimeToUtc(
+      `${addCalendarDays(date, 1)}T00:00:00`,
+      timeZone,
+    ).getTime() - 1,
+  );
+}
+
+/** Half-open [start, end) covering the local calendar day of `instant`. */
+export function localDayInterval(
+  instant: Date,
+  timeZone: string,
+): { start: Date; end: Date } {
+  const localDate = localDateString(instant, timeZone);
+  const start = startOfLocalDay(
+    new Date(`${localDate}T12:00:00.000Z`),
+    timeZone,
+  );
+  const end = startOfLocalDay(
+    new Date(`${addCalendarDays(localDate, 1)}T12:00:00.000Z`),
+    timeZone,
+  );
+  return { start, end };
+}
+
+/** Half-open [start, end) covering the local calendar month of `instant`. */
+export function localMonthInterval(
+  instant: Date,
+  timeZone: string,
+): { start: Date; end: Date; monthKey: string } {
+  const localDate = localDateString(instant, timeZone);
+  const year = Number(localDate.slice(0, 4));
+  const month = Number(localDate.slice(5, 7));
+  const monthKey = localDate.slice(0, 7);
+  const start = startOfLocalDay(
+    new Date(
+      `${year}-${String(month).padStart(2, "0")}-01T12:00:00.000Z`,
+    ),
+    timeZone,
+  );
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear = month === 12 ? year + 1 : year;
+  const end = startOfLocalDay(
+    new Date(
+      `${nextYear}-${String(nextMonth).padStart(2, "0")}-01T12:00:00.000Z`,
+    ),
+    timeZone,
+  );
+  return { start, end, monthKey };
+}
+
 export function daysBetween(startDate: string, endDate: string): number {
   const start = Date.parse(`${startDate}T00:00:00.000Z`);
   const end = Date.parse(`${endDate}T00:00:00.000Z`);

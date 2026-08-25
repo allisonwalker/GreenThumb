@@ -6,6 +6,7 @@ import {
   endOfLocalDay,
   localDateString,
   localDateTimeString,
+  startOfLocalDay,
   zonedDateTimeToUtc,
 } from "./local-date";
 
@@ -42,5 +43,18 @@ describe("garden local date helpers", () => {
     expect(() =>
       zonedDateTimeToUtc("2026-03-08T02:30", "America/Los_Angeles"),
     ).toThrow("not a valid local time");
+  });
+
+  it("starts the Pacific calendar day at 07:00 UTC during PDT", () => {
+    const afternoon = new Date("2026-08-13T22:00:00.000Z");
+    expect(startOfLocalDay(afternoon, "America/Los_Angeles").toISOString()).toBe(
+      "2026-08-13T07:00:00.000Z",
+    );
+  });
+
+  it("ends the Pacific calendar day just before the next local midnight", () => {
+    expect(endOfLocalDay("2026-08-19", "America/Los_Angeles").toISOString()).toBe(
+      "2026-08-20T06:59:59.999Z",
+    );
   });
 });
