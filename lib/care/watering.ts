@@ -50,6 +50,8 @@ export type CarePlantingInput = {
   fertilizeMinutes: number | null;
   pruneMinutes: number | null;
   frostMinutes: number | null;
+  sunPreference: "full_sun" | "part_sun" | "part_shade" | "full_shade" | null;
+  locationSunExposure: string;
   plantedOn: string;
 };
 

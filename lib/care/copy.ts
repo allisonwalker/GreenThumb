@@ -1,5 +1,6 @@
 import { cropCareCopyLabel } from "@/lib/crops/slug";
 import { addCalendarDays, endOfLocalDay } from "@/lib/garden/local-date";
+import { formatSunExposureLabel } from "@/lib/garden/sun-fit";
 
 import type { CadenceNeed } from "./cadence";
 import type { FrostNeed } from "./frost";
@@ -227,6 +228,49 @@ function dueByFor(
 
 function dayPhrase(days: number): string {
   return days === 1 ? "1 day ago" : `${days} days ago`;
+}
+
+export function sunMismatchTask(
+  planting: {
+    locationId: string;
+    locationName: string;
+    plantingId: string;
+    cropId: string;
+    cropName: string;
+    variety: string | null;
+    sunPreference: "full_sun" | "part_sun" | "part_shade" | "full_shade";
+    locationSunExposure: string;
+  },
+  today: string,
+  timeZone: string,
+): MatchingTaskInput {
+  const cropLabel = cropCareCopyLabel(planting.cropName, planting.variety);
+  const preference = formatSunExposureLabel(planting.sunPreference);
+  const location = formatSunExposureLabel(planting.locationSunExposure);
+
+  return {
+    locationId: planting.locationId,
+    plantingId: planting.plantingId,
+    cropId: planting.cropId,
+    actionType: "observed",
+    urgency: "monitor",
+    headline: `${planting.locationName} — sun does not match`,
+    rationale: `${cropLabel} want ${preference}; this location is ${location}`,
+    evidence: {
+      facts: [
+        {
+          source: "crop catalog",
+          figure: `sun_preference ${planting.sunPreference}`,
+        },
+        {
+          source: "location",
+          figure: `sun_exposure ${planting.locationSunExposure}`,
+        },
+      ],
+    },
+    estimatedMinutes: null,
+    dueBy: dueByFor("monitor", today, timeZone),
+  };
 }
 
 function formatDryness(value: number): string {

@@ -79,6 +79,7 @@ export const MATCHING_OWNED_ACTION_TYPES = [
   "fertilized",
   "pruned",
   "treated",
+  "observed",
 ] as const satisfies readonly MatchingTaskInput["actionType"][];
 
 export type PersistMatchingInput = {

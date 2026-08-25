@@ -39,6 +39,8 @@ function planting(
     fertilizeMinutes: 20,
     pruneMinutes: 15,
     frostMinutes: 8,
+    sunPreference: null,
+    locationSunExposure: "full_sun",
     plantedOn: "2026-06-01",
     ...overrides,
   };
@@ -441,6 +443,123 @@ describe("evaluateCareList fertilize, prune, and frost", () => {
       expect(task).not.toHaveProperty("confidence");
       expect(task.evidence).not.toHaveProperty("inferences");
     }
+  });
+});
+
+describe("evaluateCareList sun mismatch", () => {
+  it("emits a monitor warning when a full-sun crop is in part shade", () => {
+    const tasks = evaluateCareList({
+      today: TODAY,
+      timeZone: TIME_ZONE,
+      plantings: [
+        planting({
+          wateringIntervalDays: null,
+          sunPreference: "full_sun",
+          locationSunExposure: "part_shade",
+        }),
+      ],
+      weatherDays: weatherWindow({}),
+      log: [],
+    });
+
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0]?.actionType).toBe("observed");
+    expect(tasks[0]?.urgency).toBe("monitor");
+    expect(tasks[0]?.headline).toBe("Section 3 — sun does not match");
+    expect(tasks[0]?.rationale).toBe(
+      "tomatoes want full sun; this location is part shade",
+    );
+    expect(tasks[0]?.evidence.facts).toEqual([
+      { source: "crop catalog", figure: "sun_preference full_sun" },
+      { source: "location", figure: "sun_exposure part_shade" },
+    ]);
+  });
+
+  it("emits none for a good fit, including mostly_{preference}", () => {
+    const exact = evaluateCareList({
+      today: TODAY,
+      timeZone: TIME_ZONE,
+      plantings: [
+        planting({
+          wateringIntervalDays: null,
+          sunPreference: "part_shade",
+          locationSunExposure: "part_shade",
+        }),
+      ],
+      weatherDays: weatherWindow({}),
+      log: [],
+    });
+    const mostly = evaluateCareList({
+      today: TODAY,
+      timeZone: TIME_ZONE,
+      plantings: [
+        planting({
+          wateringIntervalDays: null,
+          sunPreference: "full_sun",
+          locationSunExposure: "mostly_full_sun",
+        }),
+      ],
+      weatherDays: weatherWindow({}),
+      log: [],
+    });
+
+    expect(exact).toEqual([]);
+    expect(mostly).toEqual([]);
+  });
+
+  it("skips the warning when sun_preference is missing", () => {
+    const tasks = evaluateCareList({
+      today: TODAY,
+      timeZone: TIME_ZONE,
+      plantings: [
+        planting({
+          wateringIntervalDays: null,
+          sunPreference: null,
+          locationSunExposure: "part_shade",
+        }),
+      ],
+      weatherDays: weatherWindow({}),
+      log: [],
+    });
+
+    expect(tasks).toEqual([]);
+  });
+
+  it("flags mixed sections and pots the same way", () => {
+    const mixed = evaluateCareList({
+      today: TODAY,
+      timeZone: TIME_ZONE,
+      plantings: [
+        planting({
+          wateringIntervalDays: null,
+          sunPreference: "full_sun",
+          locationSunExposure: "mixed",
+        }),
+      ],
+      weatherDays: weatherWindow({}),
+      log: [],
+    });
+    const pot = evaluateCareList({
+      today: TODAY,
+      timeZone: TIME_ZONE,
+      plantings: [
+        planting({
+          plantingId: "plant-pepper",
+          locationId: POT_ID,
+          locationName: "Pepper Pot",
+          wateringIntervalDays: null,
+          cropName: "peppers",
+          sunPreference: "full_sun",
+          locationSunExposure: "part_shade",
+        }),
+      ],
+      weatherDays: weatherWindow({}),
+      log: [],
+    });
+
+    expect(mixed[0]?.rationale).toContain("this location is mixed");
+    expect(pot[0]?.headline).toBe("Pepper Pot — sun does not match");
+    expect(pot[0]?.rationale).toContain("this location is part shade");
   });
 });
 

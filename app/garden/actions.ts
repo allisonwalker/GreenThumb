@@ -15,10 +15,13 @@ import {
   revertSectionExposureRecord,
   saveSeasonSectionsRecord,
 } from "@/lib/garden/season-repository";
+import { getCropRecord } from "@/lib/crops/repository";
+import { cropCareCopyLabel } from "@/lib/crops/slug";
 import {
   addPlantingRecord,
   removePlantingRecord,
 } from "@/lib/garden/planting-repository";
+import { sunMismatchWarning } from "@/lib/garden/sun-fit";
 import {
   type PlantingFormState,
   parseAddPlantingForm,
@@ -224,11 +227,18 @@ export async function addPlanting(
       }
     }
 
+    const cropAfter = (await getCropRecord(crop.id)) ?? crop;
+    const warning = sunMismatchWarning({
+      cropLabel: cropCareCopyLabel(cropAfter.name, cropAfter.variety),
+      sunPreference: cropAfter.sunPreference,
+      locationExposure: result.locationSunExposure,
+    });
+
     revalidatePath("/garden");
     revalidatePath(`/garden/${input.locationId}`);
     revalidatePath("/catalog");
     revalidatePath(`/catalog/${crop.id}`);
-    return { status: "success", message };
+    return { status: "success", message, warning: warning ?? undefined };
   } catch (error) {
     console.error("Adding a planting failed.", error);
     return {
