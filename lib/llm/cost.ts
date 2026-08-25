@@ -1,7 +1,7 @@
 import type { LlmProviderName } from "./types";
 
 /** Published list prices used for agent_run estimates (USD per million tokens). */
-const RATES: Record<
+export const LLM_LIST_PRICE_USD_PER_MILLION: Record<
   LlmProviderName,
   { inputPerMillion: number; outputPerMillion: number }
 > = {
@@ -16,7 +16,7 @@ export function estimateCostUsd(input: {
   inputTokens: number;
   outputTokens: number;
 }): number {
-  const rates = RATES[input.provider];
+  const rates = LLM_LIST_PRICE_USD_PER_MILLION[input.provider];
   const cost =
     (input.inputTokens / 1_000_000) * rates.inputPerMillion +
     (input.outputTokens / 1_000_000) * rates.outputPerMillion;

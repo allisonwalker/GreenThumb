@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { runToolLoop } from "./loop";
+import type { ModelCallLog } from "./invocation-log";
 import type { LlmClient, ProviderTurnResult, ToolCallRequest } from "./types";
 
 function mockClient(
@@ -37,7 +38,17 @@ const noopTools = [
   },
 ];
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("runToolLoop bounds", () => {
+  let log: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    log = vi.spyOn(console, "log").mockImplementation(() => {});
+  });
+
   it("stops when the iteration cap is reached", async () => {
     const toolCall: ToolCallRequest = {
       id: "1",
@@ -200,5 +211,46 @@ describe("runToolLoop bounds", () => {
 
     expect(deltas).toEqual(["Hel", "lo"]);
     expect(result.finalText).toBe("Hello");
+  });
+
+  it("emits one structured log line per model invocation", async () => {
+    await runToolLoop({
+      client: mockClient([
+        {
+          text: null,
+          toolCalls: [{ id: "1", name: "ping", input: {} }],
+          inputTokens: 5,
+          outputTokens: 2,
+          stopReason: "tool_use",
+        },
+        {
+          text: "All good",
+          toolCalls: [],
+          inputTokens: 8,
+          outputTokens: 4,
+          stopReason: "end",
+        },
+      ]),
+      system: "test",
+      userMessage: "Should I water today?",
+      tools: noopTools,
+      executeTool: async () => ({ pong: true }),
+      maxIterations: 5,
+      maxTokens: 1_000,
+      timeoutMs: 5_000,
+    });
+
+    expect(log).toHaveBeenCalledTimes(2);
+    const first = JSON.parse(String(log.mock.calls[0]?.[0])) as ModelCallLog;
+    const second = JSON.parse(String(log.mock.calls[1]?.[0])) as ModelCallLog;
+    expect(first.outcome).toBe("tool_use");
+    expect(first.question).toBe("Should I water today?");
+    expect(first.response).toBe("");
+    expect(first.inputTokens).toBe(5);
+    expect(first.outputTokens).toBe(2);
+    expect(second.outcome).toBe("end");
+    expect(second.response).toBe("All good");
+    expect(second.model).toBe("mock-model");
+    expect(first.requestId).not.toBe(second.requestId);
   });
 });

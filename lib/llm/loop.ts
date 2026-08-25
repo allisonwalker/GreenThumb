@@ -1,4 +1,5 @@
 import { estimateCostUsd } from "./cost";
+import { withModelInvocationLog } from "./invocation-log";
 import type {
   ProviderMessage,
   RunToolLoopOptions,
@@ -59,20 +60,32 @@ export async function runToolLoop(
         256,
         options.maxTokens - (inputTokens + outputTokens),
       );
-      const turn = await options.client.complete(
-        {
-          system: options.system,
-          messages,
-          tools: options.tools,
-          maxOutputTokens: Math.min(
-            DEFAULT_OUTPUT_TOKENS_PER_TURN,
-            remainingTokens,
+      const turn = await withModelInvocationLog({
+        model: options.client.model,
+        provider: options.client.provider,
+        question: options.userMessage,
+        invoke: () =>
+          options.client.complete(
+            {
+              system: options.system,
+              messages,
+              tools: options.tools,
+              maxOutputTokens: Math.min(
+                DEFAULT_OUTPUT_TOKENS_PER_TURN,
+                remainingTokens,
+              ),
+            },
+            options.onTextDelta
+              ? { onTextDelta: options.onTextDelta }
+              : undefined,
           ),
-        },
-        options.onTextDelta
-          ? { onTextDelta: options.onTextDelta }
-          : undefined,
-      );
+        toLog: (result) => ({
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
+          outcome: result.stopReason,
+          response: result.text ?? "",
+        }),
+      });
 
       inputTokens += turn.inputTokens;
       outputTokens += turn.outputTokens;
