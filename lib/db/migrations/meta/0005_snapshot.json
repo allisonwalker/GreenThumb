@@ -1,5 +1,6 @@
 {
   "id": "4b77650d-f0b5-43aa-a1c6-2f96370edb74",
+  "id": "59483eab-1e51-4c83-bec5-d75f117932f6",
   "prevId": "94196d4e-7494-416e-8765-711bd357b9aa",
   "version": "7",
   "dialect": "postgresql",
@@ -53,6 +54,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "voids_id": {
+          "name": "voids_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -79,6 +86,21 @@
             }
           ],
           "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "action_log_voids_id_idx": {
+          "name": "action_log_voids_id_idx",
+          "columns": [
+            {
+              "expression": "voids_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -109,6 +131,19 @@
             "id"
           ],
           "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "action_log_voids_id_action_log_id_fk": {
+          "name": "action_log_voids_id_action_log_id_fk",
+          "tableFrom": "action_log",
+          "tableTo": "action_log",
+          "columnsFrom": [
+            "voids_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -1235,21 +1270,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "planting_crop_idx": {
-          "name": "planting_crop_idx",
-          "columns": [
-            {
-              "expression": "crop_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -1259,19 +1279,6 @@
           "tableTo": "location",
           "columnsFrom": [
             "location_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "planting_crop_id_crop_id_fk": {
-          "name": "planting_crop_id_crop_id_fk",
-          "tableFrom": "planting",
-          "tableTo": "crop",
-          "columnsFrom": [
-            "crop_id"
           ],
           "columnsTo": [
             "id"
@@ -2038,15 +2045,6 @@
         "failed",
         "timed_out",
         "budget_exceeded"
-      ]
-    },
-    "public.crop_source": {
-      "name": "crop_source",
-      "schema": "public",
-      "values": [
-        "generated",
-        "edited",
-        "stub"
       ]
     },
     "public.location_kind": {
