@@ -5,6 +5,7 @@ import {
   date,
   foreignKey,
   index,
+  integer,
   jsonb,
   numeric,
   pgEnum,
@@ -15,6 +16,8 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+
+import type { CropPruning, CropTimeEstimates } from "@/lib/crops/types";
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -65,6 +68,12 @@ export const actionTypeEnum = pgEnum("action_type", [
   "treated",
 ]);
 
+export const cropSourceEnum = pgEnum("crop_source", [
+  "generated",
+  "edited",
+  "stub",
+]);
+
 export const weatherDayKindEnum = pgEnum("weather_day_kind", [
   "observed",
   "forecast",
@@ -75,6 +84,8 @@ export const agentRunKindEnum = pgEnum("agent_run_kind", [
   "ask",
   "script",
   "test",
+  "time_budget",
+  "crop_draft",
 ]);
 
 export const agentRunStatusEnum = pgEnum("agent_run_status", [
@@ -84,6 +95,13 @@ export const agentRunStatusEnum = pgEnum("agent_run_status", [
   "timed_out",
   "budget_exceeded",
 ]);
+
+export const conversationKindEnum = pgEnum("conversation_kind", [
+  "ask",
+  "time_budget",
+]);
+
+export const messageRoleEnum = pgEnum("message_role", ["user", "assistant"]);
 
 export const recommendationUrgencyEnum = pgEnum("recommendation_urgency", [
   "now",
@@ -100,9 +118,26 @@ export const recommendationStatusEnum = pgEnum("recommendation_status", [
   "expired",
 ]);
 
+export const careRunTriggerEnum = pgEnum("care_run_trigger", [
+  "scheduled",
+  "manual",
+  "after_write",
+  "simulated",
+]);
+
+export const careRunStatusEnum = pgEnum("care_run_status", [
+  "running",
+  "succeeded",
+  "failed",
+]);
+
+export type RecommendationEvidenceFact = {
+  source: string;
+  figure: string;
+};
+
 export type RecommendationEvidence = {
-  facts: string[];
-  inferences: string[];
+  facts: RecommendationEvidenceFact[];
 };
 
 export type AgentToolTraceEntry = {
@@ -288,6 +323,80 @@ export const locations = pgTable(
   ],
 );
 
+export const crops = pgTable(
+  "crop",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull(),
+    variety: text("variety"),
+    slug: text("slug").notNull(),
+    wateringIntervalDays: integer("watering_interval_days"),
+    fertilizingIntervalDays: integer("fertilizing_interval_days"),
+    pruning: jsonb("pruning").$type<CropPruning>(),
+    frostSensitive: boolean("frost_sensitive"),
+    sunPreference: sunExposureEnum("sun_preference"),
+    plantWindowStart: text("plant_window_start"),
+    plantWindowEnd: text("plant_window_end"),
+    daysToHarvestMin: integer("days_to_harvest_min"),
+    daysToHarvestMax: integer("days_to_harvest_max"),
+    timeEstimates: jsonb("time_estimates").$type<CropTimeEstimates>(),
+    source: cropSourceEnum("source").notNull(),
+    generatedByProvider: text("generated_by_provider"),
+    generatedByModel: text("generated_by_model"),
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("crop_slug_idx").on(table.slug),
+    check("crop_name_not_blank", sql`length(trim(${table.name})) > 0`),
+    check(
+      "crop_variety_null_or_nonblank",
+      sql`${table.variety} is null or length(trim(${table.variety})) > 0`,
+    ),
+    check("crop_slug_not_blank", sql`length(trim(${table.slug})) > 0`),
+    check(
+      "crop_watering_interval_positive",
+      sql`${table.wateringIntervalDays} is null or ${table.wateringIntervalDays} > 0`,
+    ),
+    check(
+      "crop_fertilizing_interval_positive",
+      sql`${table.fertilizingIntervalDays} is null or ${table.fertilizingIntervalDays} > 0`,
+    ),
+    check(
+      "crop_harvest_days_positive",
+      sql`(
+        (${table.daysToHarvestMin} is null or ${table.daysToHarvestMin} > 0)
+        and (${table.daysToHarvestMax} is null or ${table.daysToHarvestMax} > 0)
+        and (
+          ${table.daysToHarvestMin} is null
+          or ${table.daysToHarvestMax} is null
+          or ${table.daysToHarvestMax} >= ${table.daysToHarvestMin}
+        )
+      )`,
+    ),
+    check(
+      "crop_plant_window_format",
+      sql`(
+        ${table.plantWindowStart} is null
+        or ${table.plantWindowStart} ~ '^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'
+      ) and (
+        ${table.plantWindowEnd} is null
+        or ${table.plantWindowEnd} ~ '^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'
+      )`,
+    ),
+    check(
+      "crop_pruning_object",
+      sql`${table.pruning} is null
+        or jsonb_typeof(${table.pruning}) = 'object'`,
+    ),
+    check(
+      "crop_time_estimates_object",
+      sql`${table.timeEstimates} is null
+        or jsonb_typeof(${table.timeEstimates}) = 'object'`,
+    ),
+  ],
+);
+
 export const plantings = pgTable(
   "planting",
   {
@@ -295,6 +404,9 @@ export const plantings = pgTable(
     locationId: uuid("location_id")
       .notNull()
       .references(() => locations.id, { onDelete: "restrict" }),
+    cropId: uuid("crop_id")
+      .notNull()
+      .references(() => crops.id, { onDelete: "restrict" }),
     cropName: text("crop_name").notNull(),
     variety: text("variety"),
     method: plantingMethodEnum("method").notNull(),
@@ -313,6 +425,7 @@ export const plantings = pgTable(
   },
   (table) => [
     index("planting_location_idx").on(table.locationId),
+    index("planting_crop_idx").on(table.cropId),
     check(
       "planting_valid_dates",
       sql`${table.removedOn} is null or ${table.removedOn} >= ${table.plantedOn}`,
@@ -469,6 +582,9 @@ export const agentRuns = pgTable(
     status: agentRunStatusEnum("status").default("running").notNull(),
     provider: text("provider").notNull(),
     model: text("model").notNull(),
+    userId: uuid("user_id").references(() => appUsers.id, {
+      onDelete: "set null",
+    }),
     startedAt: timestamp("started_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -502,6 +618,11 @@ export const agentRuns = pgTable(
   (table) => [
     index("agent_run_started_idx").on(table.startedAt),
     index("agent_run_provider_started_idx").on(table.provider, table.startedAt),
+    index("agent_run_user_kind_started_idx").on(
+      table.userId,
+      table.kind,
+      table.startedAt,
+    ),
     check(
       "agent_run_nonnegative_tokens",
       sql`${table.inputTokens} >= 0 and ${table.outputTokens} >= 0 and ${table.estimatedCostUsd} >= 0`,
@@ -509,25 +630,100 @@ export const agentRuns = pgTable(
   ],
 );
 
+export const conversations = pgTable(
+  "conversation",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull(),
+    kind: conversationKindEnum("kind").notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("conversation_user_kind_idx").on(table.userId, table.kind),
+    index("conversation_user_updated_idx").on(table.userId, table.updatedAt),
+  ],
+);
+
+export const messages = pgTable(
+  "message",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    role: messageRoleEnum("role").notNull(),
+    content: text("content").notNull(),
+    agentRunId: uuid("agent_run_id").references(() => agentRuns.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("message_conversation_created_idx").on(
+      table.conversationId,
+      table.createdAt,
+    ),
+    check("message_content_not_blank", sql`length(trim(${table.content})) > 0`),
+    check(
+      "message_agent_run_assistant_only",
+      sql`${table.role} = 'assistant' or ${table.agentRunId} is null`,
+    ),
+  ],
+);
+
+export const careRuns = pgTable(
+  "care_run",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    trigger: careRunTriggerEnum("trigger").notNull(),
+    status: careRunStatusEnum("status").default("running").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    weatherFetchId: uuid("weather_fetch_id").references(
+      () => weatherFetches.id,
+      { onDelete: "set null" },
+    ),
+    simulatedWeather: jsonb("simulated_weather").$type<unknown>(),
+    taskCount: integer("task_count").default(0).notNull(),
+    error: text("error"),
+    ...timestamps,
+  },
+  (table) => [
+    index("care_run_started_idx").on(table.startedAt),
+    check("care_run_nonnegative_task_count", sql`${table.taskCount} >= 0`),
+  ],
+);
+
 export const recommendations = pgTable(
   "recommendation",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    agentRunId: uuid("agent_run_id")
-      .notNull()
-      .references(() => agentRuns.id, { onDelete: "restrict" }),
+    careRunId: uuid("care_run_id").references(() => careRuns.id, {
+      onDelete: "restrict",
+    }),
+    agentRunId: uuid("agent_run_id").references(() => agentRuns.id, {
+      onDelete: "restrict",
+    }),
     locationId: uuid("location_id")
       .notNull()
       .references(() => locations.id, { onDelete: "restrict" }),
     plantingId: uuid("planting_id").references(() => plantings.id, {
       onDelete: "restrict",
     }),
+    cropId: uuid("crop_id").references(() => crops.id, {
+      onDelete: "restrict",
+    }),
     actionType: actionTypeEnum("action_type").notNull(),
     urgency: recommendationUrgencyEnum("urgency").notNull(),
     headline: text("headline").notNull(),
     rationale: text("rationale").notNull(),
-    confidence: numeric("confidence", { precision: 4, scale: 3 }).notNull(),
+    confidence: numeric("confidence", { precision: 4, scale: 3 }),
     evidence: jsonb("evidence").$type<RecommendationEvidence>().notNull(),
+    estimatedMinutes: integer("estimated_minutes"),
     status: recommendationStatusEnum("status").default("open").notNull(),
     dueBy: timestamp("due_by", { withTimezone: true }),
     resolvedAt: timestamp("resolved_at", { withTimezone: true }),
@@ -544,9 +740,18 @@ export const recommendations = pgTable(
       table.locationId,
       table.status,
     ),
+    index("recommendation_care_run_idx").on(table.careRunId),
+    check(
+      "recommendation_has_run",
+      sql`${table.careRunId} is not null or ${table.agentRunId} is not null`,
+    ),
     check(
       "recommendation_confidence_range",
-      sql`${table.confidence} between 0 and 1`,
+      sql`${table.confidence} is null or ${table.confidence} between 0 and 1`,
+    ),
+    check(
+      "recommendation_estimated_minutes_range",
+      sql`${table.estimatedMinutes} is null or ${table.estimatedMinutes} between 1 and 480`,
     ),
     check("recommendation_headline_not_blank", sql`length(trim(${table.headline})) > 0`),
   ],

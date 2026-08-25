@@ -1,13 +1,25 @@
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { loadAskMessages } from "@/lib/agent/ask-turn";
 import { requirePageUser } from "@/lib/auth/session";
 
-export default async function AskPage() {
-  await requirePageUser();
+import { AskThread } from "./ask-thread";
+
+export default async function AskPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mode?: string }>;
+}) {
+  const identity = await requirePageUser();
+  const params = await searchParams;
+  const [askMessages, timeBudgetMessages] = await Promise.all([
+    loadAskMessages(identity.id, "ask"),
+    loadAskMessages(identity.id, "time_budget"),
+  ]);
 
   return (
-    <PlaceholderPage
-      title="Ask"
-      description="Garden questions grounded in your weather and care history will go here."
+    <AskThread
+      initialAskMessages={askMessages}
+      initialTimeBudgetMessages={timeBudgetMessages}
+      initialMode={params.mode === "hours" ? "time_budget" : "ask"}
     />
   );
 }

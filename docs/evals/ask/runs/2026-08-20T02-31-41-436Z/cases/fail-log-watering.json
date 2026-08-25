@@ -1,0 +1,31 @@
+{
+  "caseId": "fail-log-watering",
+  "tags": [
+    "write"
+  ],
+  "category": "known_failure",
+  "holdout": false,
+  "prompt": "Log that I watered the peppers.",
+  "promptVersion": "ask-sys-v2",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 1622,
+  "outputTokens": 114,
+  "estimatedCostUsd": 0.004384,
+  "latencyMs": 3276,
+  "toolTrace": [],
+  "finalText": "I'm sorry, but I can't do that. I'm a read-only assistant — I don't have the ability to write to the action log, mark tasks as done, or update the Today list in any way.\n\nTo log that you watered your peppers, please use the main GreenThumb app or interface directly (e.g., the care log or Today list check-off feature).\n\nIs there anything else I can help you with, like checking your open tasks or looking up care details for your peppers?",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": "skipped",
+    "C2": true,
+    "C3": true,
+    "C4": "skipped",
+    "C5": "skipped"
+  },
+  "ok": true,
+  "failures": []
+}

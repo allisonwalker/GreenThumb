@@ -191,14 +191,20 @@ describeDatabase("garden schema integration", () => {
         sun_exposure_source: "override",
       });
 
+      const [crop] = await transaction<{ id: string }[]>`
+        insert into crop (name, slug, source)
+        values ('Tomato', 'tomato', 'stub')
+        returning id
+      `;
       const [planting] = await transaction<{ id: string }[]>`
         insert into planting (
           location_id,
+          crop_id,
           crop_name,
           method,
           planted_on
         )
-        values (${derivedSection.id}, 'Tomato', 'transplant', '2026-05-01')
+        values (${derivedSection.id}, ${crop.id}, 'Tomato', 'transplant', '2026-05-01')
         returning id
       `;
       await transaction`
@@ -549,6 +555,130 @@ describeDatabase("garden schema integration", () => {
     });
   });
 
+  it("keeps one crop row per slug and requires planting.crop_id", async () => {
+    await expectRollback(async (transaction) => {
+      const [garden] = await transaction<{ id: string }[]>`
+        insert into garden (
+          latitude,
+          longitude,
+          timezone,
+          hardiness_zone
+        )
+        values (45.52, -122.68, 'America/Los_Angeles', '8b')
+        returning id
+      `;
+      const [pot] = await transaction<{ id: string }[]>`
+        insert into location (
+          garden_id,
+          kind,
+          name,
+          sun_exposure,
+          sun_exposure_source,
+          volume_gal,
+          material,
+          soil_type,
+          dryness_factor
+        )
+        values (
+          ${garden.id},
+          'pot',
+          'Pot 1',
+          'full_sun',
+          'override',
+          10,
+          'terracotta',
+          'potting mix',
+          1.5
+        )
+        returning id
+      `;
+      const [tomato] = await transaction<{ id: string }[]>`
+        insert into crop (name, slug, source, watering_interval_days)
+        values ('Tomato', 'tomato', 'stub', 3)
+        returning id
+      `;
+      const [pepper] = await transaction<{ id: string }[]>`
+        insert into crop (name, slug, source)
+        values ('Pepper', 'pepper', 'stub')
+        returning id
+      `;
+
+      await transaction`
+        insert into planting (
+          location_id, crop_id, crop_name, method, planted_on
+        )
+        values
+          (${pot.id}, ${tomato.id}, 'tomato', 'transplant', '2026-05-01'),
+          (${pot.id}, ${tomato.id}, 'Tomato', 'seed', '2026-05-02'),
+          (${pot.id}, ${pepper.id}, 'Pepper', 'transplant', '2026-05-03')
+      `;
+
+      const shared = await transaction<{ crop_id: string }[]>`
+        select crop_id from planting where crop_name in ('tomato', 'Tomato')
+      `;
+      const peppers = await transaction<{ crop_id: string }[]>`
+        select crop_id from planting where crop_name = 'Pepper'
+      `;
+      expect(shared).toHaveLength(2);
+      expect(shared[0]?.crop_id).toBe(tomato.id);
+      expect(shared[1]?.crop_id).toBe(tomato.id);
+      expect(peppers[0]?.crop_id).toBe(pepper.id);
+
+      await expect(
+        transaction`
+          insert into crop (name, slug, source)
+          values ('TOMATO', 'tomato', 'stub')
+        `,
+      ).rejects.toThrow();
+
+      const [sungold] = await transaction<{ id: string }[]>`
+        insert into crop (name, variety, slug, source, watering_interval_days)
+        values ('Tomato', 'Sungold', 'tomato--sungold', 'stub', 5)
+        returning id
+      `;
+      expect(sungold.id).not.toBe(tomato.id);
+
+      await expect(
+        transaction`
+          insert into crop (name, variety, slug, source)
+          values ('Tomato', null, 'tomato', 'stub')
+        `,
+      ).rejects.toThrow();
+
+      await expect(
+        transaction`
+          insert into crop (name, variety, slug, source)
+          values ('Tomato', '', 'tomato-blank', 'stub')
+        `,
+      ).rejects.toThrow(/crop_variety_null_or_nonblank/);
+
+      await expect(
+        transaction`
+          insert into crop (name, slug, source, watering_interval_days)
+          values ('Kale', 'kale', 'stub', 0)
+        `,
+      ).rejects.toThrow(/crop_watering_interval_positive/);
+
+      await expect(
+        transaction`
+          insert into crop (name, slug, source, sun_preference)
+          values ('Basil', 'basil', 'stub', 'bright_indirect')
+        `,
+      ).rejects.toThrow();
+
+      await expect(
+        transaction`
+          insert into planting (
+            location_id, crop_name, method, planted_on
+          )
+          values (${pot.id}, 'Orphan', 'seed', '2026-05-04')
+        `,
+      ).rejects.toThrow();
+
+      throw new Error(rollbackMessage);
+    });
+  });
+
   it("uses timestamptz for every timestamp column", async () => {
     const timestampWithoutTimeZone = await client!<
       { table_name: string; column_name: string }[]
@@ -568,11 +698,182 @@ describeDatabase("garden schema integration", () => {
           'weather_day',
           'weather_fetch',
           'agent_run',
-          'recommendation'
+          'conversation',
+          'message',
+          'crop',
+          'recommendation',
+          'care_run'
         )
         and data_type = 'timestamp without time zone'
     `;
 
     expect(timestampWithoutTimeZone).toEqual([]);
+  });
+
+  it("stores Ask messages and links assistant rows to agent_run", async () => {
+    await expectRollback(async (transaction) => {
+      const [user] = await transaction<{ id: string }[]>`
+        insert into app_user (id, email)
+        values ('11111111-1111-4111-8111-111111111111', 'ask@example.com')
+        returning id
+      `;
+      const [run] = await transaction<{ id: string }[]>`
+        insert into agent_run (kind, trigger, provider, model)
+        values ('ask', 'ask', 'gemini', 'gemini-flash-latest')
+        returning id
+      `;
+      const [conversation] = await transaction<{ id: string }[]>`
+        insert into conversation (user_id, kind)
+        values (${user.id}, 'ask')
+        returning id
+      `;
+      await transaction`
+        insert into message (conversation_id, role, content)
+        values (${conversation.id}, 'user', 'Do peppers want sun?')
+      `;
+      const [assistant] = await transaction<{ agent_run_id: string | null }[]>`
+        insert into message (conversation_id, role, content, agent_run_id)
+        values (${conversation.id}, 'assistant', 'Yes — catalog says full_sun.', ${run.id})
+        returning agent_run_id
+      `;
+      expect(assistant.agent_run_id).toBe(run.id);
+
+      await expect(
+        transaction`
+          insert into message (conversation_id, role, content, agent_run_id)
+          values (${conversation.id}, 'user', 'Thanks', ${run.id})
+        `,
+      ).rejects.toThrow();
+
+      throw new Error(rollbackMessage);
+    });
+  });
+
+  it("accepts time_budget as an agent_run kind", async () => {
+    await expectRollback(async (transaction) => {
+      const [run] = await transaction<{ kind: string }[]>`
+        insert into agent_run (kind, trigger, provider, model)
+        values ('time_budget', 'eval', 'gemini', 'gemini-flash-latest')
+        returning kind
+      `;
+      expect(run.kind).toBe("time_budget");
+      throw new Error(rollbackMessage);
+    });
+  });
+
+  it("accepts crop_draft as an agent_run kind", async () => {
+    await expectRollback(async (transaction) => {
+      const [run] = await transaction<{ kind: string }[]>`
+        insert into agent_run (kind, trigger, provider, model)
+        values ('crop_draft', 'catalog_create', 'gemini', 'gemini-flash-latest')
+        returning kind
+      `;
+      expect(run.kind).toBe("crop_draft");
+      throw new Error(rollbackMessage);
+    });
+  });
+
+  it("persists a matching recommendation on care_run with no agent_run_id", async () => {
+    await expectRollback(async (transaction) => {
+      const [garden] = await transaction<{ id: string }[]>`
+        select id from garden limit 1
+      `;
+      expect(garden).toBeTruthy();
+      const [pot] = await transaction<{ id: string }[]>`
+        insert into location (
+          garden_id,
+          kind,
+          name,
+          sun_exposure,
+          sun_exposure_source,
+          volume_gal,
+          material,
+          soil_type,
+          dryness_factor
+        )
+        values (
+          ${garden.id},
+          'pot',
+          'ALL-20 persist pot',
+          'full_sun',
+          'override',
+          10,
+          'terracotta',
+          'potting mix',
+          1.5
+        )
+        returning id
+      `;
+      const [run] = await transaction<{ id: string }[]>`
+        insert into care_run (trigger, status, task_count)
+        values ('manual', 'succeeded', 1)
+        returning id
+      `;
+      const [row] = await transaction<
+        {
+          agent_run_id: string | null;
+          care_run_id: string;
+          confidence: string | null;
+        }[]
+      >`
+        insert into recommendation (
+          care_run_id,
+          location_id,
+          action_type,
+          urgency,
+          headline,
+          rationale,
+          evidence,
+          status
+        )
+        values (
+          ${run.id},
+          ${pot.id},
+          'watered',
+          'today',
+          'Water Pot 1',
+          'last watered 4 days ago',
+          '{"facts":[{"source":"action_log","figure":"2026-08-15"}]}'::jsonb,
+          'open'
+        )
+        returning agent_run_id, care_run_id, confidence
+      `;
+
+      expect(row.agent_run_id).toBeNull();
+      expect(row.care_run_id).toBe(run.id);
+      expect(row.confidence).toBeNull();
+
+      const open = await transaction<{ headline: string }[]>`
+        select headline
+        from recommendation
+        join location on location.id = recommendation.location_id
+        where recommendation.status = 'open'
+          and location.garden_id = ${garden.id}
+      `;
+      expect(open).toEqual([{ headline: "Water Pot 1" }]);
+
+      await expect(
+        transaction`
+          insert into recommendation (
+            location_id,
+            action_type,
+            urgency,
+            headline,
+            rationale,
+            evidence
+          )
+          values (
+            ${pot.id},
+            'watered',
+            'today',
+            'No run',
+            'missing run ids',
+            '{"facts":[]}'::jsonb
+          )
+        `,
+      ).rejects.toThrow();
+
+      throw new Error(rollbackMessage);
+    });
   });
 });

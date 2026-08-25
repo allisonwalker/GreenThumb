@@ -23,6 +23,9 @@ function mockClient(
       }
       return turn;
     },
+    async generateJson() {
+      throw new Error("generateJson not used in tool-loop tests");
+    },
   };
 }
 
@@ -162,5 +165,40 @@ describe("runToolLoop bounds", () => {
     expect(result.finalText).toBe("All good");
     expect(result.toolTrace[0]?.output).toEqual({ pong: true });
     expect(result.estimatedCostUsd).toBeGreaterThanOrEqual(0);
+  });
+
+  it("forwards streamed text deltas before the turn completes", async () => {
+    const deltas: string[] = [];
+    const result = await runToolLoop({
+      client: {
+        provider: "gemini",
+        model: "mock-model",
+        async complete(_request, options) {
+          options?.onTextDelta?.("Hel");
+          options?.onTextDelta?.("lo");
+          return {
+            text: "Hello",
+            toolCalls: [],
+            inputTokens: 3,
+            outputTokens: 2,
+            stopReason: "end",
+          };
+        },
+        async generateJson() {
+          throw new Error("generateJson not used in tool-loop tests");
+        },
+      },
+      system: "test",
+      userMessage: "go",
+      tools: noopTools,
+      executeTool: async () => ({}),
+      maxIterations: 1,
+      maxTokens: 1_000,
+      timeoutMs: 5_000,
+      onTextDelta: (delta) => deltas.push(delta),
+    });
+
+    expect(deltas).toEqual(["Hel", "lo"]);
+    expect(result.finalText).toBe("Hello");
   });
 });

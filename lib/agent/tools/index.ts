@@ -1,22 +1,54 @@
 import type { ToolCallRequest, ToolDefinition } from "@/lib/llm/types";
 
-import { getCareHistory } from "./get-care-history";
-import { getCurrentLocations } from "./get-current-locations";
-import { getGardenNotes } from "./get-garden-notes";
-import { getGardenProfile } from "./get-garden-profile";
-import { getOpenRecommendations } from "./get-open-recommendations";
-import { getPlantings } from "./get-plantings";
-import { getWeather } from "./get-weather";
+import {
+  getCareHistory,
+  type CareHistoryStore,
+} from "./get-care-history";
+import {
+  getCropCatalog,
+  type CropCatalogStore,
+} from "./get-crop-catalog";
+import {
+  getCurrentLocations,
+  type CurrentLocationsStore,
+} from "./get-current-locations";
+import {
+  createGardenNotesStore,
+  getGardenNotes,
+  type GardenNotesStore,
+} from "./get-garden-notes";
+import {
+  createGardenProfileStore,
+  getGardenProfile,
+  type GardenProfileStore,
+} from "./get-garden-profile";
+import {
+  getOpenRecommendations,
+  type OpenRecommendationsStore,
+} from "./get-open-recommendations";
+import { getPlantings, type PlantingsStore } from "./get-plantings";
+import { getWeather, type WeatherToolDependencies } from "./get-weather";
 import { emptyObjectSchema, type ToolExecutionContext } from "./types";
 
+/**
+ * Conversational registry — getters only. Ask and time-budget share this
+ * list. Do not add a write tool.
+ */
 export const READ_TOOL_NAMES = [
   "get_garden_profile",
   "get_current_locations",
   "get_plantings",
+  "get_crop_catalog",
   "get_care_history",
   "get_weather",
   "get_garden_notes",
   "get_open_recommendations",
+] as const;
+
+/** Names that must never be registered or executable from conversation. */
+export const FORBIDDEN_WRITE_TOOL_NAMES = [
+  "propose_recommendation",
+  "save_harvest_estimate",
 ] as const;
 
 export type ReadToolName = (typeof READ_TOOL_NAMES)[number];
@@ -39,6 +71,21 @@ export const agentToolDefinitions: ToolDefinition[] = [
     description:
       "List active plantings with crop, planted_on, and days since planting.",
     inputSchema: { ...emptyObjectSchema },
+  },
+  {
+    name: "get_crop_catalog",
+    description:
+      "Return crop care rows (name, variety, slug, sun_preference, watering interval, frost, harvest window, time estimates). Optional query filters by name, variety, or slug. If a row or field is missing, say so — do not guess.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Optional crop name, variety, or slug to search for.",
+        },
+      },
+      additionalProperties: false,
+    },
   },
   {
     name: "get_care_history",
@@ -89,7 +136,7 @@ export const agentToolDefinitions: ToolDefinition[] = [
   {
     name: "get_open_recommendations",
     description:
-      "Return currently open recommendations so you avoid restating advice that is already pending.",
+      "Return the already-computed open Today list, including estimated_minutes from the crop row when that action has a time estimate (null if missing). Read this instead of recomputing care. Do not invent tasks that are not in the result.",
     inputSchema: { ...emptyObjectSchema },
   },
 ];
@@ -99,34 +146,87 @@ export type ToolRegistry = {
   execute: (call: ToolCallRequest) => Promise<unknown>;
 };
 
+export type ToolRegistryDependencies = {
+  gardenProfileStore?: GardenProfileStore;
+  currentLocationsStore?: CurrentLocationsStore;
+  plantingsStore?: PlantingsStore;
+  cropCatalogStore?: CropCatalogStore;
+  careHistoryStore?: CareHistoryStore;
+  gardenNotesStore?: GardenNotesStore;
+  openRecommendationsStore?: OpenRecommendationsStore;
+  weather?: WeatherToolDependencies;
+};
+
 export function createToolRegistry(
   context: ToolExecutionContext = {},
+  dependencies: ToolRegistryDependencies = {},
 ): ToolRegistry {
+  const profileStore =
+    dependencies.gardenProfileStore ?? createGardenProfileStore();
+
   return {
     definitions: agentToolDefinitions,
     async execute(call) {
+      if (
+        (FORBIDDEN_WRITE_TOOL_NAMES as readonly string[]).includes(call.name)
+      ) {
+        throw new Error(`Unknown tool: ${call.name}`);
+      }
+
       switch (call.name as ReadToolName) {
         case "get_garden_profile":
-          return getGardenProfile(context);
+          return getGardenProfile(context, profileStore);
         case "get_current_locations":
-          return getCurrentLocations(context);
+          return getCurrentLocations(
+            context,
+            dependencies.currentLocationsStore,
+          );
         case "get_plantings":
-          return getPlantings(context);
+          return getPlantings(
+            context,
+            dependencies.plantingsStore,
+            profileStore,
+          );
+        case "get_crop_catalog":
+          return getCropCatalog(
+            {
+              ...context,
+              query: optionalString(call.input.query),
+            },
+            dependencies.cropCatalogStore,
+          );
         case "get_care_history":
-          return getCareHistory({
-            ...context,
-            days: optionalInteger(call.input.days),
-          });
+          return getCareHistory(
+            {
+              ...context,
+              days: optionalInteger(call.input.days),
+            },
+            dependencies.careHistoryStore,
+          );
         case "get_weather":
-          return getWeather({
-            ...context,
-            pastDays: optionalInteger(call.input.past_days),
-            forecastDays: optionalInteger(call.input.forecast_days),
-          });
+          return getWeather(
+            {
+              ...context,
+              pastDays: optionalInteger(call.input.past_days),
+              forecastDays: optionalInteger(call.input.forecast_days),
+            },
+            {
+              profileStore,
+              ...dependencies.weather,
+            },
+          );
         case "get_garden_notes":
-          return getGardenNotes(context);
+          return getGardenNotes(
+            context,
+            dependencies.gardenNotesStore ?? createGardenNotesStore(),
+            profileStore,
+          );
         case "get_open_recommendations":
-          return getOpenRecommendations(context);
+          return getOpenRecommendations(
+            context,
+            dependencies.openRecommendationsStore,
+            profileStore,
+          );
         default:
           throw new Error(`Unknown tool: ${call.name}`);
       }
@@ -147,10 +247,21 @@ function optionalInteger(value: unknown): number | undefined {
   throw new Error(`Expected integer, got ${typeof value}`);
 }
 
+function optionalString(value: unknown): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  throw new Error(`Expected string, got ${typeof value}`);
+}
+
 export type { ToolExecutionContext } from "./types";
 
 export {
   getCareHistory,
+  getCropCatalog,
   getCurrentLocations,
   getGardenNotes,
   getGardenProfile,

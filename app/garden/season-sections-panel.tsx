@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 
 import {
@@ -24,6 +25,7 @@ import {
 const fieldClass =
   "mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-base shadow-sm outline-none focus:border-green-700 focus:ring-2 focus:ring-green-200";
 const initialState = { status: "idle" as const };
+const SEASON_SECTIONS_FORM_ID = "season-sections-save";
 
 type DraftSection = {
   clientKey: string;
@@ -191,6 +193,14 @@ function HistorySections({
               {section.sunExposureDisplay}
               {section.sunExposureSource === "override" ? " · override" : ""}
             </p>
+            <p className="mt-2">
+              <Link
+                href={`/garden/${section.id}`}
+                className="text-sm font-semibold text-green-800 hover:underline"
+              >
+                View plantings
+              </Link>
+            </p>
           </div>
         ))
       )}
@@ -277,9 +287,6 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
   const [drafts, setDrafts] = useState<DraftSection[]>(() =>
     toDrafts(board.currentSeason?.sections ?? [], board.bedLengthFt),
   );
-  const [historySeasonId, setHistorySeasonId] = useState(
-    board.pastSeasons[0]?.id ?? "",
-  );
 
   const savedById = useMemo(() => {
     const map = new Map<string, SeasonSectionRecord>();
@@ -288,9 +295,6 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
     }
     return map;
   }, [board.currentSeason]);
-
-  const historySeason =
-    board.pastSeasons.find((season) => season.id === historySeasonId) ?? null;
 
   function updateDraft(clientKey: string, change: Partial<DraftSection>) {
     setDrafts((current) =>
@@ -403,12 +407,7 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
 
           <SectionStrip sections={drafts} bedLengthFt={board.bedLengthFt} />
 
-          <form action={saveAction} className="mt-6 space-y-4">
-            <input
-              type="hidden"
-              name="seasonId"
-              value={board.currentSeason.id}
-            />
+          <div className="mt-6 space-y-4">
             {drafts.map((section, index) => {
               const saved = section.id ? savedById.get(section.id) : undefined;
               let previewLabel = saved?.sunExposureDisplay;
@@ -428,97 +427,132 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
               }
 
               return (
-                <fieldset
+                <div
                   key={section.clientKey}
                   className="rounded-xl border bg-neutral-50 p-4"
                 >
-                  <legend className="px-1 text-sm font-semibold">
-                    {section.name || `Section ${index + 1}`}
-                  </legend>
-                  {section.id ? (
-                    <input type="hidden" name="sectionId" value={section.id} />
-                  ) : (
-                    <input type="hidden" name="sectionId" value="" />
-                  )}
-                  <div className="grid gap-4 sm:grid-cols-[1.4fr_1fr_1fr_auto] sm:items-end">
-                    <label className="text-sm font-medium">
-                      Name
+                  <fieldset className="min-w-0 border-0 p-0">
+                    <legend className="px-0 text-sm font-semibold">
+                      {section.name || `Section ${index + 1}`}
+                    </legend>
+                    {section.id ? (
                       <input
-                        className={fieldClass}
-                        name="sectionName"
-                        required
-                        value={section.name}
-                        onChange={(event) =>
-                          updateDraft(section.clientKey, {
-                            name: event.target.value,
-                          })
-                        }
+                        type="hidden"
+                        form={SEASON_SECTIONS_FORM_ID}
+                        name="sectionId"
+                        value={section.id}
                       />
-                    </label>
-                    <label className="text-sm font-medium">
-                      Starts at (ft)
+                    ) : (
                       <input
-                        className={fieldClass}
-                        name="sectionStartFt"
-                        type="number"
-                        inputMode="decimal"
-                        step="0.1"
-                        required
-                        value={section.startFt}
-                        onChange={(event) =>
-                          updateDraft(section.clientKey, {
-                            startFt: Number(event.target.value),
-                          })
-                        }
+                        type="hidden"
+                        form={SEASON_SECTIONS_FORM_ID}
+                        name="sectionId"
+                        value=""
                       />
-                    </label>
-                    <label className="text-sm font-medium">
-                      Ends at (ft)
-                      <input
-                        className={fieldClass}
-                        name="sectionEndFt"
-                        type="number"
-                        inputMode="decimal"
-                        step="0.1"
-                        required
-                        value={section.endFt}
-                        onChange={(event) =>
-                          updateDraft(section.clientKey, {
-                            endFt: Number(event.target.value),
-                          })
+                    )}
+                    <div className="grid gap-4 sm:grid-cols-[1.4fr_1fr_1fr_auto] sm:items-end">
+                      <label className="text-sm font-medium">
+                        Name
+                        <input
+                          className={fieldClass}
+                          form={SEASON_SECTIONS_FORM_ID}
+                          name="sectionName"
+                          required
+                          value={section.name}
+                          onChange={(event) =>
+                            updateDraft(section.clientKey, {
+                              name: event.target.value,
+                            })
+                          }
+                        />
+                      </label>
+                      <label className="text-sm font-medium">
+                        Starts at (ft)
+                        <input
+                          className={fieldClass}
+                          form={SEASON_SECTIONS_FORM_ID}
+                          name="sectionStartFt"
+                          type="number"
+                          inputMode="decimal"
+                          step="0.1"
+                          required
+                          value={section.startFt}
+                          onChange={(event) =>
+                            updateDraft(section.clientKey, {
+                              startFt: Number(event.target.value),
+                            })
+                          }
+                        />
+                      </label>
+                      <label className="text-sm font-medium">
+                        Ends at (ft)
+                        <input
+                          className={fieldClass}
+                          form={SEASON_SECTIONS_FORM_ID}
+                          name="sectionEndFt"
+                          type="number"
+                          inputMode="decimal"
+                          step="0.1"
+                          required
+                          value={section.endFt}
+                          onChange={(event) =>
+                            updateDraft(section.clientKey, {
+                              endFt: Number(event.target.value),
+                            })
+                          }
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${section.name}`}
+                        onClick={() =>
+                          setDrafts((current) =>
+                            current.filter(
+                              (item) => item.clientKey !== section.clientKey,
+                            ),
+                          )
                         }
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      aria-label={`Remove ${section.name}`}
-                      onClick={() =>
-                        setDrafts((current) =>
-                          current.filter(
-                            (item) => item.clientKey !== section.clientKey,
-                          ),
-                        )
-                      }
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 aria-hidden="true" className="size-4" />
-                      <span className="sm:hidden">Remove</span>
-                    </button>
-                  </div>
-                  {previewLabel ? (
-                    <p className="mt-3 text-sm text-neutral-800">
-                      Sun: {previewLabel}
-                      {saved?.sunExposureSource === "override"
-                        ? " (saved override may differ until you revert)"
-                        : " · derived"}
-                    </p>
-                  ) : null}
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 aria-hidden="true" className="size-4" />
+                        <span className="sm:hidden">Remove</span>
+                      </button>
+                    </div>
+                    {previewLabel ? (
+                      <p className="mt-3 text-sm text-neutral-800">
+                        Sun: {previewLabel}
+                        {saved?.sunExposureSource === "override"
+                          ? " (saved override may differ until you revert)"
+                          : " · derived"}
+                      </p>
+                    ) : null}
+                    {saved ? (
+                      <p className="mt-2">
+                        <Link
+                          href={`/garden/${saved.id}`}
+                          className="text-sm font-semibold text-green-800 hover:underline"
+                        >
+                          Record plantings
+                        </Link>
+                      </p>
+                    ) : null}
+                  </fieldset>
+                  {/* Own forms — must stay outside the sections save form. */}
                   {saved ? <OverrideControls section={saved} /> : null}
-                </fieldset>
+                </div>
               );
             })}
 
-            <div className="sticky bottom-20 rounded-xl border bg-white/95 p-4 shadow-lg backdrop-blur md:bottom-4">
+            <form
+              id={SEASON_SECTIONS_FORM_ID}
+              action={saveAction}
+              className="sticky bottom-20 rounded-xl border bg-white/95 p-4 shadow-lg backdrop-blur md:bottom-4"
+            >
+              <input
+                type="hidden"
+                name="seasonId"
+                value={board.currentSeason.id}
+              />
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <StatusLine
                   state={saveState}
@@ -532,41 +566,53 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
                   {savePending ? "Saving…" : "Save sections"}
                 </button>
               </div>
-            </div>
-          </form>
-        </section>
-      ) : null}
-
-      {board.pastSeasons.length > 0 ? (
-        <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold">Previous seasons</h2>
-            <p className="mt-1 text-sm text-neutral-600">
-              Read-only history of earlier section cuts and their exposures.
-            </p>
+            </form>
           </div>
-          <label className="block text-sm font-semibold text-neutral-800">
-            Season
-            <select
-              className={fieldClass}
-              value={historySeasonId}
-              onChange={(event) => setHistorySeasonId(event.target.value)}
-            >
-              {board.pastSeasons.map((season) => (
-                <option key={season.id} value={season.id}>
-                  {season.name} ({season.startsOn} → {season.endsOn})
-                </option>
-              ))}
-            </select>
-          </label>
-          {historySeason ? (
-            <HistorySections
-              season={historySeason}
-              bedLengthFt={board.bedLengthFt}
-            />
-          ) : null}
         </section>
       ) : null}
     </div>
+  );
+}
+
+export function PreviousSeasonsPanel({ board }: { board: SeasonBoardRecord }) {
+  const [historySeasonId, setHistorySeasonId] = useState(
+    board.pastSeasons[0]?.id ?? "",
+  );
+  const historySeason =
+    board.pastSeasons.find((season) => season.id === historySeasonId) ?? null;
+
+  if (board.pastSeasons.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="rounded-2xl border bg-white p-5 pb-28 shadow-sm sm:p-6 md:pb-6">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold">Previous seasons</h2>
+        <p className="mt-1 text-sm text-neutral-600">
+          Read-only history of earlier section cuts and their exposures.
+        </p>
+      </div>
+      <label className="block text-sm font-semibold text-neutral-800">
+        Season
+        <select
+          className={fieldClass}
+          value={historySeasonId}
+          onChange={(event) => setHistorySeasonId(event.target.value)}
+        >
+          {board.pastSeasons.map((season) => (
+            <option key={season.id} value={season.id}>
+              {season.name} ({season.startsOn} → {season.endsOn})
+            </option>
+          ))}
+        </select>
+      </label>
+      {historySeason ? (
+        <HistorySections
+          season={historySeason}
+          bedLengthFt={board.bedLengthFt}
+        />
+      ) : null}
+    </section>
   );
 }

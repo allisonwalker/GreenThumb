@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 
 import { SignInForm } from "@/app/(auth)/sign-in/sign-in-form";
 import { getAuthenticatedIdentity } from "@/lib/auth/session";
-import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/config";
 
 type SignInPageProps = {
   searchParams: Promise<{ error?: string }>;
@@ -16,9 +15,6 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   if (identity) {
     redirect("/today");
   }
-
-  const supabaseUrl = getSupabaseUrl();
-  const supabaseAnonKey = getSupabaseAnonKey();
 
   return (
     <section className="mx-auto flex min-h-[75dvh] max-w-md items-center">
@@ -42,10 +38,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
               : "That sign-in link is invalid or expired. Request a new code on this page and enter the code from the email."}
           </p>
         ) : null}
-        <SignInForm
-          supabaseUrl={supabaseUrl}
-          supabaseAnonKey={supabaseAnonKey}
-        />
+        <SignInForm />
       </div>
     </section>
   );

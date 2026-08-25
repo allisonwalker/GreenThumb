@@ -4,6 +4,7 @@ import {
   CircleHelp,
   ClipboardPlus,
   Flower2,
+  Leaf,
   ListTodo,
   LogOut,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils";
 const destinations = [
   { href: "/today", label: "Today", icon: ListTodo },
   { href: "/garden", label: "Garden", icon: Flower2 },
+  { href: "/catalog", label: "Catalog", icon: Leaf },
   { href: "/log", label: "Log", icon: ClipboardPlus },
   { href: "/ask", label: "Ask", icon: CircleHelp },
 ];
@@ -32,7 +34,7 @@ export function AppNav() {
       aria-label="Primary navigation"
       className="fixed inset-x-0 bottom-0 z-10 border-t bg-white md:static md:border-t-0 md:border-r"
     >
-      <ul className="mx-auto grid max-w-lg grid-cols-5 md:w-52 md:grid-cols-1 md:gap-2 md:p-4">
+      <ul className="mx-auto grid max-w-lg grid-cols-6 md:w-52 md:grid-cols-1 md:gap-2 md:p-4">
         {destinations.map(({ href, label, icon: Icon }) => {
           const isActive = pathname.startsWith(href);
 

@@ -1,15 +1,21 @@
 import { requirePageUser } from "@/lib/auth/session";
+import { listCurrentLocations } from "@/lib/garden/planting-repository";
 import { getGardenProfileRecord } from "@/lib/garden/profile-repository";
 import { getSeasonBoardRecord } from "@/lib/garden/season-repository";
 
+import { CurrentLocationsPanel } from "./current-locations-panel";
 import { GardenProfileForm } from "./garden-profile-form";
-import { SeasonSectionsPanel } from "./season-sections-panel";
+import {
+  PreviousSeasonsPanel,
+  SeasonSectionsPanel,
+} from "./season-sections-panel";
 
 export default async function GardenPage() {
   await requirePageUser();
-  const [profile, seasonBoard] = await Promise.all([
+  const [profile, seasonBoard, currentLocations] = await Promise.all([
     getGardenProfileRecord(),
     getSeasonBoardRecord(),
+    listCurrentLocations(),
   ]);
 
   return (
@@ -22,8 +28,8 @@ export default async function GardenPage() {
           Your garden profile
         </h1>
         <p className="mt-3 max-w-2xl text-neutral-600">
-          Set the location and permanent sun map, then draw this season&apos;s
-          bed sections to see each one&apos;s exposure.
+          Set the location and permanent sun map, draw this season&apos;s bed
+          sections, then record what is planted in each section and pot.
         </p>
       </header>
 
@@ -45,6 +51,12 @@ export default async function GardenPage() {
           </p>
         </section>
       )}
+
+      <CurrentLocationsPanel locations={currentLocations} />
+
+      {seasonBoard && seasonBoard.pastSeasons.length > 0 ? (
+        <PreviousSeasonsPanel board={seasonBoard} />
+      ) : null}
     </div>
   );
 }

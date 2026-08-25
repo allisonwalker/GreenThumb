@@ -1,29 +1,22 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import {
-  finishSignIn,
-  prepareMagicLink,
+  requestSignInCode,
+  verifySignInCode,
 } from "@/app/(auth)/sign-in/actions";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-
-type SignInFormProps = {
-  supabaseUrl: string;
-  supabaseAnonKey: string;
-};
 
 type SignInState = {
   status: "idle" | "error" | "sent";
   message?: string;
 };
 
-export function SignInForm({
-  supabaseUrl,
-  supabaseAnonKey,
-}: SignInFormProps) {
+export function SignInForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
+  const [code, setCode] = useState("");
   const [state, setState] = useState<SignInState>({ status: "idle" });
   const [pending, setPending] = useState(false);
 
@@ -33,43 +26,18 @@ export function SignInForm({
     setState({ status: "idle" });
 
     try {
-      const formData = new FormData(event.currentTarget);
-      const prepared = await prepareMagicLink(formData);
+      const result = await requestSignInCode(new FormData(event.currentTarget));
 
-      if (!prepared.ok) {
-        setState({ status: "error", message: prepared.message });
+      if (!result.ok) {
+        setState({ status: "error", message: result.message });
         return;
       }
 
-      const supabase = createSupabaseBrowserClient(
-        supabaseUrl,
-        supabaseAnonKey,
-      );
-      const { error } = await supabase.auth.signInWithOtp({
-        email: prepared.email,
-        options: {
-          emailRedirectTo: prepared.callbackUrl,
-          shouldCreateUser: true,
-        },
-      });
-
-      if (error) {
-        console.error("Supabase could not send a sign-in code.", error);
-        const rateLimited = /rate limit/i.test(error.message);
-        setState({
-          status: "error",
-          message: rateLimited
-            ? "Too many sign-in emails were requested. Wait about an hour (Supabase’s free email limit), then try once."
-            : "We could not send the sign-in code. Please try again.",
-        });
-        return;
-      }
-
-      setEmail(prepared.email);
-      setOtp("");
+      setEmail(result.email);
+      setCode("");
       setState({
         status: "sent",
-        message: `Check ${prepared.email} for a one-time code (do not use the link — enter the code here).`,
+        message: `Check ${result.email} for a one-time code (do not use the link — enter the code here).`,
       });
     } catch (error) {
       console.error("Sign-in code request failed.", error);
@@ -88,59 +56,15 @@ export function SignInForm({
     setState((current) => ({ ...current, status: "sent" }));
 
     try {
-      const token = otp.replace(/\s/g, "");
-      if (!/^\d{6,8}$/.test(token)) {
-        setState({
-          status: "error",
-          message: "Enter the 6–8 digit code from the email.",
-        });
+      const result = await verifySignInCode(new FormData(event.currentTarget));
+
+      if (!result.ok) {
+        setState({ status: "error", message: result.message });
         return;
       }
 
-      const supabase = createSupabaseBrowserClient(
-        supabaseUrl,
-        supabaseAnonKey,
-      );
-
-      // signInWithOtp emails use the magiclink OTP type; fall back to email.
-      let verifyError = (
-        await supabase.auth.verifyOtp({
-          email,
-          token,
-          type: "magiclink",
-        })
-      ).error;
-
-      if (verifyError) {
-        verifyError = (
-          await supabase.auth.verifyOtp({
-            email,
-            token,
-            type: "email",
-          })
-        ).error;
-      }
-
-      if (verifyError) {
-        console.error(
-          "Supabase could not verify the sign-in code.",
-          verifyError,
-        );
-        setState({
-          status: "error",
-          message:
-            "That code is invalid or expired. Request a new code and try again.",
-        });
-        return;
-      }
-
-      const finished = await finishSignIn();
-      if (!finished.ok) {
-        setState({ status: "error", message: finished.message });
-        return;
-      }
-
-      window.location.assign("/today");
+      // The action set the session cookie, so this navigation is authenticated.
+      router.push("/today");
     } catch (error) {
       console.error("Sign-in code verification failed.", error);
       setState({
@@ -152,11 +76,11 @@ export function SignInForm({
     }
   }
 
-  const showOtpStep = Boolean(email);
+  const showCodeStep = Boolean(email);
 
   return (
     <div className="mt-8 space-y-5">
-      {!showOtpStep ? (
+      {!showCodeStep ? (
         <form onSubmit={onRequestCode} className="space-y-5">
           <div>
             <label
@@ -187,25 +111,26 @@ export function SignInForm({
         </form>
       ) : (
         <form onSubmit={onVerifyCode} className="space-y-5">
+          <input type="hidden" name="email" value={email} readOnly />
           <p className="text-sm text-neutral-600">
-            Code sent to <span className="font-medium">{email}</span>. Enter
-            the code from the email — ignore any sign-in link for now.
+            Code sent to <span className="font-medium">{email}</span>. Enter the
+            code from the email — ignore any sign-in link for now.
           </p>
           <div>
             <label
-              htmlFor="otp"
+              htmlFor="code"
               className="block text-sm font-semibold text-neutral-800"
             >
               Sign-in code
             </label>
             <input
-              id="otp"
-              name="otp"
+              id="code"
+              name="code"
               inputMode="numeric"
               autoComplete="one-time-code"
               required
-              value={otp}
-              onChange={(event) => setOtp(event.target.value)}
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
               className="mt-2 min-h-12 w-full rounded-lg border bg-white px-3 text-center text-2xl tracking-[0.4em] shadow-sm outline-none focus:border-green-700 focus:ring-2 focus:ring-green-200"
               placeholder="12345678"
               maxLength={8}
@@ -226,7 +151,7 @@ export function SignInForm({
             className="w-full text-sm text-neutral-600 underline-offset-2 hover:underline"
             onClick={() => {
               setEmail("");
-              setOtp("");
+              setCode("");
               setState({ status: "idle" });
             }}
           >

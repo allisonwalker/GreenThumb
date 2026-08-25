@@ -86,14 +86,14 @@ export function createCareHistoryStore(): CareHistoryStore {
 
 export async function getCareHistory(
   input: ToolExecutionContext & { days?: number } = {},
-  store: CareHistoryStore = createCareHistoryStore(),
+  store?: CareHistoryStore,
 ): Promise<CareHistoryResult> {
   const days = input.days ?? 30;
   if (!Number.isInteger(days) || days < 1 || days > 365) {
     throw new Error("days must be an integer between 1 and 365");
   }
 
-  return store.list({
+  return (store ?? createCareHistoryStore()).list({
     gardenId: input.gardenId,
     days,
     now: input.now ?? new Date(),

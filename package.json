@@ -4,15 +4,20 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run verify:env && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:db": "RUN_DB_TESTS=true node --env-file-if-exists=.env.local ./node_modules/vitest/vitest.mjs run lib/db/schema.integration.test.ts",
+    "test:db": "RUN_DB_TESTS=true node --env-file-if-exists=.env.local ./node_modules/vitest/vitest.mjs run lib/db/schema.integration.test.ts lib/db/rls.integration.test.ts lib/care/persist.integration.test.ts",
+    "verify:env": "tsx scripts/verify-env.ts",
+    "verify:rls": "tsx --env-file-if-exists=.env.local scripts/verify-rls.ts",
+    "verify:bundle": "tsx --env-file-if-exists=.env.local scripts/scan-build-secrets.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.ts",
-    "agent:run": "tsx --env-file-if-exists=.env.local scripts/run-agent.ts"
+    "agent:run": "tsx --env-file-if-exists=.env.local scripts/run-agent.ts",
+    "eval:ask": "tsx --env-file-if-exists=.env.local scripts/eval-ask.ts",
+    "eval:time-budget": "tsx --env-file-if-exists=.env.local scripts/eval-time-budget.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

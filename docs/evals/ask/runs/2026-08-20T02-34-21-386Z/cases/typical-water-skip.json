@@ -1,0 +1,37 @@
+{
+  "caseId": "typical-water-skip",
+  "tags": [
+    "care"
+  ],
+  "category": "typical",
+  "holdout": false,
+  "prompt": "Should I water the peppers today?",
+  "promptVersion": "ask-sys-v1",
+  "provider": "gemini",
+  "model": "gemini-flash-latest",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 2572,
+  "outputTokens": 186,
+  "estimatedCostUsd": 0.000332,
+  "latencyMs": 11238,
+  "toolTrace": [
+    "get_open_recommendations",
+    "get_plantings",
+    "get_crop_catalog",
+    "get_care_history",
+    "get_weather"
+  ],
+  "finalText": "**No, you should skip watering the peppers today.**\n\nHere are the details from your garden records:\n\n* **Today's Recommendation:** An open task for **Pepper Pot** recommends: *\"Skip watering Pepper Pot — rain coming.\"*\n* **Weather Forecast:** 12 mm of rain is forecast for today (August 13, 2026).\n* **Planting & Care Info:** Your **Carmen peppers** in **Pepper Pot** normally have a standard watering interval of 3 days, but scheduled watering is deferred due to the incoming precipitation.",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": true,
+    "C5": "skipped"
+  },
+  "ok": true,
+  "failures": []
+}

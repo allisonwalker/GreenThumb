@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   addCalendarDays,
   daysBetween,
+  endOfLocalDay,
   localDateString,
   localDateTimeString,
   zonedDateTimeToUtc,

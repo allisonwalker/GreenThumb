@@ -16,6 +16,15 @@ import {
   saveSeasonSectionsRecord,
 } from "@/lib/garden/season-repository";
 import {
+  addPlantingRecord,
+  removePlantingRecord,
+} from "@/lib/garden/planting-repository";
+import {
+  type PlantingFormState,
+  parseAddPlantingForm,
+  parseRemovePlantingForm,
+} from "@/lib/garden/planting-validation";
+import {
   type SeasonFormState,
   parseCreateSeasonForm,
   parseOverrideSectionForm,
@@ -164,6 +173,107 @@ export async function revertSectionExposure(
         error instanceof Error
           ? error.message
           : "Could not revert to derived exposure.",
+    };
+  }
+}
+
+export async function addPlanting(
+  _previousState: PlantingFormState,
+  formData: FormData,
+): Promise<PlantingFormState> {
+  const identity = await requirePageUser();
+
+  let input;
+  try {
+    input = parseAddPlantingForm(formData);
+  } catch (error) {
+    return {
+      status: "error",
+      message:
+        error instanceof Error ? error.message : "Check the form and try again.",
+    };
+  }
+
+  try {
+    const result = await addPlantingRecord(input);
+    const crop = result.crop;
+    const created = result.created;
+    if (!crop?.id) {
+      return {
+        status: "error",
+        message: "Could not resolve or create a catalog crop for this planting.",
+      };
+    }
+
+    let message = "Planting added.";
+
+    if (created) {
+      const { draftCropCare } = await import("@/lib/crops/draft");
+      const draft = await draftCropCare({
+        cropId: crop.id,
+        trigger: "planting_first_sight",
+        userId: identity.id,
+      });
+      if (draft.outcome === "generated") {
+        message = "Planting added. Care fields drafted by Gemini.";
+      } else if (draft.outcome === "stub_monthly_cap") {
+        message = `Planting added with a blank care stub. ${draft.message}`;
+      } else {
+        message =
+          "Planting added with a blank care stub — Gemini could not fill care fields.";
+      }
+    }
+
+    revalidatePath("/garden");
+    revalidatePath(`/garden/${input.locationId}`);
+    revalidatePath("/catalog");
+    revalidatePath(`/catalog/${crop.id}`);
+    return { status: "success", message };
+  } catch (error) {
+    console.error("Adding a planting failed.", error);
+    return {
+      status: "error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "The planting could not be saved. Please try again.",
+    };
+  }
+}
+
+export async function removePlanting(
+  _previousState: PlantingFormState,
+  formData: FormData,
+): Promise<PlantingFormState> {
+  await requirePageUser();
+
+  let input;
+  try {
+    input = parseRemovePlantingForm(formData);
+  } catch (error) {
+    return {
+      status: "error",
+      message:
+        error instanceof Error ? error.message : "Check the form and try again.",
+    };
+  }
+
+  try {
+    await removePlantingRecord(input);
+    revalidatePath("/garden");
+    revalidatePath(`/garden/${input.locationId}`);
+    return {
+      status: "success",
+      message: "Planting marked removed and kept in history.",
+    };
+  } catch (error) {
+    console.error("Removing a planting failed.", error);
+    return {
+      status: "error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "The planting could not be updated. Please try again.",
     };
   }
 }
