@@ -11,8 +11,7 @@ export function getDatabase() {
   }
 
   client ??= postgres(databaseUrl, {
-    // Concurrent RSC loads and Promise.all queries queue forever if this is 1.
-    max: 5,
+    max: 4,
     prepare: false,
     idle_timeout: 20,
     connect_timeout: 10,
