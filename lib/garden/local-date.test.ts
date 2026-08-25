@@ -5,7 +5,8 @@ import {
   daysBetween,
   endOfLocalDay,
   localDateString,
-  startOfLocalDay,
+  localDateTimeString,
+  zonedDateTimeToUtc,
 } from "./local-date";
 
 describe("garden local date helpers", () => {
@@ -26,16 +27,20 @@ describe("garden local date helpers", () => {
     expect(daysBetween("2026-06-01", "2026-08-08")).toBe(68);
   });
 
-  it("starts the Pacific calendar day at 07:00 UTC during PDT", () => {
-    const afternoon = new Date("2026-08-13T22:00:00.000Z");
-    expect(startOfLocalDay(afternoon, "America/Los_Angeles").toISOString()).toBe(
-      "2026-08-13T07:00:00.000Z",
+  it("converts a late Pacific evening to the following UTC morning", () => {
+    const instant = zonedDateTimeToUtc(
+      "2026-08-08T21:30",
+      "America/Los_Angeles",
+    );
+    expect(instant.toISOString()).toBe("2026-08-09T04:30:00.000Z");
+    expect(localDateTimeString(instant, "America/Los_Angeles")).toBe(
+      "2026-08-08T21:30",
     );
   });
 
-  it("ends the Pacific calendar day just before the next local midnight", () => {
-    expect(endOfLocalDay("2026-08-19", "America/Los_Angeles").toISOString()).toBe(
-      "2026-08-20T06:59:59.999Z",
-    );
+  it("rejects a spring-forward gap that is not a real local time", () => {
+    expect(() =>
+      zonedDateTimeToUtc("2026-03-08T02:30", "America/Los_Angeles"),
+    ).toThrow("not a valid local time");
   });
 });

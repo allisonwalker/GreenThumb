@@ -19,6 +19,15 @@ import {
   type AskGrade,
 } from "../lib/agent/evals";
 import { resolveLlmProvider } from "../lib/llm";
+import {
+  formatMs,
+  formatTokens,
+  formatUsd,
+  ink,
+  passFail,
+  printTable,
+  truncate,
+} from "./eval-report";
 
 const CRITERIA: AskCriterionId[] = ["C1", "C2", "C3", "C4", "C5"];
 
@@ -75,6 +84,7 @@ async function main() {
     console.log("ASK_EVAL_RECORD unset — not writing agent_run rows.");
   }
   console.log("---");
+  console.log(ink.dim("Running cases…"));
 
   const pauseMs = Number(process.env.ASK_EVAL_PAUSE_MS ?? "0");
   const records: CaseRecord[] = [];
@@ -160,6 +170,9 @@ async function main() {
       path.join(casesDir, `${evalCase.id}.json`),
       `${JSON.stringify(record, null, 2)}\n`,
     );
+    console.log(
+      `  ${index + 1}/${selected.length}  ${record.caseId.padEnd(22)} ${passFail(record.ok)}  ${formatMs(record.latencyMs)}  ${formatTokens(record.inputTokens, record.outputTokens)}`,
+    );
   }
 
   const scored = records.length;
@@ -201,12 +214,25 @@ async function main() {
     `${JSON.stringify(manifest, null, 2)}\n`,
   );
 
-  printTable(records);
   console.log("");
-  console.log(
-    `scored=${scored} passed=${scored - failed} failed=${failed} C3_failed=${c3Failed} tokens=${inputTokens}/${outputTokens} cost_usd=${estimatedCostUsd.toFixed(6)} latency_ms=${latencyMs}`,
+  printCaseTable(records);
+  printFailureDetails(records);
+  console.log("");
+  printTable(
+    ["scored", "passed", "failed", "C3 fail", "tokens in/out", "cost", "latency"],
+    [
+      [
+        String(scored),
+        ink.green(String(scored - failed)),
+        failed > 0 ? ink.red(String(failed)) : "0",
+        c3Failed > 0 ? ink.red(String(c3Failed)) : "0",
+        formatTokens(inputTokens, outputTokens),
+        formatUsd(estimatedCostUsd),
+        formatMs(latencyMs),
+      ],
+    ],
   );
-  console.log(`wrote ${runDir}`);
+  console.log(ink.dim(`wrote ${runDir}`));
 
   if (failed > 0 || c3Failed > 0) {
     process.exit(1);
@@ -258,59 +284,50 @@ function selectCases(includeHoldout: boolean, onlyId: string | null): AskEvalCas
   return ASK_EVAL_CASES.filter((item) => !item.holdout);
 }
 
-function printTable(records: CaseRecord[]) {
-  const header = [
-    pad("id", 22),
-    pad("hold", 5),
-    ...CRITERIA.map((id) => pad(id, 4)),
-    pad("ok", 6),
-    pad("ms", 6),
-    "tools",
-  ].join("  ");
-  console.log(header);
-  for (const record of records) {
-    const tools = record.toolTrace.join(",") || "(none)";
-    console.log(
-      [
-        pad(record.caseId, 22),
-        pad(record.holdout ? "yes" : "no", 5),
-        ...CRITERIA.map((id) => pad(formatCriterion(record.criteria[id]), 4)),
-        pad(record.ok ? "PASS" : "FAIL", 6),
-        pad(String(record.latencyMs), 6),
-        tools,
-      ].join("  "),
-    );
+function printCaseTable(records: CaseRecord[]) {
+  printTable(
+    ["id", "hold", ...CRITERIA, "ok", "latency", "tokens", "cost", "tools"],
+    records.map((record) => [
+      record.caseId,
+      record.holdout ? ink.yellow("yes") : "no",
+      ...CRITERIA.map((id) => formatCriterion(record.criteria[id])),
+      passFail(record.ok),
+      formatMs(record.latencyMs),
+      formatTokens(record.inputTokens, record.outputTokens),
+      formatUsd(record.estimatedCostUsd),
+      record.toolTrace.join(",") || ink.dim("(none)"),
+    ]),
+  );
+}
+
+function printFailureDetails(records: CaseRecord[]) {
+  const failed = records.filter(
+    (record) => !record.ok || record.failures.length > 0 || record.error,
+  );
+  if (failed.length === 0) {
+    return;
+  }
+  console.log("");
+  console.log(ink.bold("Failures"));
+  for (const record of failed) {
+    console.log(`  ${ink.red(record.caseId)}`);
     for (const failure of record.failures) {
-      console.log(`  · ${failure}`);
+      console.log(`    · ${failure}`);
     }
     if (record.error) {
-      console.log(`  error: ${record.error}`);
+      console.log(`    error: ${record.error}`);
     }
     if (record.finalText) {
-      console.log(`  reply: ${truncate(record.finalText, 220)}`);
+      console.log(`    ${ink.dim(`reply: ${truncate(record.finalText, 180)}`)}`);
     }
   }
 }
 
 function formatCriterion(value: boolean | "skipped"): string {
   if (value === "skipped") {
-    return "—";
+    return ink.dim("—");
   }
-  return value ? "ok" : "FAIL";
-}
-
-function pad(value: string, width: number): string {
-  if (value.length >= width) {
-    return value;
-  }
-  return value.padEnd(width);
-}
-
-function truncate(value: string, max: number) {
-  if (value.length <= max) {
-    return value;
-  }
-  return `${value.slice(0, max)}…`;
+  return value ? ink.green("ok") : ink.red("FAIL");
 }
 
 void main().catch((error: unknown) => {
