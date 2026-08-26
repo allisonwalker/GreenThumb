@@ -15,6 +15,18 @@ import {
   revertSectionExposureRecord,
   saveSeasonSectionsRecord,
 } from "@/lib/garden/season-repository";
+import { getCropRecord } from "@/lib/crops/repository";
+import { cropCareCopyLabel } from "@/lib/crops/slug";
+import {
+  addPlantingRecord,
+  removePlantingRecord,
+} from "@/lib/garden/planting-repository";
+import { sunMismatchWarning } from "@/lib/garden/sun-fit";
+import {
+  type PlantingFormState,
+  parseAddPlantingForm,
+  parseRemovePlantingForm,
+} from "@/lib/garden/planting-validation";
 import {
   addPlantingRecord,
   removePlantingRecord,
