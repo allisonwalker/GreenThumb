@@ -24,13 +24,17 @@ const MOTIF_HEX_PATTERN =
   /#(?:172217|f7faf7|d7e5d7|c5d9c5|3d6b3d|dbe5db)/i;
 
 const QUIET_PAGE_BODY_FILES = [
-  "app/catalog/page.tsx",
-  "app/catalog/catalog-list.tsx",
-  "app/catalog/[cropId]/page.tsx",
   "app/log/page.tsx",
   "app/log/log-action-form.tsx",
   "app/ask/page.tsx",
   "app/ask/ask-thread.tsx",
+];
+
+const CATALOG_BOLDER_FILES = [
+  "app/catalog/page.tsx",
+  "app/catalog/catalog-list.tsx",
+  "app/catalog/[cropId]/page.tsx",
+  "app/catalog/[cropId]/crop-edit-form.tsx",
 ];
 
 const GARDEN_BOLDER_FILES = [
@@ -143,7 +147,57 @@ describe("shared motif tokens (ALL-99)", () => {
 
     expect(load("app/log/log-action-form.tsx")).toContain("bg-white");
     expect(load("app/ask/ask-thread.tsx")).toContain("focus:ring-green-200");
-    expect(load("app/catalog/page.tsx")).toContain("text-green-700");
+    expect(load("app/log/page.tsx")).toContain("text-green-700");
+  });
+
+  it("bolders Catalog list and crop detail with one type peak, then quieter rows (ALL-103)", () => {
+    const list = load("app/catalog/page.tsx");
+    const panel = load("app/catalog/catalog-list.tsx");
+    const detail = load("app/catalog/[cropId]/crop-edit-form.tsx");
+    const detailPage = load("app/catalog/[cropId]/page.tsx");
+
+    expect(list).toContain("Crop catalog");
+    expect(list).toContain("tracking-display");
+    expect(list).toContain("text-5xl");
+    expect(list).toContain("text-forest");
+    expect(list).not.toContain("text-display");
+    expect(list).not.toContain("bg-forest");
+    expect(list).not.toContain("uppercase");
+    expect(list).not.toContain("text-green-700");
+    expect(list).toContain("Search, open, and edit");
+
+    expect(panel).toContain("createStubCrop");
+    expect(panel).toContain("rounded-2xl border bg-white");
+    expect(panel).not.toContain("shadow-sm");
+    expect(panel).not.toContain("hover:bg-green-50");
+    expect(panel).toContain("hover:bg-cream");
+    expect(panel).toContain("bg-forest");
+    expect(panel).toContain("text-cream");
+    expect(panel).toContain("Add crop");
+    expect(panel).toContain("Search by name or variety");
+    expect(panel).not.toContain("bg-green-800");
+
+    expect(detailPage).toContain("CropEditForm");
+    expect(detailPage).not.toContain("tracking-display");
+
+    expect(detail).toContain("tracking-display");
+    expect(detail).toContain("text-5xl");
+    expect(detail).toContain("href=\"/catalog\"");
+    expect(detail).not.toContain("uppercase");
+    expect(detail).not.toContain("text-green-700");
+    expect(detail).not.toContain("bg-green-800");
+    expect(detail).not.toContain("shadow-sm");
+    expect(detail).toContain("bg-forest");
+    expect(detail).toContain("text-cream");
+    expect(detail).toContain("saveCrop");
+    expect(detail).toContain("draftCropWithGemini");
+    expect(detail).toContain("Save crop");
+    expect(detail).toContain("Draft with Gemini");
+
+    for (const relative of CATALOG_BOLDER_FILES) {
+      expect(load(relative)).not.toContain("text-display-compact");
+      expect(load(relative)).not.toContain("text-green-700");
+    }
   });
 
   it("bolders Garden list, location, and setup with one type peak, then quieter rows (ALL-101)", () => {

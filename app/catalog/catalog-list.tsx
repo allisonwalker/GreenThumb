@@ -9,7 +9,7 @@ import type { CropListItem } from "@/lib/crops/types";
 import { createStubCrop } from "./actions";
 
 const fieldClass =
-  "mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-base shadow-sm outline-none focus:border-green-700 focus:ring-2 focus:ring-green-200";
+  "mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-base outline-none focus:border-forest focus:ring-2 focus:ring-leaf";
 const initialState = { status: "idle" as const };
 
 function sourceLabel(source: CropListItem["source"]) {
@@ -38,14 +38,14 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="text-xl font-semibold">Add a crop</h2>
-        <p className="mt-1 text-sm text-neutral-600">
+      <section className="rounded-2xl border bg-white p-5 sm:p-6">
+        <h2 className="text-xl font-semibold text-forest">Add a crop</h2>
+        <p className="mt-1 text-sm text-forest">
           Add a crop by name and optional variety. Later plantings of the same
           combination reuse this row. Tomato and Tomato / Sungold stay separate.
         </p>
         <form action={createAction} className="mt-4 space-y-3">
-          <label className="block text-sm font-medium">
+          <label className="block text-sm font-medium text-forest">
             Crop name
             <input
               className={fieldClass}
@@ -55,7 +55,7 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
               autoComplete="off"
             />
           </label>
-          <label className="block text-sm font-medium">
+          <label className="block text-sm font-medium text-forest">
             Variety (optional)
             <input
               className={fieldClass}
@@ -70,7 +70,7 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
               className={
                 createState.status === "error"
                   ? "text-sm font-medium text-red-700"
-                  : "text-sm font-medium text-green-800"
+                  : "text-sm font-medium text-forest"
               }
             >
               {createState.status === "idle"
@@ -80,7 +80,7 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
             <button
               type="submit"
               disabled={createPending}
-              className="min-h-12 rounded-lg bg-green-800 px-6 font-semibold text-white hover:bg-green-900 disabled:opacity-60"
+              className="min-h-12 rounded-lg bg-forest px-6 font-semibold text-cream hover:bg-selection disabled:opacity-60"
             >
               {createPending ? "Creating…" : "Add crop"}
             </button>
@@ -89,7 +89,7 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
             <p>
               <Link
                 href={`/catalog/${createState.existingCropId}`}
-                className="text-sm font-semibold text-green-800 underline"
+                className="text-sm font-semibold text-forest underline"
               >
                 Open the existing row
               </Link>
@@ -98,9 +98,9 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
         </form>
       </section>
 
-      <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="text-xl font-semibold">Search crops</h2>
-        <label className="mt-4 block text-sm font-medium">
+      <section className="rounded-2xl border bg-white p-5 sm:p-6">
+        <h2 className="text-xl font-semibold text-forest">Search crops</h2>
+        <label className="mt-4 block text-sm font-medium text-forest">
           Search by name or variety
           <input
             className={fieldClass}
@@ -112,31 +112,31 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
             aria-describedby="catalog-search-help"
           />
         </label>
-        <p id="catalog-search-help" className="mt-2 text-sm text-neutral-600">
+        <p id="catalog-search-help" className="mt-2 text-sm text-forest">
           {crops.length === 0
             ? "No crops yet. Add one above, or record a planting."
             : `${matches.length} of ${crops.length} crop${crops.length === 1 ? "" : "s"}`}
         </p>
 
         {crops.length > 0 && matches.length === 0 ? (
-          <p className="mt-4 text-sm text-neutral-600">No crops match that search.</p>
+          <p className="mt-4 text-sm text-forest">No crops match that search.</p>
         ) : (
           <ul className="mt-4 space-y-2">
             {matches.map((crop) => (
               <li key={crop.id}>
                 <Link
                   href={`/catalog/${crop.id}`}
-                  className="flex min-h-11 flex-col justify-center rounded-xl border px-4 py-3 hover:border-green-700 hover:bg-green-50 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex min-h-11 flex-col justify-center rounded-xl border px-4 py-3 hover:bg-cream sm:flex-row sm:items-center sm:justify-between"
                 >
                   <span>
-                    <span className="font-semibold text-neutral-900">
+                    <span className="font-semibold text-forest">
                       {cropIdentityLabel(crop.name, crop.variety)}
                     </span>
-                    <span className="mt-1 block text-sm text-neutral-600 sm:mt-0 sm:inline sm:before:content-['·'] sm:before:mx-2">
+                    <span className="mt-1 block text-sm text-forest sm:mt-0 sm:inline sm:before:content-['·'] sm:before:mx-2">
                       {sourceLabel(crop.source)}
                     </span>
                   </span>
-                  <span className="text-sm text-neutral-600">
+                  <span className="text-sm text-forest">
                     {crop.wateringIntervalDays
                       ? `Water every ${crop.wateringIntervalDays} day${crop.wateringIntervalDays === 1 ? "" : "s"}`
                       : "Watering interval not set"}
