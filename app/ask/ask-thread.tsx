@@ -196,7 +196,7 @@ export function AskThread({
               }
             >
               <p className="text-xs font-semibold uppercase tracking-wide opacity-80">
-                {message.role === "user" ? "You" : "GreenThumb"}
+                {message.role === "user" ? "You" : "Jory Journal"}
               </p>
               <p className="mt-1 whitespace-pre-wrap text-base leading-6">
                 {message.content ||
