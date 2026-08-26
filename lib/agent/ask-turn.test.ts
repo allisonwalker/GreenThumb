@@ -134,6 +134,39 @@ describe("runAskTurn", () => {
     });
   });
 
+  it("persists cleaned assistant text when the model uses markdown or em dashes", async () => {
+    const store = memoryStore();
+    const events: AskStreamEvent[] = [];
+    const dirty =
+      "# Heading\nPeppers want **full sun** — check `sun_preference`.";
+    const runAgent = vi.fn(async (options: RunAgentOptions) => {
+      options.onTextDelta?.(dirty);
+      return succeededResult({ finalText: dirty });
+    });
+
+    await runAskTurn(
+      {
+        userId: "user-1",
+        prompt: "Do peppers want full sun?",
+        timezone: "America/Los_Angeles",
+        onEvent: (event) => events.push(event),
+      },
+      turnDeps(store, { runAgent }),
+    );
+
+    const stored = store.messages.at(-1)?.content ?? "";
+    expect(stored).not.toMatch(/\*\*/);
+    expect(stored).not.toMatch(/`/);
+    expect(stored).not.toMatch(/^#/m);
+    expect(stored).not.toContain("\u2014");
+    expect(stored).toMatch(/full sun/);
+    expect(stored).toMatch(/sun_preference/);
+    expect(events.at(-1)).toMatchObject({
+      type: "done",
+      content: stored,
+    });
+  });
+
   it("returns daily_qa_cap without calling the model", async () => {
     const store = memoryStore();
     const runAgent = vi.fn();

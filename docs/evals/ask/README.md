@@ -24,7 +24,7 @@ Prose quality, warmth, length, extra read tools, and exact headline wording are 
 npm run eval:ask
 ```
 
-Non-holdout cases only (9 of 11). Uses `ASK_SYSTEM_PROMPT` and records prompt version `ask-sys-v1`.
+Non-holdout cases only (9 of 11). Uses `ASK_SYSTEM_PROMPT` and records prompt version `ask-sys-v4`.
 
 ```bash
 npm run eval:ask -- --holdout
@@ -44,7 +44,7 @@ Cheaper or other models use the existing env vars — do not invent a provider:
 - `GEMINI_MODEL`
 - `ANTHROPIC_MODEL`
 
-Optional: `ASK_EVAL_PROMPT_VERSION=ask-sys-v1` (default), `ask-sys-v2`, or `ask-sys-v3`. Unknown versions fail. `ASK_EVAL_PAUSE_MS` waits between cases (useful on Gemini free-tier RPM). `DATABASE_URL` enables live row-count checks. Set `ASK_EVAL_RECORD=1` to also write `agent_run` rows; default is not to record into the household database.
+Optional: `ASK_EVAL_PROMPT_VERSION=ask-sys-v4` (default), `ask-sys-v1`, `ask-sys-v2`, or `ask-sys-v3`. Unknown versions fail. `ASK_EVAL_PAUSE_MS` waits between cases (useful on Gemini free-tier RPM). `DATABASE_URL` enables live row-count checks. Set `ASK_EVAL_RECORD=1` to also write `agent_run` rows; default is not to record into the household database.
 
 ## Where results land
 

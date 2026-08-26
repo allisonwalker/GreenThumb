@@ -92,6 +92,7 @@ export function AskThread({
           finalizeAssistant(current, {
             id: event.assistantMessageId,
             agentRunId: event.agentRunId,
+            content: event.content,
           }),
         );
         if (event.stopReason === "daily_qa_cap") {
@@ -441,7 +442,7 @@ function appendToken(messages: ThreadMessage[], text: string): ThreadMessage[] {
 
 function finalizeAssistant(
   messages: ThreadMessage[],
-  input: { id: string; agentRunId: string | null },
+  input: { id: string; agentRunId: string | null; content: string },
 ): ThreadMessage[] {
   const next = [...messages];
   const last = next[next.length - 1];
@@ -452,6 +453,7 @@ function finalizeAssistant(
     ...last,
     id: input.id,
     agentRunId: input.agentRunId,
+    content: input.content,
   };
   return next;
 }
