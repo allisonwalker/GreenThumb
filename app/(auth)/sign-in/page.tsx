@@ -22,21 +22,21 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
       <div className="flex flex-col justify-between px-5 py-8 sm:px-10 sm:py-12">
         <Link
           href="/"
-          className="text-sm font-semibold tracking-wide text-[#c5d9c5] underline-offset-4 hover:underline"
+          className="text-sm font-semibold tracking-wide text-leaf-muted underline-offset-4 hover:underline"
         >
           Jory Journal
         </Link>
         <div>
-          <h1 className="max-w-[11ch] text-[clamp(3rem,10vw,6.5rem)] font-bold leading-[0.88] tracking-[-0.04em]">
+          <h1 className="max-w-[11ch] text-display-compact font-bold tracking-display">
             Sign in to your garden
           </h1>
-          <p className="mt-6 max-w-md text-lg leading-7 text-[#d7e5d7]">
+          <p className="mt-6 max-w-md text-lg leading-7 text-leaf">
             We&apos;ll email you a one-time code. Jory Journal does not use
             passwords.
           </p>
         </div>
       </div>
-      <div className="flex flex-1 flex-col justify-center bg-[#f7faf7] px-5 py-10 text-[#172217] sm:px-10">
+      <div className="flex flex-1 flex-col justify-center bg-cream px-5 py-10 text-forest sm:px-10">
         {error ? (
           <p
             role="alert"

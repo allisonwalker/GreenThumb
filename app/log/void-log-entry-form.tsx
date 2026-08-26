@@ -29,7 +29,7 @@ export function VoidLogEntryForm({ entryId }: { entryId: string }) {
           className={
             state.status === "error"
               ? "mt-1 text-sm text-red-700"
-              : "mt-1 text-sm text-green-800"
+              : "mt-1 text-sm text-forest"
           }
         >
           {state.message}

@@ -12,7 +12,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { signOut } from "@/lib/auth/actions";
-import { PRIMARY_NAV_HREFS } from "@/lib/shell/identity";
+import { isMarketingPath, PRIMARY_NAV_HREFS } from "@/lib/shell/identity";
 import { cn } from "@/lib/utils";
 
 const destinationMeta = {
@@ -23,17 +23,20 @@ const destinationMeta = {
   "/ask": { label: "Ask", icon: CircleHelp },
 } as const;
 
+const navItemClass =
+  "flex min-h-16 flex-col items-center justify-center gap-1 px-2 text-xs font-medium transition-colors md:min-h-11 md:flex-row md:justify-start md:rounded-lg md:px-3 md:text-sm";
+
 export function AppNav() {
   const pathname = usePathname();
 
-  if (pathname === "/" || pathname.startsWith("/sign-in")) {
+  if (isMarketingPath(pathname)) {
     return null;
   }
 
   return (
     <nav
       aria-label="Primary navigation"
-      className="fixed inset-x-0 bottom-0 z-10 border-t bg-white md:static md:border-t-0"
+      className="fixed inset-x-0 bottom-0 z-10 border-t bg-forest md:static md:border-t-0 md:bg-transparent"
     >
       <ul className="mx-auto grid max-w-lg grid-cols-6 md:w-52 md:grid-cols-1 md:gap-2 md:p-4">
         {PRIMARY_NAV_HREFS.map((href) => {
@@ -46,10 +49,10 @@ export function AppNav() {
                 href={href}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex min-h-16 flex-col items-center justify-center gap-1 px-2 text-xs font-medium transition-colors md:min-h-11 md:flex-row md:justify-start md:rounded-lg md:px-3 md:text-sm",
+                  navItemClass,
                   isActive
-                    ? "bg-green-50 text-green-800"
-                    : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950",
+                    ? "bg-selection text-cream"
+                    : "text-leaf hover:bg-selection hover:text-cream",
                 )}
               >
                 <Icon aria-hidden="true" className="size-5" />
@@ -62,7 +65,10 @@ export function AppNav() {
           <form action={signOut}>
             <button
               type="submit"
-              className="flex min-h-16 w-full flex-col items-center justify-center gap-1 px-2 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-950 md:min-h-11 md:flex-row md:justify-start md:rounded-lg md:px-3 md:text-sm"
+              className={cn(
+                navItemClass,
+                "w-full text-leaf hover:bg-selection hover:text-cream",
+              )}
             >
               <LogOut aria-hidden="true" className="size-5" />
               Sign out

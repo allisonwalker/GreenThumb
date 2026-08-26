@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_GARDEN_NAME,
+  isMarketingPath,
   PRIMARY_NAV_HREFS,
   PRODUCT_LABEL,
   resolveGardenDisplayName,
@@ -39,5 +40,13 @@ describe("shell identity", () => {
       "/ask",
     ]);
     expect(PRIMARY_NAV_HREFS).not.toContain("/garden/setup");
+  });
+
+  it("treats landing and sign-in as marketing paths that skip the shell", () => {
+    expect(isMarketingPath("/")).toBe(true);
+    expect(isMarketingPath("/sign-in")).toBe(true);
+    expect(isMarketingPath("/sign-in/confirm")).toBe(true);
+    expect(isMarketingPath("/today")).toBe(false);
+    expect(isMarketingPath("/garden")).toBe(false);
   });
 });

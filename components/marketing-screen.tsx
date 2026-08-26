@@ -11,7 +11,7 @@ export function MarketingScreen({ children, className }: MarketingScreenProps) {
   return (
     <div
       className={cn(
-        "flex min-h-dvh flex-col bg-[#172217] text-[#f7faf7] selection:bg-[#3d6b3d] selection:text-[#f7faf7]",
+        "flex min-h-dvh flex-col bg-forest text-cream selection:bg-selection selection:text-cream",
         className,
       )}
     >

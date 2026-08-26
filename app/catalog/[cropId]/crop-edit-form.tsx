@@ -12,7 +12,7 @@ import { SUN_EXPOSURES } from "@/lib/garden/sun-exposure";
 import { draftCropWithGemini, saveCrop } from "../actions";
 
 const fieldClass =
-  "mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-base shadow-sm outline-none focus:border-green-700 focus:ring-2 focus:ring-green-200";
+  "mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-base outline-none focus:border-forest focus:ring-2 focus:ring-leaf";
 const initialState = { status: "idle" as const };
 
 const TIME_ESTIMATE_LABELS: Record<(typeof TIME_ESTIMATE_ACTIONS)[number], string> = {
@@ -36,19 +36,19 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <header>
-        <p className="text-sm font-semibold uppercase tracking-wide text-green-700">
-          <Link href="/catalog" className="hover:underline">
+        <p className="text-sm font-medium text-forest">
+          <Link href="/catalog" className="underline">
             Catalog
           </Link>
         </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="mt-3 text-5xl font-bold leading-none tracking-display text-forest sm:text-6xl">
           {cropIdentityLabel(crop.name, crop.variety)}
         </h1>
-        <p className="mt-2 text-neutral-600">
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-forest">
           Name and variety are how this garden tells crops apart. If you already
           have this combination, open that crop instead of saving a second one.
         </p>
-        <p className="mt-2 text-sm font-medium text-green-800">
+        <p className="mt-2 text-sm font-medium text-forest">
           {cropAttributionFromRecord(crop)}
         </p>
         {crop.source === "stub" ? (
@@ -57,7 +57,7 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
             <button
               type="submit"
               disabled={draftPending}
-              className="min-h-11 rounded-lg border border-green-800 px-4 text-sm font-semibold text-green-900 hover:bg-green-50 disabled:opacity-60"
+              className="min-h-11 rounded-lg border bg-white px-4 text-sm font-semibold text-forest hover:bg-cream disabled:opacity-60"
             >
               {draftPending ? "Drafting…" : "Draft with Gemini"}
             </button>
@@ -66,7 +66,7 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
               className={
                 draftState.status === "error"
                   ? "mt-2 text-sm font-medium text-red-700"
-                  : "mt-2 text-sm font-medium text-green-800"
+                  : "mt-2 text-sm font-medium text-forest"
               }
             >
               {draftState.status === "idle"
@@ -80,8 +80,8 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
       <form action={formAction} className="space-y-6">
         <input type="hidden" name="id" value={crop.id} />
 
-        <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="text-xl font-semibold">Name and variety</h2>
+        <section className="rounded-2xl border bg-white p-5 sm:p-6">
+          <h2 className="text-xl font-semibold text-forest">Name and variety</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-medium">
               Display name
@@ -106,9 +106,9 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
           </div>
         </section>
 
-        <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="text-xl font-semibold">Cadence</h2>
-          <p className="mt-1 text-sm text-neutral-600">
+        <section className="rounded-2xl border bg-white p-5 sm:p-6">
+          <h2 className="text-xl font-semibold text-forest">Cadence</h2>
+          <p className="mt-1 text-sm text-forest">
             Leave a field blank if you don&apos;t know it. That task stays off
             Today&apos;s list until you fill it in.
           </p>
@@ -175,8 +175,8 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
           </div>
         </section>
 
-        <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="text-xl font-semibold">Conditions</h2>
+        <section className="rounded-2xl border bg-white p-5 sm:p-6">
+          <h2 className="text-xl font-semibold text-forest">Conditions</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-medium">
               Frost sensitive
@@ -258,9 +258,9 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
           </div>
         </section>
 
-        <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="text-xl font-semibold">Minutes per task</h2>
-          <p className="mt-1 text-sm text-neutral-600">
+        <section className="rounded-2xl border bg-white p-5 sm:p-6">
+          <h2 className="text-xl font-semibold text-forest">Minutes per task</h2>
+          <p className="mt-1 text-sm text-forest">
             Whole minutes, 1–480. Used later when planning a time budget.
           </p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -282,8 +282,8 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
           </div>
         </section>
 
-        <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="text-xl font-semibold">Notes</h2>
+        <section className="rounded-2xl border bg-white p-5 sm:p-6">
+          <h2 className="text-xl font-semibold text-forest">Notes</h2>
           <label className="mt-4 block text-sm font-medium">
             Household notes for this crop
             <textarea
@@ -301,7 +301,7 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
               className={
                 state.status === "error"
                   ? "text-sm font-medium text-red-700"
-                  : "text-sm font-medium text-green-800"
+                  : "text-sm font-medium text-forest"
               }
             >
               {state.status === "idle"
@@ -312,7 +312,7 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
               <p>
                 <Link
                   href={`/catalog/${state.existingCropId}`}
-                  className="text-sm font-semibold text-green-800 underline"
+                  className="text-sm font-semibold text-forest underline"
                 >
                   Open the existing row
                 </Link>
@@ -322,7 +322,7 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
           <button
             type="submit"
             disabled={pending}
-            className="min-h-12 rounded-lg bg-green-800 px-6 font-semibold text-white hover:bg-green-900 disabled:opacity-60"
+            className="min-h-12 rounded-lg bg-forest px-6 font-semibold text-cream hover:bg-selection disabled:opacity-60"
           >
             {pending ? "Saving…" : "Save crop"}
           </button>

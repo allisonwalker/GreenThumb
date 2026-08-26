@@ -9,7 +9,7 @@ import { PLANTING_METHODS } from "@/lib/garden/planting-validation";
 import { addPlanting, removePlanting } from "./actions";
 
 const fieldClass =
-  "mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-base shadow-sm outline-none focus:border-green-700 focus:ring-2 focus:ring-green-200";
+  "mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-base outline-none focus:border-forest focus:ring-2 focus:ring-leaf";
 const initialState = { status: "idle" as const };
 
 function StatusLine({
@@ -25,7 +25,7 @@ function StatusLine({
       className={
         state.status === "error"
           ? "text-sm font-medium text-red-700"
-          : "text-sm font-medium text-green-800"
+          : "text-sm font-medium text-forest"
       }
     >
       {state.status === "idle" ? idle : state.message}
@@ -43,12 +43,12 @@ function PlantingHeading({
   variety: string | null;
 }) {
   return (
-    <h3 className="font-semibold">
-      <Link href={`/catalog/${cropId}`} className="hover:underline">
+    <h3 className="font-semibold text-forest">
+      <Link href={`/catalog/${cropId}`} className="underline">
         {cropName}
       </Link>
       {variety ? (
-        <span className="font-normal text-neutral-600"> · {variety}</span>
+        <span className="font-normal text-forest"> · {variety}</span>
       ) : null}
     </h3>
   );
@@ -71,19 +71,21 @@ export function LocationPlantingsPanel({
   return (
     <div className="mx-auto max-w-3xl space-y-10">
       <header>
-        <p className="text-sm font-semibold uppercase tracking-wide text-green-700">
-          <Link href="/garden" className="hover:underline">
+        <p className="text-sm font-medium text-forest">
+          <Link href="/garden" className="underline">
             Garden
           </Link>
           {" · "}
           {page.location.kind === "pot" ? "Pot" : "Bed section"}
         </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="mt-3 text-5xl font-bold leading-none tracking-display text-forest sm:text-6xl">
           {page.location.name}
         </h1>
-        <p className="mt-2 text-neutral-600">{page.location.detail}</p>
+        <p className="mt-4 text-base leading-relaxed text-forest">
+          {page.location.detail}
+        </p>
         {!page.location.isCurrent ? (
-          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-forest">
             This location is not in the current season. You can review history,
             but new plantings go on current pots and sections.
           </p>
@@ -91,9 +93,9 @@ export function LocationPlantingsPanel({
       </header>
 
       {page.location.isCurrent ? (
-        <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="text-xl font-semibold">Add a planting</h2>
-          <p className="mt-1 text-sm text-neutral-600">
+        <section className="rounded-2xl border bg-white p-5 sm:p-6">
+          <h2 className="text-xl font-semibold text-forest">Add a planting</h2>
+          <p className="mt-1 text-sm text-forest">
             Crop name attaches this planting to a shared care row. Variety stays
             here. Matching will skip a task if that crop field is still blank.
           </p>
@@ -150,7 +152,7 @@ export function LocationPlantingsPanel({
               <button
                 type="submit"
                 disabled={addPending}
-                className="min-h-12 rounded-lg bg-green-800 px-6 font-semibold text-white hover:bg-green-900 disabled:opacity-60"
+                className="min-h-12 rounded-lg bg-forest px-6 font-semibold text-cream hover:bg-selection disabled:opacity-60"
               >
                 {addPending ? "Saving…" : "Add planting"}
               </button>
@@ -159,13 +161,13 @@ export function LocationPlantingsPanel({
         </section>
       ) : null}
 
-      <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="text-xl font-semibold">Current plantings</h2>
-        <p className="mt-1 text-sm text-neutral-600">
+      <section className="rounded-2xl border bg-white p-5 sm:p-6">
+        <h2 className="text-xl font-semibold text-forest">Current plantings</h2>
+        <p className="mt-1 text-sm text-forest">
           Days since planting use the garden timezone ({page.timezone}).
         </p>
         {page.currentPlantings.length === 0 ? (
-          <p className="mt-4 text-sm text-neutral-600">
+          <p className="mt-4 text-sm text-forest">
             Nothing growing here right now.
           </p>
         ) : (
@@ -173,7 +175,7 @@ export function LocationPlantingsPanel({
             {page.currentPlantings.map((planting) => (
               <li
                 key={planting.id}
-                className="rounded-xl border bg-neutral-50 px-4 py-4"
+                className="rounded-xl border bg-white px-4 py-4"
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <PlantingHeading
@@ -181,12 +183,12 @@ export function LocationPlantingsPanel({
                     cropName={planting.cropName}
                     variety={planting.variety}
                   />
-                  <p className="text-sm font-medium text-green-900">
+                  <p className="text-sm font-medium text-forest">
                     {planting.daysSincePlanted} day
                     {planting.daysSincePlanted === 1 ? "" : "s"} since planting
                   </p>
                 </div>
-                <p className="mt-1 text-sm text-neutral-600">
+                <p className="mt-1 text-sm text-forest">
                   {planting.method} · planted {planting.plantedOn}
                 </p>
                 <form
@@ -227,26 +229,26 @@ export function LocationPlantingsPanel({
         </div>
       </section>
 
-      <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="text-xl font-semibold">Past plantings</h2>
-        <p className="mt-1 text-sm text-neutral-600">
+      <section className="rounded-2xl border bg-white p-5 sm:p-6">
+        <h2 className="text-xl font-semibold text-forest">Past plantings</h2>
+        <p className="mt-1 text-sm text-forest">
           Removed plantings stay here for history.
         </p>
         {page.pastPlantings.length === 0 ? (
-          <p className="mt-4 text-sm text-neutral-600">No past plantings yet.</p>
+          <p className="mt-4 text-sm text-forest">No past plantings yet.</p>
         ) : (
           <ul className="mt-4 space-y-3">
             {page.pastPlantings.map((planting) => (
               <li
                 key={planting.id}
-                className="rounded-xl border bg-neutral-50 px-4 py-3"
+                className="rounded-xl border bg-white px-4 py-3"
               >
                 <PlantingHeading
                   cropId={planting.cropId}
                   cropName={planting.cropName}
                   variety={planting.variety}
                 />
-                <p className="mt-1 text-sm text-neutral-600">
+                <p className="mt-1 text-sm text-forest">
                   {planting.method} · planted {planting.plantedOn}
                   {planting.removedOn
                     ? ` · removed ${planting.removedOn}`

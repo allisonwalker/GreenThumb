@@ -29,32 +29,29 @@ export default async function TodayPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <header>
-        <p className="text-sm font-semibold uppercase tracking-wide text-green-700">
-          Today
-        </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="text-5xl font-bold leading-none tracking-display text-forest sm:text-6xl">
           Open garden tasks
         </h1>
-        <p className="mt-3 text-neutral-600">
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-forest">
           Mark a task done when you finish it — that records it in the care log
           so it drops off this list. Dismiss leaves the log as-is.
         </p>
       </header>
 
       {matchingError ? (
-        <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-neutral-800">
+        <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-forest">
           {matchingError}
         </p>
       ) : null}
 
       {groups.length === 0 ? (
-        <p className="rounded-2xl border bg-white px-4 py-6 text-neutral-600 shadow-sm">
+        <p className="rounded-2xl border bg-white px-4 py-6 text-forest">
           Nothing open.
         </p>
       ) : (
         groups.map((group) => (
           <section key={group.urgency} className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-green-800">
+            <h2 className="text-sm font-medium text-forest">
               {URGENCY_LABELS[group.urgency]}
             </h2>
             <ul className="space-y-3">
@@ -68,11 +65,11 @@ export default async function TodayPage() {
         ))
       )}
 
-      <p className="text-neutral-600">
+      <p className="text-forest">
         Short on time?{" "}
         <Link
           href="/ask?mode=hours"
-          className="font-semibold text-green-800 underline"
+          className="font-semibold text-forest underline"
         >
           Say how many hours you have
         </Link>{" "}
@@ -80,12 +77,12 @@ export default async function TodayPage() {
         work done here when you finish it.
       </p>
 
-      <footer className="space-y-2 text-sm text-neutral-500">
+      <footer className="space-y-2 text-sm text-forest">
         <p>
           Weather data by{" "}
           <a
             href="https://open-meteo.com/"
-            className="underline hover:text-neutral-800"
+            className="underline hover:text-selection"
           >
             Open-Meteo
           </a>{" "}

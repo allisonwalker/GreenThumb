@@ -143,3 +143,13 @@ Product name shown to people is **Jory Journal**. Today stays the app home. Cata
 - Empty Garden (no sections/pots) sends the gardener to setup.
 
 **Out of this increment:** visual identity replacement; mixing setup forms into the location list; extra personas.
+
+## Increment: bolder, then polish (Impeccable → PO → fullstack-dev)
+
+Landing/sign-in already run through `bolder`. Signed-in screens still read flat. Full increment: `docs/polish-brief.md`.
+
+**Phase A (bolder) first:** document the two current worlds; promote landing’s motif into shared tokens if Operate cannot express it yet; amplify Today / Garden / Catalog / Log / Ask one surface at a time; rewrite `DESIGN.md` to the **bold** incumbent. Do not polish the quiet look.
+
+**Phase B (polish) second:** audit and finish states, a11y, and drift against that new `DESIGN.md`. Landing/sign-in get polish only (no second bolder).
+
+**Out of this increment:** a third visual identity; expanding primitives inside a page ticket; matching/auth/agent behavior changes; dark mode; WCAG-as-a-project.

@@ -41,6 +41,13 @@ describe("DESIGN.md Persuade vs Operate capture", () => {
     expect(source).toContain("neutral-");
     expect(source).toContain("text-3xl");
     expect(source).toMatch(/quieter than landing/i);
+    expect(source).toContain("tracking-display");
+    expect(source).toContain("text-5xl");
+    expect(source).toContain("Open garden tasks");
+    expect(source).toContain("Current locations");
+    expect(source).toContain("Your garden profile");
+    expect(source).toContain("Crop catalog");
+    expect(source).toContain("What we already did");
   });
 
   it("states Operate should inherit motif and type conviction at Operate density", () => {
@@ -51,12 +58,14 @@ describe("DESIGN.md Persuade vs Operate capture", () => {
     expect(source).toMatch(/not a fold-covering poster/i);
   });
 
-  it("lists marketing hex vs CSS variables vs Tailwind neutrals for extract", () => {
+  it("lists promoted motif tokens vs leftover Operate page-body utilities", () => {
     const source = loadDesignDoc();
 
     expect(source).toMatch(/^## Primitives/m);
     expect(source).toContain("--background");
     expect(source).toContain("--foreground");
+    expect(source).toContain("--color-forest");
+    expect(source).toContain("--color-cream");
     expect(source).toContain("Hardcoded marketing hex");
     expect(source).toContain("neutral-*");
   });

@@ -1,0 +1,334 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+import { PRIMARY_NAV_HREFS } from "./identity";
+
+const root = process.cwd();
+
+function load(relative: string) {
+  return readFileSync(resolve(root, relative), "utf8");
+}
+
+const MOTIF_HEX = {
+  forest: "#172217",
+  cream: "#f7faf7",
+  leaf: "#d7e5d7",
+  "leaf-muted": "#c5d9c5",
+  selection: "#3d6b3d",
+  line: "#dbe5db",
+} as const;
+
+const MOTIF_HEX_PATTERN =
+  /#(?:172217|f7faf7|d7e5d7|c5d9c5|3d6b3d|dbe5db)/i;
+
+const QUIET_PAGE_BODY_FILES = [
+  "app/ask/page.tsx",
+  "app/ask/ask-thread.tsx",
+];
+
+const LOG_BOLDER_FILES = [
+  "app/log/page.tsx",
+  "app/log/log-action-form.tsx",
+  "app/log/log-history.tsx",
+  "app/log/void-log-entry-form.tsx",
+];
+
+const CATALOG_BOLDER_FILES = [
+  "app/catalog/page.tsx",
+  "app/catalog/catalog-list.tsx",
+  "app/catalog/[cropId]/page.tsx",
+  "app/catalog/[cropId]/crop-edit-form.tsx",
+];
+
+const GARDEN_BOLDER_FILES = [
+  "app/garden/page.tsx",
+  "app/garden/current-locations-panel.tsx",
+  "app/garden/setup/page.tsx",
+  "app/garden/location-plantings-panel.tsx",
+  "app/garden/garden-profile-form.tsx",
+  "app/garden/season-sections-panel.tsx",
+];
+
+const MARKETING_FILES = [
+  "components/marketing-screen.tsx",
+  "app/page.tsx",
+  "app/(auth)/sign-in/page.tsx",
+];
+
+describe("shared motif tokens (ALL-99)", () => {
+  it("names forest, cream, and landing type-strength roles in globals.css", () => {
+    const css = load("app/globals.css");
+
+    expect(css).toContain("@theme");
+    expect(css).toContain("--color-forest: #172217");
+    expect(css).toContain("--color-cream: #f7faf7");
+    expect(css).toContain("--color-leaf: #d7e5d7");
+    expect(css).toContain("--color-leaf-muted: #c5d9c5");
+    expect(css).toContain("--color-selection: #3d6b3d");
+    expect(css).toContain("--color-line: #dbe5db");
+    expect(css).toContain("--font-sans: Arial, Helvetica, sans-serif");
+    expect(css).toContain(
+      "--text-display: clamp(3.75rem, 16vw, 8.5rem)",
+    );
+    expect(css).toContain("--text-display--line-height: 0.82");
+    expect(css).toContain(
+      "--text-display-compact: clamp(3rem, 10vw, 6.5rem)",
+    );
+    expect(css).toContain("--text-display-compact--line-height: 0.88");
+    expect(css).toContain("--tracking-display: -0.04em");
+    expect(css).toContain("--background: var(--color-cream)");
+    expect(css).toContain("--foreground: var(--color-forest)");
+    expect(Object.values(MOTIF_HEX)).toHaveLength(6);
+  });
+
+  it("points marketing at named tokens instead of motif hex", () => {
+    for (const relative of MARKETING_FILES) {
+      expect(load(relative)).not.toMatch(MOTIF_HEX_PATTERN);
+    }
+
+    const marketing = load("components/marketing-screen.tsx");
+    expect(marketing).toContain("bg-forest");
+    expect(marketing).toContain("text-cream");
+    expect(marketing).toContain("selection:bg-selection");
+
+    const landing = load("app/page.tsx");
+    expect(landing).toContain("text-display");
+    expect(landing).toContain("tracking-display");
+    expect(landing).toContain("text-leaf");
+    expect(landing).toContain("bg-cream");
+    expect(landing).toContain("text-forest");
+
+    const signIn = load("app/(auth)/sign-in/page.tsx");
+    expect(signIn).toContain("text-display-compact");
+    expect(signIn).toContain("text-leaf-muted");
+    expect(signIn).toContain("bg-cream");
+    expect(signIn).toContain("text-forest");
+  });
+
+  it("applies motif tokens to signed-in chrome at Operate density", () => {
+    const shell = load("components/app-shell.tsx");
+    const nav = load("components/app-nav.tsx");
+
+    expect(shell).toContain("isMarketingPath");
+    expect(shell).toContain("bg-forest");
+    expect(shell).toContain("text-cream");
+    expect(shell).toContain("tracking-display");
+    expect(shell).toContain("text-leaf");
+    expect(shell).toContain("sticky top-0");
+    expect(shell).toContain("md:hidden");
+    expect(shell).toContain("md:grid md:grid-cols-[auto_1fr]");
+    expect(shell).not.toContain("bg-white");
+    expect(shell).not.toContain("text-neutral-");
+    expect(shell).toContain("PRODUCT_LABEL");
+
+    expect(nav).toContain("isMarketingPath");
+    expect(nav).toContain("fixed inset-x-0 bottom-0");
+    expect(nav).toContain("md:static");
+    expect(nav).toContain("bg-forest");
+    expect(nav).toContain("bg-selection");
+    expect(nav).toContain("text-leaf");
+    expect(nav).toContain("text-cream");
+    expect(nav).not.toContain("bg-white");
+    expect(nav).not.toContain("bg-green-50");
+    expect(nav).not.toContain("text-neutral-");
+    expect(nav).toContain("Sign out");
+    expect(nav).toContain('action={signOut}');
+
+    for (const href of PRIMARY_NAV_HREFS) {
+      expect(nav).toContain(`"${href}"`);
+    }
+  });
+
+  it("does not restyle Operate page bodies still waiting on their bolder ticket", () => {
+    for (const relative of QUIET_PAGE_BODY_FILES) {
+      const source = load(relative);
+      expect(source).not.toContain("bg-forest");
+      expect(source).not.toContain("text-display");
+      expect(source).not.toContain("text-display-compact");
+      expect(source).not.toContain("tracking-display");
+    }
+
+    expect(load("app/ask/ask-thread.tsx")).toContain("focus:ring-green-200");
+    expect(load("app/ask/ask-thread.tsx")).toContain("text-green-700");
+  });
+
+  it("bolders Log entry and history with one type peak, then quieter rows (ALL-102)", () => {
+    const page = load("app/log/page.tsx");
+    const form = load("app/log/log-action-form.tsx");
+    const history = load("app/log/log-history.tsx");
+    const voidForm = load("app/log/void-log-entry-form.tsx");
+
+    expect(page).toContain("What we already did");
+    expect(page).toContain("tracking-display");
+    expect(page).toContain("text-5xl");
+    expect(page).toContain("text-forest");
+    expect(page).not.toContain("text-display");
+    expect(page).not.toContain("bg-forest");
+    expect(page).not.toContain("uppercase");
+    expect(page).not.toContain("text-green-700");
+    expect(page).toContain("Record watering, feeding, pruning, harvest");
+
+    expect(form).toContain("logGardenAction");
+    expect(form).toContain("Log an action");
+    expect(form).toContain("Log it");
+    expect(form).toContain("rounded-2xl border bg-white");
+    expect(form).not.toContain("shadow-sm");
+    expect(form).not.toContain("bg-green-800");
+    expect(form).toContain("bg-forest");
+    expect(form).toContain("text-cream");
+    expect(form).toContain("focus:border-forest");
+    expect(form).toContain("focus:ring-leaf");
+    expect(form).toContain("has-[:checked]:bg-cream");
+
+    expect(history).toContain("History");
+    expect(history).toContain("rounded-2xl border bg-white");
+    expect(history).not.toContain("shadow-sm");
+    expect(history).not.toContain("bg-green-50");
+    expect(history).toContain("bg-cream");
+    expect(history).toContain("VoidLogEntryForm");
+
+    expect(voidForm).toContain("voidGardenAction");
+    expect(voidForm).toContain("This was a mistake");
+    expect(voidForm).not.toContain("text-green-800");
+
+    for (const relative of LOG_BOLDER_FILES) {
+      expect(load(relative)).not.toContain("text-display-compact");
+      expect(load(relative)).not.toContain("text-green-700");
+    }
+  });
+
+  it("bolders Catalog list and crop detail with one type peak, then quieter rows (ALL-103)", () => {
+    const list = load("app/catalog/page.tsx");
+    const panel = load("app/catalog/catalog-list.tsx");
+    const detail = load("app/catalog/[cropId]/crop-edit-form.tsx");
+    const detailPage = load("app/catalog/[cropId]/page.tsx");
+
+    expect(list).toContain("Crop catalog");
+    expect(list).toContain("tracking-display");
+    expect(list).toContain("text-5xl");
+    expect(list).toContain("text-forest");
+    expect(list).not.toContain("text-display");
+    expect(list).not.toContain("bg-forest");
+    expect(list).not.toContain("uppercase");
+    expect(list).not.toContain("text-green-700");
+    expect(list).toContain("Search, open, and edit");
+
+    expect(panel).toContain("createStubCrop");
+    expect(panel).toContain("rounded-2xl border bg-white");
+    expect(panel).not.toContain("shadow-sm");
+    expect(panel).not.toContain("hover:bg-green-50");
+    expect(panel).toContain("hover:bg-cream");
+    expect(panel).toContain("bg-forest");
+    expect(panel).toContain("text-cream");
+    expect(panel).toContain("Add crop");
+    expect(panel).toContain("Search by name or variety");
+    expect(panel).not.toContain("bg-green-800");
+
+    expect(detailPage).toContain("CropEditForm");
+    expect(detailPage).not.toContain("tracking-display");
+
+    expect(detail).toContain("tracking-display");
+    expect(detail).toContain("text-5xl");
+    expect(detail).toContain("href=\"/catalog\"");
+    expect(detail).not.toContain("uppercase");
+    expect(detail).not.toContain("text-green-700");
+    expect(detail).not.toContain("bg-green-800");
+    expect(detail).not.toContain("shadow-sm");
+    expect(detail).toContain("bg-forest");
+    expect(detail).toContain("text-cream");
+    expect(detail).toContain("saveCrop");
+    expect(detail).toContain("draftCropWithGemini");
+    expect(detail).toContain("Save crop");
+    expect(detail).toContain("Draft with Gemini");
+
+    for (const relative of CATALOG_BOLDER_FILES) {
+      expect(load(relative)).not.toContain("text-display-compact");
+      expect(load(relative)).not.toContain("text-green-700");
+    }
+  });
+
+  it("bolders Garden list, location, and setup with one type peak, then quieter rows (ALL-101)", () => {
+    const list = load("app/garden/page.tsx");
+    const panel = load("app/garden/current-locations-panel.tsx");
+    const setup = load("app/garden/setup/page.tsx");
+    const location = load("app/garden/location-plantings-panel.tsx");
+
+    expect(list).toContain("Current locations");
+    expect(list).toContain("tracking-display");
+    expect(list).toContain("text-5xl");
+    expect(list).toContain("text-forest");
+    expect(list).toContain("GARDEN_SETUP_PATH");
+    expect(list).toContain("Garden setup");
+    expect(list).not.toContain("text-display");
+    expect(list).not.toContain("bg-forest");
+    expect(list).not.toContain("uppercase");
+    expect(list).not.toContain("text-green-700");
+    expect(list).toContain("emptyGardenDashboardRedirect");
+
+    expect(panel).toContain("gardenLocationPath");
+    expect(panel).toContain("rounded-2xl border bg-white");
+    expect(panel).not.toContain("shadow-sm");
+    expect(panel).not.toContain("hover:bg-green-50");
+    expect(panel).toContain("Bed sections");
+    expect(panel).toContain("Pots");
+
+    expect(setup).toContain("Your garden profile");
+    expect(setup).toContain("tracking-display");
+    expect(setup).toContain("text-5xl");
+    expect(setup).not.toContain("emptyGardenDashboardRedirect");
+    expect(setup).not.toContain("uppercase");
+
+    expect(location).toContain("tracking-display");
+    expect(location).toContain("text-5xl");
+    expect(location).toContain("bg-forest");
+    expect(location).toContain("text-cream");
+    expect(location).not.toContain("bg-green-800");
+    expect(location).not.toContain("uppercase");
+    expect(location).toContain("addPlanting");
+
+    for (const relative of GARDEN_BOLDER_FILES) {
+      expect(load(relative)).not.toContain("text-display-compact");
+      expect(load(relative)).not.toContain("text-green-700");
+    }
+  });
+
+  it("bolders Today with one type peak, then quieter rows (ALL-100)", () => {
+    const page = load("app/today/page.tsx");
+    const card = load("app/today/recommendation-card.tsx");
+
+    expect(page).toContain("Open garden tasks");
+    expect(page).toContain("tracking-display");
+    expect(page).toContain("text-5xl");
+    expect(page).toContain("text-forest");
+    expect(page).not.toContain("text-display");
+    expect(page).not.toContain("text-display-compact");
+    expect(page).not.toContain("bg-forest");
+    expect(page).not.toContain("uppercase");
+    expect(page).not.toContain("text-green-700");
+    expect(page).not.toContain("text-green-800");
+    expect(page).toContain("Mark a task done when you finish it");
+    expect(page).toContain("Nothing open.");
+    expect(page).toContain('href="/ask?mode=hours"');
+
+    expect(card).toContain("rounded-2xl border bg-white");
+    expect(card).not.toContain("shadow-sm");
+    expect(card).toContain("bg-forest");
+    expect(card).toContain("text-cream");
+    expect(card).toContain("completeRecommendation");
+    expect(card).toContain("skipRecommendation");
+    expect(card).toContain("Done");
+    expect(card).toContain("Dismiss");
+    expect(card).not.toContain("text-display");
+    expect(card).not.toContain("bg-green-800");
+  });
+
+  it("keeps GreenThumb out of chrome copy", () => {
+    expect(load("components/app-shell.tsx")).not.toMatch(/GreenThumb/i);
+    expect(load("components/app-nav.tsx")).not.toMatch(/GreenThumb/i);
+    expect(load("components/marketing-screen.tsx")).not.toMatch(/GreenThumb/i);
+    expect(load("app/page.tsx")).not.toMatch(/GreenThumb/i);
+    expect(load("app/(auth)/sign-in/page.tsx")).not.toMatch(/GreenThumb/i);
+  });
+});

@@ -50,16 +50,16 @@ export function LogHistory({
     <section className="mt-8">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold">History</h2>
-          <p className="mt-1 text-sm text-neutral-600">
+          <h2 className="text-xl font-semibold text-forest">History</h2>
+          <p className="mt-1 text-sm text-forest">
             Newest first. Corrections add a new row; they never delete the
             original.
           </p>
         </div>
-        <label className="text-sm font-semibold">
+        <label className="text-sm font-medium text-forest">
           Filter
           <select
-            className="mt-2 block min-h-11 min-w-48 rounded-lg border bg-white px-3 text-base font-normal shadow-sm"
+            className="mt-2 block min-h-11 min-w-48 rounded-lg border bg-white px-3 text-base font-normal outline-none focus:border-forest focus:ring-2 focus:ring-leaf"
             name="locationFilter"
             value={selectedLocationId}
             onChange={(event) => setSelectedLocationId(event.target.value)}
@@ -75,7 +75,7 @@ export function LogHistory({
       </div>
 
       {careSummary ? (
-        <p className="mb-4 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-950">
+        <p className="mb-4 rounded-xl bg-cream px-4 py-3 text-sm text-forest">
           {selected?.name ?? "This location"}: last watered{" "}
           {careSummary.lastWateredOn ?? "not yet"}, last fertilized{" "}
           {careSummary.lastFertilizedOn ?? "not yet"} (garden-local dates).
@@ -92,11 +92,11 @@ export function LogHistory({
                 <button
                   type="button"
                   onClick={() => setSelectedLocationId(location.id)}
-                  className="font-semibold text-green-900 underline-offset-2 hover:underline"
+                  className="font-semibold text-forest underline-offset-2 hover:underline"
                 >
                   {location.name}
                 </button>
-                <p className="mt-1 text-neutral-600">
+                <p className="mt-1 text-forest">
                   Last watered {care?.lastWateredOn ?? "not yet"} · fertilized{" "}
                   {care?.lastFertilizedOn ?? "not yet"}
                 </p>
@@ -107,7 +107,7 @@ export function LogHistory({
       ) : null}
 
       {visibleEntries.length === 0 ? (
-        <p className="rounded-2xl border bg-white p-5 text-sm text-neutral-600 shadow-sm">
+        <p className="rounded-2xl border bg-white p-5 text-sm text-forest">
           No entries yet{selected ? ` for ${selected.name}` : ""}.
         </p>
       ) : (
@@ -117,26 +117,26 @@ export function LogHistory({
             return (
               <li
                 key={entry.id}
-                className={`rounded-2xl border bg-white p-4 shadow-sm ${
+                className={`rounded-2xl border bg-white p-4 ${
                   entry.voided ? "opacity-70" : ""
                 }`}
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="font-semibold">
+                  <p className="font-semibold text-forest">
                     {actionLabel(entry.actionType)}
                     {entry.voided ? (
-                      <span className="ml-2 text-xs font-semibold uppercase tracking-wide text-red-800">
+                      <span className="ml-2 text-xs font-semibold text-red-800">
                         Voided
                       </span>
                     ) : null}
                     {entry.voidsId ? (
-                      <span className="ml-2 text-xs font-semibold uppercase tracking-wide text-neutral-600">
+                      <span className="ml-2 text-xs font-semibold text-forest">
                         Correction
                       </span>
                     ) : null}
                   </p>
                   <time
-                    className="text-sm text-neutral-600"
+                    className="text-sm text-forest"
                     dateTime={occurredAt.toISOString()}
                   >
                     {localDateTimeString(occurredAt, timeZone).replace(
@@ -145,11 +145,11 @@ export function LogHistory({
                     )}
                   </time>
                 </div>
-                <p className="mt-1 text-sm text-neutral-700">
+                <p className="mt-1 text-sm text-forest">
                   {entry.locationName} · {entry.loggedByEmail}
                 </p>
                 {entry.detail ? (
-                  <p className="mt-2 text-sm text-neutral-800">{entry.detail}</p>
+                  <p className="mt-2 text-sm text-forest">{entry.detail}</p>
                 ) : null}
                 {!entry.voided && !entry.voidsId ? (
                   <VoidLogEntryForm entryId={entry.id} />

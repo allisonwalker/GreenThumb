@@ -38,7 +38,7 @@ const EXPOSURE_DETAILS: Record<
 };
 
 const fieldClass =
-  "mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-base shadow-sm outline-none focus:border-green-700 focus:ring-2 focus:ring-green-200";
+  "mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-base outline-none focus:border-forest focus:ring-2 focus:ring-leaf";
 const initialState = { status: "idle" as const };
 
 function newZone(zones: SunZoneInput[], bedLengthFt: number): SunZoneInput[] {
@@ -92,15 +92,15 @@ export function GardenProfileForm({
 
   return (
     <form action={formAction} className="space-y-8">
-      <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
+      <section className="rounded-2xl border bg-white p-5 sm:p-6">
         <div className="mb-5">
-          <h2 className="text-xl font-semibold">Garden location</h2>
-          <p className="mt-1 text-sm text-neutral-600">
+          <h2 className="text-xl font-semibold text-forest">Garden location</h2>
+          <p className="mt-1 text-sm text-forest">
             Used to match weather and decide when each garden day begins.
           </p>
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
-          <label className="block text-sm font-semibold text-neutral-800">
+          <label className="block text-sm font-semibold text-forest">
             Latitude
             <input
               className={fieldClass}
@@ -115,7 +115,7 @@ export function GardenProfileForm({
               placeholder="45.5231"
             />
           </label>
-          <label className="block text-sm font-semibold text-neutral-800">
+          <label className="block text-sm font-semibold text-forest">
             Longitude
             <input
               className={fieldClass}
@@ -130,7 +130,7 @@ export function GardenProfileForm({
               placeholder="-122.6765"
             />
           </label>
-          <label className="block text-sm font-semibold text-neutral-800">
+          <label className="block text-sm font-semibold text-forest">
             Timezone
             <input
               className={fieldClass}
@@ -139,11 +139,11 @@ export function GardenProfileForm({
               defaultValue={profile?.timezone ?? "America/Los_Angeles"}
               placeholder="America/Los_Angeles"
             />
-            <span className="mt-1 block font-normal text-neutral-500">
+            <span className="mt-1 block font-normal text-forest">
               Use an IANA timezone name.
             </span>
           </label>
-          <label className="block text-sm font-semibold text-neutral-800">
+          <label className="block text-sm font-semibold text-forest">
             USDA hardiness zone
             <input
               className={fieldClass}
@@ -153,7 +153,7 @@ export function GardenProfileForm({
               placeholder="8b"
             />
           </label>
-          <label className="block text-sm font-semibold text-neutral-800">
+          <label className="block text-sm font-semibold text-forest">
             Average last frost (optional)
             <input
               className={fieldClass}
@@ -162,7 +162,7 @@ export function GardenProfileForm({
               defaultValue={profile?.averageLastFrostOn ?? ""}
             />
           </label>
-          <label className="block text-sm font-semibold text-neutral-800">
+          <label className="block text-sm font-semibold text-forest">
             Average first frost (optional)
             <input
               className={fieldClass}
@@ -174,15 +174,15 @@ export function GardenProfileForm({
         </div>
       </section>
 
-      <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
+      <section className="rounded-2xl border bg-white p-5 sm:p-6">
         <div className="mb-5">
-          <h2 className="text-xl font-semibold">Raised bed</h2>
-          <p className="mt-1 text-sm text-neutral-600">
+          <h2 className="text-xl font-semibold text-forest">Raised bed</h2>
+          <p className="mt-1 text-sm text-forest">
             Record the permanent bed dimensions and its soil.
           </p>
         </div>
         <div className="grid gap-5 sm:grid-cols-3">
-          <label className="block text-sm font-semibold text-neutral-800">
+          <label className="block text-sm font-semibold text-forest">
             Length (feet)
             <input
               className={fieldClass}
@@ -196,7 +196,7 @@ export function GardenProfileForm({
               onChange={(event) => setBedLengthFt(Number(event.target.value))}
             />
           </label>
-          <label className="block text-sm font-semibold text-neutral-800">
+          <label className="block text-sm font-semibold text-forest">
             Width (feet)
             <input
               className={fieldClass}
@@ -209,7 +209,7 @@ export function GardenProfileForm({
               defaultValue={profile?.bedWidthFt ?? 3}
             />
           </label>
-          <label className="block text-sm font-semibold text-neutral-800">
+          <label className="block text-sm font-semibold text-forest">
             Soil type
             <input
               className={fieldClass}
@@ -222,11 +222,11 @@ export function GardenProfileForm({
         </div>
       </section>
 
-      <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
+      <section className="rounded-2xl border bg-white p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold">Sun map</h2>
-            <p className="mt-1 max-w-2xl text-sm text-neutral-600">
+            <h2 className="text-xl font-semibold text-forest">Sun map</h2>
+            <p className="mt-1 max-w-2xl text-sm text-forest">
               Zones must touch without overlapping and cover the entire 0–
               {bedLengthFt || 0} foot bed.
             </p>
@@ -234,7 +234,7 @@ export function GardenProfileForm({
           <button
             type="button"
             onClick={() => setZones((current) => newZone(current, bedLengthFt))}
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-green-700 px-4 text-sm font-semibold text-green-800 hover:bg-green-50"
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg border bg-white px-4 text-sm font-semibold text-forest hover:bg-cream"
           >
             <Plus aria-hidden="true" className="size-4" />
             Add zone
@@ -242,7 +242,7 @@ export function GardenProfileForm({
         </div>
 
         <div
-          className="mt-6 flex h-14 overflow-hidden rounded-lg border bg-neutral-100"
+          className="mt-6 flex h-14 overflow-hidden rounded-lg border bg-cream"
           aria-label="Sun exposure along the raised bed"
         >
           {zones.map((zone, index) => {
@@ -253,7 +253,7 @@ export function GardenProfileForm({
             return (
               <div
                 key={index}
-                className={`${EXPOSURE_DETAILS[zone.sunExposure].color} flex min-w-0 items-center justify-center border-r border-white/70 px-1 text-center text-xs font-semibold text-neutral-900 last:border-r-0`}
+                className={`${EXPOSURE_DETAILS[zone.sunExposure].color} flex min-w-0 items-center justify-center border-r border-white/70 px-1 text-center text-xs font-semibold text-forest last:border-r-0`}
                 style={{ width: `${width}%` }}
                 title={`${zone.startFt}–${zone.endFt} ft: ${EXPOSURE_DETAILS[zone.sunExposure].label}`}
               >
@@ -262,7 +262,7 @@ export function GardenProfileForm({
             );
           })}
         </div>
-        <div className="mt-1 flex justify-between text-xs text-neutral-500">
+        <div className="mt-1 flex justify-between text-xs text-forest">
           <span>0 ft</span>
           <span>{bedLengthFt || 0} ft</span>
         </div>
@@ -271,7 +271,7 @@ export function GardenProfileForm({
           {zones.map((zone, index) => (
             <fieldset
               key={index}
-              className="rounded-xl border bg-neutral-50 p-4"
+              className="rounded-xl border bg-white p-4"
             >
               <legend className="px-1 text-sm font-semibold">
                 Zone {index + 1}
@@ -326,7 +326,7 @@ export function GardenProfileForm({
                       </option>
                     ))}
                   </select>
-                  <span className="mt-1 block text-xs font-normal text-neutral-500">
+                  <span className="mt-1 block text-xs font-normal text-forest">
                     {EXPOSURE_DETAILS[zone.sunExposure].description}
                   </span>
                 </label>
@@ -349,14 +349,14 @@ export function GardenProfileForm({
         </div>
       </section>
 
-      <div className="sticky bottom-20 rounded-xl border bg-white/95 p-4 shadow-lg backdrop-blur md:bottom-4">
+      <div className="sticky bottom-20 rounded-xl border bg-white/95 p-4 backdrop-blur md:bottom-4">
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p
             aria-live="polite"
             className={
               state.status === "error"
                 ? "text-sm font-medium text-red-700"
-                : "text-sm font-medium text-green-800"
+                : "text-sm font-medium text-forest"
             }
           >
             {state.status === "idle" ? "Changes are not saved automatically." : state.message}
@@ -364,7 +364,7 @@ export function GardenProfileForm({
           <button
             type="submit"
             disabled={pending}
-            className="min-h-12 rounded-lg bg-green-800 px-6 font-semibold text-white hover:bg-green-900 disabled:cursor-wait disabled:opacity-60"
+            className="min-h-12 rounded-lg bg-forest px-6 font-semibold text-cream hover:bg-selection disabled:cursor-wait disabled:opacity-60"
           >
             {pending ? "Saving…" : "Save garden profile"}
           </button>
