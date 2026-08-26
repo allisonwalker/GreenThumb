@@ -14,8 +14,10 @@ import { READ_TOOL_NAMES } from "./tools";
 describe("runAgent", () => {
   it("records provider, model, tokens, cost, and tool trace on every run", async () => {
     const finalized: unknown[] = [];
+    const created: unknown[] = [];
     const store: AgentRunStore = {
       async create(input) {
+        created.push(input);
         return {
           id: "run-1",
           kind: input.kind,
@@ -50,6 +52,7 @@ describe("runAgent", () => {
     const result = await runAgent({
       kind: "test",
       trigger: "unit",
+      userId: "user-1",
       prompt: "Summarize",
       client,
       store,
@@ -58,6 +61,7 @@ describe("runAgent", () => {
     });
 
     expect(result.agentRunId).toBe("run-1");
+    expect(created[0]).toMatchObject({ userId: "user-1" });
     expect(result.status).toBe("succeeded");
     expect(finalized).toHaveLength(1);
     expect(finalized[0]).toMatchObject({

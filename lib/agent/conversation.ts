@@ -1,4 +1,4 @@
-import { and, asc, count, eq, gte } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 import { getDatabase } from "@/lib/db/client";
 import { conversations, messages } from "@/lib/db/schema";
@@ -33,59 +33,59 @@ export type ConversationStore = {
     content: string;
     agentRunId?: string | null;
   }): Promise<MessageRecord>;
-  countUserMessagesSince(input: {
-    userId: string;
-    kind: ConversationKind;
-    role: MessageRole;
-    since: Date;
-  }): Promise<number>;
+  clearMessages(userId: string, kind: ConversationKind): Promise<void>;
 };
 
 export function createConversationStore(): ConversationStore {
+  async function getOrCreate(
+    userId: string,
+    kind: ConversationKind,
+  ): Promise<ConversationRecord> {
+    const database = getDatabase();
+    const existing = await database
+      .select({
+        id: conversations.id,
+        userId: conversations.userId,
+        kind: conversations.kind,
+      })
+      .from(conversations)
+      .where(
+        and(eq(conversations.userId, userId), eq(conversations.kind, kind)),
+      )
+      .limit(1);
+
+    const found = existing[0];
+    if (found) {
+      return found;
+    }
+
+    await database
+      .insert(conversations)
+      .values({ userId, kind })
+      .onConflictDoNothing({
+        target: [conversations.userId, conversations.kind],
+      });
+
+    const created = await database
+      .select({
+        id: conversations.id,
+        userId: conversations.userId,
+        kind: conversations.kind,
+      })
+      .from(conversations)
+      .where(
+        and(eq(conversations.userId, userId), eq(conversations.kind, kind)),
+      )
+      .limit(1);
+    const row = created[0];
+    if (!row) {
+      throw new Error("Failed to create conversation");
+    }
+    return row;
+  }
+
   return {
-    async getOrCreate(userId, kind) {
-      const database = getDatabase();
-      const existing = await database
-        .select({
-          id: conversations.id,
-          userId: conversations.userId,
-          kind: conversations.kind,
-        })
-        .from(conversations)
-        .where(
-          and(eq(conversations.userId, userId), eq(conversations.kind, kind)),
-        )
-        .limit(1);
-
-      const found = existing[0];
-      if (found) {
-        return found;
-      }
-
-      await database
-        .insert(conversations)
-        .values({ userId, kind })
-        .onConflictDoNothing({
-          target: [conversations.userId, conversations.kind],
-        });
-
-      const created = await database
-        .select({
-          id: conversations.id,
-          userId: conversations.userId,
-          kind: conversations.kind,
-        })
-        .from(conversations)
-        .where(
-          and(eq(conversations.userId, userId), eq(conversations.kind, kind)),
-        )
-        .limit(1);
-      const row = created[0];
-      if (!row) {
-        throw new Error("Failed to create conversation");
-      }
-      return row;
-    },
+    getOrCreate,
 
     async listMessages(conversationId) {
       const database = getDatabase();
@@ -134,24 +134,16 @@ export function createConversationStore(): ConversationStore {
       return row;
     },
 
-    async countUserMessagesSince(input) {
+    async clearMessages(userId, kind) {
+      const conversation = await getOrCreate(userId, kind);
       const database = getDatabase();
-      const rows = await database
-        .select({ value: count() })
-        .from(messages)
-        .innerJoin(
-          conversations,
-          eq(messages.conversationId, conversations.id),
-        )
-        .where(
-          and(
-            eq(conversations.userId, input.userId),
-            eq(conversations.kind, input.kind),
-            eq(messages.role, input.role),
-            gte(messages.createdAt, input.since),
-          ),
-        );
-      return Number(rows[0]?.value ?? 0);
+      await database
+        .delete(messages)
+        .where(eq(messages.conversationId, conversation.id));
+      await database
+        .update(conversations)
+        .set({ updatedAt: new Date() })
+        .where(eq(conversations.id, conversation.id));
     },
   };
 }

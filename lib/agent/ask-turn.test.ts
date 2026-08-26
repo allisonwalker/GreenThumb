@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ASK_SYSTEM_PROMPT, TIME_BUDGET_SYSTEM_PROMPT } from "./prompts";
-import { runAskTurn } from "./ask-turn";
+import { clearAskConversation, runAskTurn } from "./ask-turn";
 import { DAILY_QA_CAP_MESSAGE } from "./qa-cap";
 import type { ConversationStore, MessageRecord } from "./conversation";
 import type { AskStreamEvent } from "./ask-stream";
@@ -43,21 +43,29 @@ function memoryStore(): ConversationStore & { messages: MessageRecord[] } {
       messages.push(row);
       return row;
     },
-    async countUserMessagesSince(input) {
-      const conversationIds = [...conversations.values()]
-        .filter(
-          (conversation) =>
-            conversation.userId === input.userId &&
-            conversation.kind === input.kind,
-        )
-        .map((conversation) => conversation.id);
-      return messages.filter(
-        (message) =>
-          conversationIds.includes(message.conversationId) &&
-          message.role === input.role &&
-          message.createdAt >= input.since,
-      ).length;
+    async clearMessages(userId, kind) {
+      const conversation = await this.getOrCreate(userId, kind);
+      for (let index = messages.length - 1; index >= 0; index -= 1) {
+        if (messages[index]?.conversationId === conversation.id) {
+          messages.splice(index, 1);
+        }
+      }
     },
+  };
+}
+
+function turnDeps(
+  store: ConversationStore,
+  extra: Omit<
+    NonNullable<Parameters<typeof runAskTurn>[1]>,
+    "conversationStore"
+  > = {},
+): NonNullable<Parameters<typeof runAskTurn>[1]> {
+  return {
+    conversationStore: store,
+    countDailyQa: async () => 0,
+    dailyQaCap: 20,
+    ...extra,
   };
 }
 
@@ -97,13 +105,14 @@ describe("runAskTurn", () => {
         timezone: "America/Los_Angeles",
         onEvent: (event) => events.push(event),
       },
-      { conversationStore: store, runAgent, dailyQaCap: 20 },
+      turnDeps(store, { runAgent }),
     );
 
     expect(runAgent).toHaveBeenCalledTimes(1);
     expect(runAgent.mock.calls[0]?.[0]).toMatchObject({
       kind: "ask",
       trigger: "ask",
+      userId: "user-1",
       prompt: "Do peppers want full sun?",
       systemPrompt: ASK_SYSTEM_PROMPT,
       history: [],
@@ -127,14 +136,6 @@ describe("runAskTurn", () => {
 
   it("returns daily_qa_cap without calling the model", async () => {
     const store = memoryStore();
-    const conversation = await store.getOrCreate("user-1", "ask");
-    for (let index = 0; index < 2; index += 1) {
-      await store.appendMessage({
-        conversationId: conversation.id,
-        role: "user",
-        content: `Question ${index}`,
-      });
-    }
     const runAgent = vi.fn();
     const events: AskStreamEvent[] = [];
 
@@ -145,12 +146,12 @@ describe("runAskTurn", () => {
         timezone: "America/Los_Angeles",
         onEvent: (event) => events.push(event),
       },
-      {
-        conversationStore: store,
+      turnDeps(store, {
         runAgent,
         dailyQaCap: 2,
+        countDailyQa: async () => 2,
         now: () => new Date("2026-08-13T20:00:00.000Z"),
-      },
+      }),
     );
 
     expect(runAgent).not.toHaveBeenCalled();
@@ -188,7 +189,7 @@ describe("runAskTurn", () => {
         timezone: "America/Los_Angeles",
         onEvent: (event) => events.push(event),
       },
-      { conversationStore: store, runAgent, dailyQaCap: 20 },
+      turnDeps(store, { runAgent }),
     );
 
     expect(runAgent).toHaveBeenCalledTimes(1);
@@ -212,18 +213,6 @@ describe("runAskTurn", () => {
 
   it("shares the daily Q&A cap across Ask and time-budget and does not call the model", async () => {
     const store = memoryStore();
-    const askConversation = await store.getOrCreate("user-1", "ask");
-    await store.appendMessage({
-      conversationId: askConversation.id,
-      role: "user",
-      content: "Do peppers want sun?",
-    });
-    const budgetConversation = await store.getOrCreate("user-1", "time_budget");
-    await store.appendMessage({
-      conversationId: budgetConversation.id,
-      role: "user",
-      content: "I have one hour Saturday.",
-    });
     const runAgent = vi.fn();
     const events: AskStreamEvent[] = [];
 
@@ -235,12 +224,12 @@ describe("runAskTurn", () => {
         timezone: "America/Los_Angeles",
         onEvent: (event) => events.push(event),
       },
-      {
-        conversationStore: store,
+      turnDeps(store, {
         runAgent,
         dailyQaCap: 2,
+        countDailyQa: async () => 2,
         now: () => new Date("2026-08-13T20:00:00.000Z"),
-      },
+      }),
     );
 
     expect(runAgent).not.toHaveBeenCalled();
@@ -269,7 +258,7 @@ describe("runAskTurn", () => {
         timezone: "America/Los_Angeles",
         onEvent: () => {},
       },
-      { conversationStore: store, runAgent },
+      turnDeps(store, { runAgent }),
     );
 
     expect(writes).toEqual(["kind:ask"]);
@@ -298,7 +287,7 @@ describe("runAskTurn", () => {
         timezone: "America/Los_Angeles",
         onEvent: () => {},
       },
-      { conversationStore: store, runAgent },
+      turnDeps(store, { runAgent }),
     );
 
     expect(writes).toEqual(["kind:time_budget"]);
@@ -328,7 +317,7 @@ describe("runAskTurn", () => {
         timezone: "America/Los_Angeles",
         onEvent: (event) => events.push(event),
       },
-      { conversationStore: store, runAgent },
+      turnDeps(store, { runAgent }),
     );
 
     expect(events[0]).toMatchObject({
@@ -385,7 +374,7 @@ describe("runAskTurn", () => {
         timezone: "America/Los_Angeles",
         onEvent: (event) => events.push(event),
       },
-      { conversationStore: store, runAgent, fallbackClient },
+      turnDeps(store, { runAgent, fallbackClient }),
     );
 
     expect(runAgent).toHaveBeenCalledTimes(2);
@@ -395,5 +384,105 @@ describe("runAskTurn", () => {
       role: "assistant",
       content: "Peppers want full sun.",
     });
+  });
+
+  it("does not treat leftover chat text as today's Q&A count", async () => {
+    const store = memoryStore();
+    const conversation = await store.getOrCreate("user-1", "ask");
+    for (let index = 0; index < 20; index += 1) {
+      await store.appendMessage({
+        conversationId: conversation.id,
+        role: "user",
+        content: `Old question ${index}`,
+      });
+    }
+    const runAgent = vi.fn(async () => succeededResult());
+
+    await runAskTurn(
+      {
+        userId: "user-1",
+        prompt: "Do peppers want sun?",
+        timezone: "America/Los_Angeles",
+        onEvent: () => {},
+      },
+      turnDeps(store, {
+        runAgent,
+        dailyQaCap: 20,
+        countDailyQa: async () => 0,
+      }),
+    );
+
+    expect(runAgent).toHaveBeenCalledTimes(1);
+  });
+
+  it("omits cleared messages from the next model history and leaves the other mode", async () => {
+    const store = memoryStore();
+    const askConversation = await store.getOrCreate("user-1", "ask");
+    await store.appendMessage({
+      conversationId: askConversation.id,
+      role: "user",
+      content: "What about the peppers?",
+    });
+    await store.appendMessage({
+      conversationId: askConversation.id,
+      role: "assistant",
+      content: "They want full sun.",
+    });
+    const hoursConversation = await store.getOrCreate("user-1", "time_budget");
+    await store.appendMessage({
+      conversationId: hoursConversation.id,
+      role: "user",
+      content: "I have two hours Saturday.",
+    });
+
+    await clearAskConversation("user-1", "ask", store);
+
+    expect(await store.listMessages(askConversation.id)).toEqual([]);
+    expect(await store.listMessages(hoursConversation.id)).toHaveLength(1);
+
+    const runAgent = vi.fn(async () => succeededResult());
+    await runAskTurn(
+      {
+        userId: "user-1",
+        prompt: "Should I water basil?",
+        timezone: "America/Los_Angeles",
+        onEvent: () => {},
+      },
+      turnDeps(store, { runAgent }),
+    );
+
+    expect(runAgent).toHaveBeenCalledWith(
+      expect.objectContaining({ history: [] }),
+    );
+  });
+
+  it("still enforces the daily cap after the chat is cleared", async () => {
+    const store = memoryStore();
+    const conversation = await store.getOrCreate("user-1", "ask");
+    await store.appendMessage({
+      conversationId: conversation.id,
+      role: "user",
+      content: "Old question",
+    });
+    await clearAskConversation("user-1", "ask", store);
+    const runAgent = vi.fn();
+
+    await runAskTurn(
+      {
+        userId: "user-1",
+        prompt: "One more after clear?",
+        timezone: "America/Los_Angeles",
+        onEvent: () => {},
+      },
+      turnDeps(store, {
+        runAgent,
+        dailyQaCap: 20,
+        countDailyQa: async () => 20,
+      }),
+    );
+
+    expect(runAgent).not.toHaveBeenCalled();
+    expect(await store.listMessages(conversation.id)).toHaveLength(2);
+    expect(store.messages.at(-1)?.content).toBe(DAILY_QA_CAP_MESSAGE);
   });
 });

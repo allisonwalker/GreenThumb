@@ -5,6 +5,15 @@ export type AskRequestBody = {
   kind: ConversationKind;
 };
 
+export function parseConversationKind(
+  raw: unknown,
+): ConversationKind | { error: string } {
+  if (raw !== "ask" && raw !== "time_budget") {
+    return { error: "Expected kind to be ask or time_budget." };
+  }
+  return raw;
+}
+
 export function parseAskRequestBody(
   body: unknown,
 ): AskRequestBody | { error: string } {
@@ -17,9 +26,10 @@ export function parseAskRequestBody(
   }
 
   const rawKind = "kind" in body ? (body as { kind: unknown }).kind : "ask";
-  if (rawKind !== "ask" && rawKind !== "time_budget") {
-    return { error: "Expected kind to be ask or time_budget." };
+  const kind = parseConversationKind(rawKind);
+  if (typeof kind !== "string") {
+    return kind;
   }
 
-  return { prompt: prompt.trim(), kind: rawKind };
+  return { prompt: prompt.trim(), kind };
 }

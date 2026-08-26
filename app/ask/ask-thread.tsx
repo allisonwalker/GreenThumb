@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { clearAskThread } from "@/app/ask/actions";
 import { parseAskStreamBuffer, type AskStreamEvent } from "@/lib/agent/ask-stream";
 import type { ConversationKind, MessageRecord } from "@/lib/agent/conversation";
 import { formatTimeBudgetPrompt } from "@/lib/agent/time-budget-prompt";
@@ -40,6 +41,8 @@ export function AskThread({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [capped, setCapped] = useState(false);
+  const [confirmingClear, setConfirmingClear] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   const messages = mode === "ask" ? askMessages : timeBudgetMessages;
@@ -50,7 +53,7 @@ export function AskThread({
   }, [messages, pending, mode]);
 
   async function sendPrompt(prompt: string) {
-    if (!prompt || pending) {
+    if (!prompt || pending || clearing) {
       return;
     }
 
@@ -126,10 +129,34 @@ export function AskThread({
 
   const hoursReady =
     Number(saturdayHours) > 0 || Number(sundayHours) > 0;
+  const busy = pending || clearing;
+  const modeLabel = mode === "ask" ? "Questions" : "Hours I have";
+
+  async function onConfirmClear() {
+    if (pending || clearing) {
+      return;
+    }
+
+    setError(null);
+    setClearing(true);
+    try {
+      const result = await clearAskThread(mode);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setMessages([]);
+      setConfirmingClear(false);
+    } catch {
+      setError("Could not clear this chat. Try again.");
+    } finally {
+      setClearing(false);
+    }
+  }
 
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-2xl flex-col">
-      <header className="shrink-0">
+      <header className="flex shrink-0 flex-col">
         <p className="text-sm font-semibold uppercase tracking-wide text-green-700">
           Ask
         </p>
@@ -150,25 +177,70 @@ export function AskThread({
         >
           <ModeTab
             selected={mode === "ask"}
-            disabled={pending}
+            disabled={busy}
             onSelect={() => {
               setMode("ask");
               setError(null);
+              setConfirmingClear(false);
             }}
           >
             Questions
           </ModeTab>
           <ModeTab
             selected={mode === "time_budget"}
-            disabled={pending}
+            disabled={busy}
             onSelect={() => {
               setMode("time_budget");
               setError(null);
+              setConfirmingClear(false);
             }}
           >
             Hours I have
           </ModeTab>
         </div>
+        {confirmingClear ? (
+          <div
+            role="alertdialog"
+            aria-labelledby="clear-chat-title"
+            aria-describedby="clear-chat-description"
+            className="mt-4 rounded-2xl border bg-white p-4 shadow-sm"
+          >
+            <p id="clear-chat-title" className="text-sm font-semibold">
+              Clear this {modeLabel} chat?
+            </p>
+            <p id="clear-chat-description" className="mt-2 text-sm text-neutral-600">
+              This removes the current {modeLabel} thread. The other mode is
+              unchanged, and it does not give you extra questions today.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="min-h-12 rounded-lg border bg-white px-4 text-sm font-semibold text-neutral-700"
+                disabled={clearing}
+                onClick={() => setConfirmingClear(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="min-h-12 rounded-lg bg-green-800 px-4 text-sm font-semibold text-white hover:bg-green-900 disabled:opacity-60"
+                disabled={clearing}
+                onClick={() => void onConfirmClear()}
+              >
+                {clearing ? "Clearing…" : "Clear this chat"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="mt-4 min-h-12 self-start rounded-lg border bg-white px-4 text-sm font-semibold text-neutral-700 disabled:opacity-60"
+            disabled={busy || messages.length === 0}
+            onClick={() => setConfirmingClear(true)}
+          >
+            Clear this chat
+          </button>
+        )}
       </header>
 
       <div
@@ -200,7 +272,7 @@ export function AskThread({
               </p>
               <p className="mt-1 whitespace-pre-wrap text-base leading-6">
                 {message.content ||
-                  (pending
+                  (pending && message.role === "assistant"
                     ? mode === "ask"
                       ? "Looking at your garden…"
                       : "Cutting today's list…"
@@ -224,7 +296,7 @@ export function AskThread({
               onChange={(event) => setDraft(event.target.value)}
               rows={3}
               required
-              disabled={pending || capped}
+              disabled={pending || capped || clearing}
               placeholder="Should I water the peppers today?"
             />
           </label>
@@ -232,7 +304,7 @@ export function AskThread({
             error={error}
             pending={pending}
             capped={capped}
-            disabled={draft.trim().length === 0}
+            disabled={draft.trim().length === 0 || clearing}
             pendingLabel="Asking…"
             submitLabel="Ask"
           />
@@ -254,7 +326,7 @@ export function AskThread({
                 step={0.5}
                 value={saturdayHours}
                 onChange={(event) => setSaturdayHours(event.target.value)}
-                disabled={pending || capped}
+                disabled={pending || capped || clearing}
                 name="saturdayHours"
               />
             </label>
@@ -269,7 +341,7 @@ export function AskThread({
                 step={0.5}
                 value={sundayHours}
                 onChange={(event) => setSundayHours(event.target.value)}
-                disabled={pending || capped}
+                disabled={pending || capped || clearing}
                 name="sundayHours"
               />
             </label>
@@ -278,7 +350,7 @@ export function AskThread({
             error={error}
             pending={pending}
             capped={capped}
-            disabled={!hoursReady}
+            disabled={!hoursReady || clearing}
             pendingLabel="Planning…"
             submitLabel="Plan my hours"
           />

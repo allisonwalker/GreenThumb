@@ -749,6 +749,67 @@ describeDatabase("garden schema integration", () => {
     });
   });
 
+  it("deletes Ask messages without removing agent_run or the other mode", async () => {
+    await expectRollback(async (transaction) => {
+      const [user] = await transaction<{ id: string }[]>`
+        insert into app_user (id, email)
+        values ('11111111-1111-4111-8111-111111111112', 'clear@example.com')
+        returning id
+      `;
+      const [run] = await transaction<{ id: string }[]>`
+        insert into agent_run (kind, trigger, provider, model, user_id)
+        values ('ask', 'ask', 'gemini', 'gemini-flash-latest', ${user.id})
+        returning id
+      `;
+      const [ask] = await transaction<{ id: string }[]>`
+        insert into conversation (user_id, kind)
+        values (${user.id}, 'ask')
+        returning id
+      `;
+      const [hours] = await transaction<{ id: string }[]>`
+        insert into conversation (user_id, kind)
+        values (${user.id}, 'time_budget')
+        returning id
+      `;
+      await transaction`
+        insert into message (conversation_id, role, content)
+        values (${ask.id}, 'user', 'Do peppers want sun?')
+      `;
+      await transaction`
+        insert into message (conversation_id, role, content, agent_run_id)
+        values (${ask.id}, 'assistant', 'Yes — catalog says full_sun.', ${run.id})
+      `;
+      await transaction`
+        insert into message (conversation_id, role, content)
+        values (${hours.id}, 'user', 'I have two hours Saturday.')
+      `;
+
+      await transaction`
+        delete from message where conversation_id = ${ask.id}
+      `;
+
+      const remainingAsk = await transaction<{ count: string }[]>`
+        select count(*)::text as count from message where conversation_id = ${ask.id}
+      `;
+      const remainingHours = await transaction<{ count: string }[]>`
+        select count(*)::text as count from message where conversation_id = ${hours.id}
+      `;
+      const remainingRuns = await transaction<{ count: string }[]>`
+        select count(*)::text as count from agent_run where id = ${run.id}
+      `;
+      const remainingConversations = await transaction<{ count: string }[]>`
+        select count(*)::text as count from conversation where user_id = ${user.id}
+      `;
+
+      expect(remainingAsk[0]?.count).toBe("0");
+      expect(remainingHours[0]?.count).toBe("1");
+      expect(remainingRuns[0]?.count).toBe("1");
+      expect(remainingConversations[0]?.count).toBe("2");
+
+      throw new Error(rollbackMessage);
+    });
+  });
+
   it("accepts time_budget as an agent_run kind", async () => {
     await expectRollback(async (transaction) => {
       const [run] = await transaction<{ kind: string }[]>`

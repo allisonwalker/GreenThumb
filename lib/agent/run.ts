@@ -22,6 +22,7 @@ import {
 export type RunAgentOptions = {
   kind: AgentRunKind;
   trigger: string;
+  userId?: string | null;
   prompt?: string;
   history?: Array<{ role: "user" | "assistant"; content: string }>;
   systemPrompt?: string;
@@ -62,6 +63,7 @@ export async function runAgent(
       trigger: options.trigger,
       provider: client.provider,
       model: client.model,
+      userId: options.userId,
     });
     agentRunId = created.id;
   }
