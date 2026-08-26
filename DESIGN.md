@@ -2,7 +2,7 @@
 
 Capture of Jory Journal **as it looks today**, before Phase A bolder work. Two incumbent worlds already exist. Do not invent a third palette, a new display font, or a new motif. Product facts and chrome (Jory Journal + garden name, five destinations) stay in `PRODUCT.md` and `docs/architecture.md`. This file is look only.
 
-**Strongest existing move:** the Persuade forest field — full-viewport forest (`#172217`) with cream (`#f7faf7`) type, oversized bold headlines, shell off. Named tokens for that motif live in `app/globals.css`. Signed-in **chrome** now uses forest/cream at Operate density (usable nav, not a fold-covering poster). Page bodies stay quiet until their bolder tickets.
+**Strongest existing move:** the Persuade forest field — full-viewport forest (`#172217`) with cream (`#f7faf7`) type, oversized bold headlines, shell off. Named tokens for that motif live in `app/globals.css`. Signed-in **chrome** now uses forest/cream at Operate density (usable nav, not a fold-covering poster). **Today’s page title** now uses that type conviction at list density. Garden, Catalog, Log, and Ask bodies stay quiet until their bolder tickets.
 
 ## Persuade
 
@@ -48,23 +48,23 @@ Sign-in **form controls** on the cream pane drop back into Operate language: `ne
 - Title: `text-3xl font-bold tracking-tight` (`sm:text-4xl` on most destinations; Ask stays `text-3xl`)
 - Body: `text-neutral-600`
 
-That is one hierarchy step above body copy. It is quieter than landing’s `clamp` headlines.
+That is one hierarchy step above body copy on destinations that have not had a bolder ticket yet. It is quieter than landing’s `clamp` headlines. **Today** is the exception: the page title uses `text-5xl` / `sm:text-6xl`, `leading-none`, and `tracking-display` in `text-forest` — type conviction at Operate density, not `text-display`.
 
 **Color and density:** cream `--background` shows at the edges of main; content sits on **white cards** (`rounded-2xl` or shadcn `rounded-xl`, `border`, `shadow-sm`). Chrome is forest/cream. Page bodies still use mixed greens (`green-700` eyebrows, `green-800` primary buttons / links, `green-50` washes) plus Tailwind `neutral-*`. Default shadcn Card is white + border + light shadow. Today tasks, Garden rows, Catalog, Log, and Ask thread all read as a **dashboard / form / list**, not a marketing fold.
 
 **Per destination (look only):**
 
-- **Today** — grouped task cards, Done (`bg-green-800 text-white`) vs Dismiss (outline `neutral`). Empty: bordered white panel.
+- **Today** — one peak: `Open garden tasks` as `h1` (`text-5xl` / `sm:text-6xl`, `font-bold`, `leading-none`, `tracking-display`, `text-forest`). No green uppercase eyebrow. Urgency labels are sentence-case `text-sm font-medium text-forest`. Cards stay `rounded-2xl border bg-white` without `shadow-sm`. Done is `bg-forest text-cream`; Dismiss is outline on white. Empty is a bordered white panel; matching error keeps the amber wash. Not a forest poster; still a scannable task list.
 - **Garden** — locations list then pots; setup is a bordered `green-800` text button, not a cream-on-forest CTA. Same header recipe on setup and location pages.
 - **Catalog** — search/edit list; crop edit reuses the green eyebrow + `text-3xl` title.
 - **Log** — form then history; same header recipe.
 - **Ask** — same eyebrow/title, then a conversation column and `green-700` focus rings on the composer.
 
-Page bodies **still read quieter than landing.** Same product, two visual temperatures: Persuade fills the fold; chrome now matches that forest/cream pairing; Operate pages are still modest type + default cards.
+**Today** now shares landing’s motif and type conviction at Operate density. Garden, Catalog, Log, and Ask page bodies **still read quieter than landing** until their own tickets. Same product: Persuade fills the fold; chrome is forest/cream; Today’s title is the Operate peak; other Operate pages are still modest type + default cards.
 
 ## Intent for later bolder (page tickets)
 
-Operate chrome already shares landing’s **motif and type conviction** at **Operate density**. Page bodies (Today cards, Garden lists, Catalog, Log, Ask) still read quieter than landing until their own tickets. Do not restyle `/` or `/sign-in` again as a stand-in. Do not invent new hex or a new font in a page ticket — use `forest` / `cream` / `leaf` / `leaf-muted` / `selection` / `text-display` / `tracking-display`. Recapture this file after page bolders ship.
+Operate chrome already shares landing’s **motif and type conviction** at **Operate density**. **Today’s title** does too (`tracking-display`, not `text-display`). Garden lists, Catalog, Log, and Ask still read quieter than landing until their own tickets. Do not restyle `/` or `/sign-in` again as a stand-in. Do not invent new hex or a new font in a page ticket — use `forest` / `cream` / `leaf` / `leaf-muted` / `selection` / `text-display` / `tracking-display`. Recapture this file after remaining page bolders ship.
 
 ## Primitives (honest inventory)
 
@@ -89,6 +89,6 @@ Promoted into `@theme` in `app/globals.css`. Do not invent a third set.
 
 **Hardcoded marketing hex** is retired from components. Those same values (`#172217`, `#f7faf7`, `#d7e5d7`, `#c5d9c5`, `#3d6b3d`) are the theme tokens above, plus `white` hover on the landing CTA.
 
-**Tailwind on Operate page bodies:** `neutral-50`–`neutral-950`, `green-50` / `green-200` / `green-700` / `green-800` / `green-900`, `amber-*` (Today matching error), `red-*` (errors), `white`, default `border`. Chrome uses `forest` / `cream` / `leaf` / `selection` instead of `neutral-*` + `green-50`.
+**Tailwind on Operate page bodies:** Garden, Catalog, Log, and Ask still use `neutral-*`, `green-50` / `green-200` / `green-700` / `green-800` / `green-900`, `red-*`, `white`, default `border`. **Today** uses motif names (`forest`, `cream`, `selection`) plus `amber-*` for matching error. Chrome uses `forest` / `cream` / `leaf` / `selection`.
 
 **Components:** `MarketingScreen` (Persuade only), `AppShell` / `AppNav` (Operate only; skipped on marketing paths), shadcn `Card` (white, `rounded-xl`, `shadow-sm`). Radius on marketing/Operate CTAs is `rounded-lg`; task cards often `rounded-2xl`.

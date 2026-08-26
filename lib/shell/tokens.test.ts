@@ -23,9 +23,7 @@ const MOTIF_HEX = {
 const MOTIF_HEX_PATTERN =
   /#(?:172217|f7faf7|d7e5d7|c5d9c5|3d6b3d|dbe5db)/i;
 
-const PAGE_BODY_FILES = [
-  "app/today/page.tsx",
-  "app/today/recommendation-card.tsx",
+const QUIET_PAGE_BODY_FILES = [
   "app/garden/page.tsx",
   "app/garden/current-locations-panel.tsx",
   "app/garden/setup/page.tsx",
@@ -129,22 +127,50 @@ describe("shared motif tokens (ALL-99)", () => {
     }
   });
 
-  it("does not restyle Operate page bodies", () => {
-    for (const relative of PAGE_BODY_FILES) {
+  it("does not restyle Operate page bodies still waiting on their bolder ticket", () => {
+    for (const relative of QUIET_PAGE_BODY_FILES) {
       const source = load(relative);
       expect(source).not.toContain("bg-forest");
       expect(source).not.toContain("text-display");
       expect(source).not.toContain("text-display-compact");
+      expect(source).not.toContain("tracking-display");
     }
 
-    expect(load("app/today/recommendation-card.tsx")).toContain(
-      "rounded-2xl border bg-white",
-    );
     expect(load("app/garden/current-locations-panel.tsx")).toContain(
       "hover:bg-green-50",
     );
     expect(load("app/log/log-action-form.tsx")).toContain("bg-white");
     expect(load("app/ask/ask-thread.tsx")).toContain("focus:ring-green-200");
+  });
+
+  it("bolders Today with one type peak, then quieter rows (ALL-100)", () => {
+    const page = load("app/today/page.tsx");
+    const card = load("app/today/recommendation-card.tsx");
+
+    expect(page).toContain("Open garden tasks");
+    expect(page).toContain("tracking-display");
+    expect(page).toContain("text-5xl");
+    expect(page).toContain("text-forest");
+    expect(page).not.toContain("text-display");
+    expect(page).not.toContain("text-display-compact");
+    expect(page).not.toContain("bg-forest");
+    expect(page).not.toContain("uppercase");
+    expect(page).not.toContain("text-green-700");
+    expect(page).not.toContain("text-green-800");
+    expect(page).toContain("Mark a task done when you finish it");
+    expect(page).toContain("Nothing open.");
+    expect(page).toContain('href="/ask?mode=hours"');
+
+    expect(card).toContain("rounded-2xl border bg-white");
+    expect(card).not.toContain("shadow-sm");
+    expect(card).toContain("bg-forest");
+    expect(card).toContain("text-cream");
+    expect(card).toContain("completeRecommendation");
+    expect(card).toContain("skipRecommendation");
+    expect(card).toContain("Done");
+    expect(card).toContain("Dismiss");
+    expect(card).not.toContain("text-display");
+    expect(card).not.toContain("bg-green-800");
   });
 
   it("keeps GreenThumb out of chrome copy", () => {
