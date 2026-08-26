@@ -15,7 +15,7 @@ import {
   locations,
   plantings,
 } from "@/lib/db/schema";
-import { daysBetween, localDateString } from "@/lib/garden/local-date";
+import { daysBetween, gardenLocalToday } from "@/lib/garden/local-date";
 
 import { formatLocationPlantingSummary } from "./location-summary";
 import type {
@@ -203,7 +203,7 @@ export async function getLocationPlantingsPage(
     .where(eq(currentLocations.id, locationId))
     .limit(1);
 
-  const todayLocal = localDateString(now, garden.timezone);
+  const todayLocal = gardenLocalToday(garden, now);
   const rows = await database
     .select({
       id: plantings.id,

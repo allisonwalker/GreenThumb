@@ -1,4 +1,4 @@
-import { localDateString } from "@/lib/garden/local-date";
+import { gardenLocalToday, localDateString } from "@/lib/garden/local-date";
 
 import type {
   ExistingRecommendation,
@@ -22,7 +22,7 @@ export function planCarePersist(input: {
   supersedeIds: string[];
   inserts: MatchingTaskInput[];
 } {
-  const today = localDateString(input.asOf, input.timeZone);
+  const today = gardenLocalToday({ timezone: input.timeZone }, input.asOf);
   const expireIds = input.existing
     .filter(
       (row) =>

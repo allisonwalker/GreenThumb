@@ -8,6 +8,7 @@ import {
   type WeatherDayInput,
   type WeatherRepository,
 } from "./index";
+import { addCalendarDays } from "@/lib/garden/local-date";
 import {
   buildOpenMeteoUrl,
   normalizeOpenMeteoResponse,
@@ -226,12 +227,9 @@ function openMeteoResponse(firstPrecipitation = 0.5) {
 }
 
 function datesBetween(start: string, count: number): string[] {
-  const startDate = new Date(`${start}T00:00:00.000Z`);
-  return Array.from({ length: count }, (_, index) => {
-    const date = new Date(startDate);
-    date.setUTCDate(startDate.getUTCDate() + index);
-    return date.toISOString().slice(0, 10);
-  });
+  return Array.from({ length: count }, (_, index) =>
+    addCalendarDays(start, index),
+  );
 }
 
 function jsonFetch(body: unknown): typeof fetch {

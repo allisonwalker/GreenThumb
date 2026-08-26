@@ -3,7 +3,7 @@ import {
   refreshWeatherCache,
   type CachedWeather,
 } from "@/lib/weather";
-import { addCalendarDays, localDateString } from "@/lib/garden/local-date";
+import { addCalendarDays, gardenLocalToday } from "@/lib/garden/local-date";
 
 import { createGardenProfileStore } from "./get-garden-profile";
 import type { ToolExecutionContext } from "./types";
@@ -54,7 +54,7 @@ export async function getWeather(
     dependencies.profileStore ?? createGardenProfileStore();
   const profile = await profileStore.getProfile(input.gardenId);
   const now = input.now ?? new Date();
-  const today = localDateString(now, profile.timezone);
+  const today = gardenLocalToday(profile, now);
   const startDate = addCalendarDays(today, -pastDays);
   const endDate = addCalendarDays(today, forecastDays);
 
