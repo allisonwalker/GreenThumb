@@ -28,5 +28,6 @@ describe("shell identity", () => {
       "/log",
       "/ask",
     ]);
+    expect(PRIMARY_NAV_HREFS).not.toContain("/garden/setup");
   });
 });

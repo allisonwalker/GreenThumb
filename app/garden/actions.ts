@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requirePageUser } from "@/lib/auth/session";
+import { GARDEN_PATH, GARDEN_SETUP_PATH } from "@/lib/garden/routes";
 import {
   type GardenProfileFormState,
   parseGardenProfileForm,
@@ -32,6 +33,11 @@ import {
   parseSaveSectionsForm,
 } from "@/lib/garden/season-validation";
 
+function revalidateGardenAndSetup() {
+  revalidatePath(GARDEN_PATH);
+  revalidatePath(GARDEN_SETUP_PATH);
+}
+
 export async function saveGardenProfile(
   _previousState: GardenProfileFormState,
   formData: FormData,
@@ -51,7 +57,7 @@ export async function saveGardenProfile(
 
   try {
     await saveGardenProfileRecord(input);
-    revalidatePath("/garden");
+    revalidateGardenAndSetup();
     return { status: "success", message: "Garden profile saved." };
   } catch (error) {
     console.error("Saving the garden profile failed.", error);
@@ -81,7 +87,7 @@ export async function createSeason(
 
   try {
     await createSeasonRecord(input);
-    revalidatePath("/garden");
+    revalidateGardenAndSetup();
     return {
       status: "success",
       message: input.markCurrent
@@ -117,7 +123,7 @@ export async function saveSeasonSections(
 
     const input = parseSaveSectionsForm(formData, board.bedLengthFt);
     await saveSeasonSectionsRecord(input);
-    revalidatePath("/garden");
+    revalidateGardenAndSetup();
     return { status: "success", message: "Bed sections saved." };
   } catch (error) {
     console.error("Saving season sections failed.", error);
@@ -140,7 +146,7 @@ export async function overrideSectionExposure(
   try {
     const input = parseOverrideSectionForm(formData);
     await overrideSectionExposureRecord(input);
-    revalidatePath("/garden");
+    revalidateGardenAndSetup();
     return { status: "success", message: "Section exposure overridden." };
   } catch (error) {
     console.error("Overriding section exposure failed.", error);
@@ -163,7 +169,7 @@ export async function revertSectionExposure(
   try {
     const { sectionId } = parseRevertSectionForm(formData);
     await revertSectionExposureRecord(sectionId);
-    revalidatePath("/garden");
+    revalidateGardenAndSetup();
     return { status: "success", message: "Reverted to derived exposure." };
   } catch (error) {
     console.error("Reverting section exposure failed.", error);
