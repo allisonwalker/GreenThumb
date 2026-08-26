@@ -171,7 +171,7 @@ export const gardens = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     singletonKey: boolean("singleton_key").default(true).notNull(),
-    name: text("name").default("Jory Journal Garden").notNull(),
+    name: text("name").default("Allison and Spencer's Garden").notNull(),
     latitude: numeric("latitude", { precision: 9, scale: 6 }).notNull(),
     longitude: numeric("longitude", { precision: 9, scale: 6 }).notNull(),
     timezone: text("timezone").notNull(),
