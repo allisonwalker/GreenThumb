@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { admitOrRejectSession } from "@/lib/auth/allowlist";
 import { ensureAppUser } from "@/lib/auth/app-user";
+import { pingDatabase } from "@/lib/db/client";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 async function clearSessionBestEffort() {
@@ -80,6 +81,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    await pingDatabase();
     await ensureAppUser({ id: user.id, email: user.email });
 
     return NextResponse.redirect(new URL("/today", request.url));
