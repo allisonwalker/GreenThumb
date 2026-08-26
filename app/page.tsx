@@ -19,7 +19,7 @@ export default async function Home() {
         </h1>
         <p className="mt-8 max-w-xl text-lg leading-7 text-[#d7e5d7] sm:text-xl sm:leading-8">
           Remembers this one bed and its pots. Today&apos;s care list comes from
-          stored crop needs, weather, and the log — not a chatbot guessing.
+          stored crop needs, weather, and the log.
         </p>
       </div>
       <div className="flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">

@@ -19,8 +19,8 @@ export default async function CatalogPage() {
         <p className="mt-3 max-w-2xl text-neutral-600">
           Every tomato planting of the same variety shares one watering cadence.
           Tomato and Tomato / Sungold are different rows. Search, open, and edit
-          here — matching will skip a task if that field is still blank, rather
-          than guessing.
+          here. If a cadence is still blank, that kind of task stays off
+          Today&apos;s list until you fill it in.
         </p>
       </header>
       <CatalogList crops={crops} />

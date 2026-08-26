@@ -44,7 +44,7 @@ export function LogActionForm({
       <div className="mb-5">
         <h2 className="text-xl font-semibold">Log an action</h2>
         <p className="mt-1 text-sm text-neutral-600">
-          Writes immediately. No model is involved. Time is garden-local (
+          Saves as soon as you submit. Time is garden-local (
           {timeZone.replace(/_/g, " ")}).
         </p>
       </div>

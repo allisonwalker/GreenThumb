@@ -223,10 +223,10 @@ export async function addPlanting(
       if (draft.outcome === "generated") {
         message = "Planting added. Care fields drafted by Gemini.";
       } else if (draft.outcome === "stub_monthly_cap") {
-        message = `Planting added with a blank care stub. ${draft.message}`;
+        message = `Planting added with blank care numbers. ${draft.message}`;
       } else {
         message =
-          "Planting added with a blank care stub — Gemini could not fill care fields.";
+          "Planting added with blank care numbers — we could not fill them in yet.";
       }
     }
 

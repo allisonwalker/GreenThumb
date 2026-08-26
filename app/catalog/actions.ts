@@ -83,7 +83,7 @@ export async function draftCropWithGemini(
   if (existing.source !== "stub") {
     return {
       status: "error",
-      message: "Draft with Gemini is only available on stub rows.",
+      message: "Draft with Gemini is only available before you save care numbers.",
     };
   }
 

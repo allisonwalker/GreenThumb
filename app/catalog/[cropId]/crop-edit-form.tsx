@@ -45,10 +45,8 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
           {cropIdentityLabel(crop.name, crop.variety)}
         </h1>
         <p className="mt-2 text-neutral-600">
-          Slug <span className="font-mono text-sm">{crop.slug}</span> is
-          computed from name and variety. Saving a colliding identity fails and
-          does not persist. Saving this form marks the row as edited without
-          clearing Gemini attribution.
+          This crop is identified by name and variety. If another crop already
+          uses that combination, the save will fail. Saving keeps your edits.
         </p>
         <p className="mt-2 text-sm font-medium text-green-800">
           {cropAttributionFromRecord(crop)}
@@ -72,7 +70,7 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
               }
             >
               {draftState.status === "idle"
-                ? "One structured Gemini call — not a chat tool."
+                ? "We'll suggest care numbers you can review and change."
                 : draftState.message}
             </p>
           </form>
@@ -111,8 +109,8 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
         <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
           <h2 className="text-xl font-semibold">Cadence</h2>
           <p className="mt-1 text-sm text-neutral-600">
-            Leave a field blank if you don&apos;t know it. Matching will skip
-            that task instead of guessing.
+            Leave a field blank if you don&apos;t know it. That task stays off
+            Today&apos;s list until you fill it in.
           </p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-medium">
@@ -307,7 +305,7 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
               }
             >
               {state.status === "idle"
-                ? "Saving does not call a model."
+                ? "Saves the numbers Today's list uses."
                 : state.message}
             </p>
             {state.status === "error" && state.existingCropId ? (
