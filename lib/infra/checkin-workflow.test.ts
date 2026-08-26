@@ -41,7 +41,8 @@ describe("daily matching check-in workflow", () => {
     const source = loadWorkflow();
 
     expect(source).toMatch(/set -euo pipefail/);
-    expect(source).toMatch(/curl[^\n]*--fail-with-body/);
+    expect(source).toMatch(/curl -sS --fail-with-body/);
+    expect(source).not.toMatch(/curl -f/);
     expect(source).toMatch(/exit 1/);
   });
 
