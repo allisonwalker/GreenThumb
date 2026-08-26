@@ -24,10 +24,6 @@ const MOTIF_HEX_PATTERN =
   /#(?:172217|f7faf7|d7e5d7|c5d9c5|3d6b3d|dbe5db)/i;
 
 const QUIET_PAGE_BODY_FILES = [
-  "app/garden/page.tsx",
-  "app/garden/current-locations-panel.tsx",
-  "app/garden/setup/page.tsx",
-  "app/garden/[locationId]/page.tsx",
   "app/catalog/page.tsx",
   "app/catalog/catalog-list.tsx",
   "app/catalog/[cropId]/page.tsx",
@@ -35,6 +31,15 @@ const QUIET_PAGE_BODY_FILES = [
   "app/log/log-action-form.tsx",
   "app/ask/page.tsx",
   "app/ask/ask-thread.tsx",
+];
+
+const GARDEN_BOLDER_FILES = [
+  "app/garden/page.tsx",
+  "app/garden/current-locations-panel.tsx",
+  "app/garden/setup/page.tsx",
+  "app/garden/location-plantings-panel.tsx",
+  "app/garden/garden-profile-form.tsx",
+  "app/garden/season-sections-panel.tsx",
 ];
 
 const MARKETING_FILES = [
@@ -136,11 +141,54 @@ describe("shared motif tokens (ALL-99)", () => {
       expect(source).not.toContain("tracking-display");
     }
 
-    expect(load("app/garden/current-locations-panel.tsx")).toContain(
-      "hover:bg-green-50",
-    );
     expect(load("app/log/log-action-form.tsx")).toContain("bg-white");
     expect(load("app/ask/ask-thread.tsx")).toContain("focus:ring-green-200");
+    expect(load("app/catalog/page.tsx")).toContain("text-green-700");
+  });
+
+  it("bolders Garden list, location, and setup with one type peak, then quieter rows (ALL-101)", () => {
+    const list = load("app/garden/page.tsx");
+    const panel = load("app/garden/current-locations-panel.tsx");
+    const setup = load("app/garden/setup/page.tsx");
+    const location = load("app/garden/location-plantings-panel.tsx");
+
+    expect(list).toContain("Current locations");
+    expect(list).toContain("tracking-display");
+    expect(list).toContain("text-5xl");
+    expect(list).toContain("text-forest");
+    expect(list).toContain("GARDEN_SETUP_PATH");
+    expect(list).toContain("Garden setup");
+    expect(list).not.toContain("text-display");
+    expect(list).not.toContain("bg-forest");
+    expect(list).not.toContain("uppercase");
+    expect(list).not.toContain("text-green-700");
+    expect(list).toContain("emptyGardenDashboardRedirect");
+
+    expect(panel).toContain("gardenLocationPath");
+    expect(panel).toContain("rounded-2xl border bg-white");
+    expect(panel).not.toContain("shadow-sm");
+    expect(panel).not.toContain("hover:bg-green-50");
+    expect(panel).toContain("Bed sections");
+    expect(panel).toContain("Pots");
+
+    expect(setup).toContain("Your garden profile");
+    expect(setup).toContain("tracking-display");
+    expect(setup).toContain("text-5xl");
+    expect(setup).not.toContain("emptyGardenDashboardRedirect");
+    expect(setup).not.toContain("uppercase");
+
+    expect(location).toContain("tracking-display");
+    expect(location).toContain("text-5xl");
+    expect(location).toContain("bg-forest");
+    expect(location).toContain("text-cream");
+    expect(location).not.toContain("bg-green-800");
+    expect(location).not.toContain("uppercase");
+    expect(location).toContain("addPlanting");
+
+    for (const relative of GARDEN_BOLDER_FILES) {
+      expect(load(relative)).not.toContain("text-display-compact");
+      expect(load(relative)).not.toContain("text-green-700");
+    }
   });
 
   it("bolders Today with one type peak, then quieter rows (ALL-100)", () => {

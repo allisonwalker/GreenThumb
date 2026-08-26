@@ -21,17 +21,16 @@ export default async function GardenSetupPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-12">
       <header>
-        <p className="text-sm font-semibold uppercase tracking-wide text-green-700">
-          <Link href={GARDEN_PATH} className="hover:underline">
+        <p className="text-sm font-medium text-forest">
+          <Link href={GARDEN_PATH} className="underline">
             Garden
           </Link>
-          {" · "}
-          Setup
+          {" · Setup"}
         </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="mt-3 text-5xl font-bold leading-none tracking-display text-forest sm:text-6xl">
           Your garden profile
         </h1>
-        <p className="mt-3 max-w-2xl text-neutral-600">
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-forest">
           Set the location and permanent sun map, then draw this season&apos;s
           bed sections. Plantings stay on each location.
         </p>
@@ -47,9 +46,11 @@ export default async function GardenSetupPage() {
           board={seasonBoard}
         />
       ) : (
-        <section className="rounded-2xl border border-dashed bg-neutral-50 p-5 sm:p-6">
-          <h2 className="text-xl font-semibold">Seasons &amp; bed sections</h2>
-          <p className="mt-2 text-sm text-neutral-600">
+        <section className="rounded-2xl border border-dashed bg-white p-5 sm:p-6">
+          <h2 className="text-xl font-semibold text-forest">
+            Seasons &amp; bed sections
+          </h2>
+          <p className="mt-2 text-sm text-forest">
             Save the garden profile and a complete sun map first. Section
             exposures are derived from those permanent zones.
           </p>

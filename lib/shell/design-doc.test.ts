@@ -44,6 +44,8 @@ describe("DESIGN.md Persuade vs Operate capture", () => {
     expect(source).toContain("tracking-display");
     expect(source).toContain("text-5xl");
     expect(source).toContain("Open garden tasks");
+    expect(source).toContain("Current locations");
+    expect(source).toContain("Your garden profile");
   });
 
   it("states Operate should inherit motif and type conviction at Operate density", () => {

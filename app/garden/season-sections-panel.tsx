@@ -23,7 +23,7 @@ import {
 } from "@/lib/garden/sun-exposure";
 
 const fieldClass =
-  "mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-base shadow-sm outline-none focus:border-green-700 focus:ring-2 focus:ring-green-200";
+  "mt-2 min-h-11 w-full rounded-lg border bg-white px-3 text-base outline-none focus:border-forest focus:ring-2 focus:ring-leaf";
 const initialState = { status: "idle" as const };
 const SEASON_SECTIONS_FORM_ID = "season-sections-save";
 
@@ -105,7 +105,7 @@ function StatusLine({
       className={
         state.status === "error"
           ? "text-sm font-medium text-red-700"
-          : "text-sm font-medium text-green-800"
+          : "text-sm font-medium text-forest"
       }
     >
       {state.status === "idle" ? idle : state.message}
@@ -115,7 +115,7 @@ function StatusLine({
 
 function SeasonMeta({ season }: { season: SeasonRecord }) {
   return (
-    <p className="text-sm text-neutral-600">
+    <p className="text-sm text-forest">
       {season.startsOn} → {season.endsOn}
       {season.isCurrent ? " · current" : ""}
     </p>
@@ -132,7 +132,7 @@ function SectionStrip({
   return (
     <>
       <div
-        className="mt-4 flex h-14 overflow-hidden rounded-lg border bg-neutral-100"
+        className="mt-4 flex h-14 overflow-hidden rounded-lg border bg-cream"
         aria-label="Bed sections along the raised bed"
       >
         {sections.map((section) => {
@@ -146,7 +146,7 @@ function SectionStrip({
           return (
             <div
               key={`${section.name}-${section.startFt}-${section.endFt}`}
-              className="flex min-w-0 items-center justify-center border-r border-white/70 bg-green-200 px-1 text-center text-xs font-semibold text-neutral-900 last:border-r-0"
+              className="flex min-w-0 items-center justify-center border-r border-white/70 bg-leaf px-1 text-center text-xs font-semibold text-forest last:border-r-0"
               style={{ width: `${width}%` }}
               title={`${section.name}: ${section.startFt}–${section.endFt} ft`}
             >
@@ -155,7 +155,7 @@ function SectionStrip({
           );
         })}
       </div>
-      <div className="mt-1 flex justify-between text-xs text-neutral-500">
+      <div className="mt-1 flex justify-between text-xs text-forest">
         <span>0 ft</span>
         <span>{bedLengthFt} ft</span>
       </div>
@@ -174,29 +174,29 @@ function HistorySections({
     <div className="mt-4 space-y-3">
       <SectionStrip sections={season.sections} bedLengthFt={bedLengthFt} />
       {season.sections.length === 0 ? (
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-forest">
           This season has no bed sections recorded.
         </p>
       ) : (
         season.sections.map((section) => (
           <div
             key={section.id}
-            className="rounded-xl border bg-neutral-50 px-4 py-3"
+            className="rounded-xl border bg-white px-4 py-3"
           >
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="font-semibold">{section.name}</h3>
-              <p className="text-sm text-neutral-600">
+              <h3 className="font-semibold text-forest">{section.name}</h3>
+              <p className="text-sm text-forest">
                 {section.startFt}–{section.endFt} ft
               </p>
             </div>
-            <p className="mt-1 text-sm text-neutral-800">
+            <p className="mt-1 text-sm text-forest">
               {section.sunExposureDisplay}
               {section.sunExposureSource === "override" ? " · override" : ""}
             </p>
             <p className="mt-2">
               <Link
                 href={`/garden/${section.id}`}
-                className="text-sm font-semibold text-green-800 hover:underline"
+                className="text-sm font-semibold text-forest underline"
               >
                 View plantings
               </Link>
@@ -262,7 +262,7 @@ function OverrideControls({ section }: { section: SeasonSectionRecord }) {
           <button
             type="submit"
             disabled={overridePending}
-            className="min-h-11 rounded-lg border px-4 text-sm font-semibold text-neutral-800 hover:bg-neutral-50 disabled:opacity-60"
+            className="min-h-11 rounded-lg border bg-white px-4 text-sm font-semibold text-forest hover:bg-cream disabled:opacity-60"
           >
             {overridePending ? "Saving…" : "Save override"}
           </button>
@@ -306,31 +306,31 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
+      <section className="rounded-2xl border bg-white p-5 sm:p-6">
         <div className="mb-5">
-          <h2 className="text-xl font-semibold">Seasons</h2>
-          <p className="mt-1 text-sm text-neutral-600">
+          <h2 className="text-xl font-semibold text-forest">Seasons</h2>
+          <p className="mt-1 text-sm text-forest">
             Re-cut the bed each season. Sun exposure is derived from the
             permanent sun map—no re-entry.
           </p>
         </div>
 
         {board.currentSeason ? (
-          <div className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3">
-            <p className="text-sm font-semibold text-green-900">
+          <div className="mb-6 rounded-xl border bg-cream px-4 py-3">
+            <p className="text-sm font-semibold text-forest">
               Current season: {board.currentSeason.name}
             </p>
             <SeasonMeta season={board.currentSeason} />
           </div>
         ) : (
-          <p className="mb-6 text-sm text-neutral-600">
+          <p className="mb-6 text-sm text-forest">
             No current season yet. Create one to draw this year&apos;s sections.
           </p>
         )}
 
         <form action={createAction} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
-            <label className="text-sm font-semibold text-neutral-800 sm:col-span-1">
+            <label className="text-sm font-semibold text-forest sm:col-span-1">
               Season name
               <input
                 className={fieldClass}
@@ -339,16 +339,16 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
                 placeholder="2026 main"
               />
             </label>
-            <label className="text-sm font-semibold text-neutral-800">
+            <label className="text-sm font-semibold text-forest">
               Starts
               <input className={fieldClass} name="startsOn" type="date" required />
             </label>
-            <label className="text-sm font-semibold text-neutral-800">
+            <label className="text-sm font-semibold text-forest">
               Ends
               <input className={fieldClass} name="endsOn" type="date" required />
             </label>
           </div>
-          <label className="flex min-h-11 items-center gap-3 text-sm font-medium text-neutral-800">
+          <label className="flex min-h-11 items-center gap-3 text-sm font-medium text-forest">
             <input type="hidden" name="markCurrent" value="false" />
             <input
               type="checkbox"
@@ -359,7 +359,7 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
             />
             Mark as the current season
           </label>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-forest">
             Marking a season current keeps earlier seasons and their sections as
             read-only history.
           </p>
@@ -371,7 +371,7 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
             <button
               type="submit"
               disabled={createPending}
-              className="min-h-12 rounded-lg bg-green-800 px-6 font-semibold text-white hover:bg-green-900 disabled:opacity-60"
+              className="min-h-12 rounded-lg bg-forest px-6 font-semibold text-cream hover:bg-selection disabled:opacity-60"
             >
               {createPending ? "Creating…" : "Create season"}
             </button>
@@ -380,13 +380,13 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
       </section>
 
       {board.currentSeason ? (
-        <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
+        <section className="rounded-2xl border bg-white p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-xl font-semibold text-forest">
                 This season&apos;s bed sections
               </h2>
-              <p className="mt-1 max-w-2xl text-sm text-neutral-600">
+              <p className="mt-1 max-w-2xl text-sm text-forest">
                 Draw 5–6 ranges covering 0–{board.bedLengthFt} ft without gaps
                 or overlaps. Exposure appears from the sun map.
               </p>
@@ -398,7 +398,7 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
                   splitSection(current, board.bedLengthFt),
                 )
               }
-              className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-green-700 px-4 text-sm font-semibold text-green-800 hover:bg-green-50"
+              className="inline-flex min-h-11 items-center gap-2 rounded-lg border bg-white px-4 text-sm font-semibold text-forest hover:bg-cream"
             >
               <Plus aria-hidden="true" className="size-4" />
               Split last section
@@ -429,7 +429,7 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
               return (
                 <div
                   key={section.clientKey}
-                  className="rounded-xl border bg-neutral-50 p-4"
+                  className="rounded-xl border bg-white p-4"
                 >
                   <fieldset className="min-w-0 border-0 p-0">
                     <legend className="px-0 text-sm font-semibold">
@@ -519,7 +519,7 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
                       </button>
                     </div>
                     {previewLabel ? (
-                      <p className="mt-3 text-sm text-neutral-800">
+                      <p className="mt-3 text-sm text-forest">
                         Sun: {previewLabel}
                         {saved?.sunExposureSource === "override"
                           ? " (saved override may differ until you revert)"
@@ -530,7 +530,7 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
                       <p className="mt-2">
                         <Link
                           href={`/garden/${saved.id}`}
-                          className="text-sm font-semibold text-green-800 hover:underline"
+                          className="text-sm font-semibold text-forest underline"
                         >
                           Record plantings
                         </Link>
@@ -546,7 +546,7 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
             <form
               id={SEASON_SECTIONS_FORM_ID}
               action={saveAction}
-              className="sticky bottom-20 rounded-xl border bg-white/95 p-4 shadow-lg backdrop-blur md:bottom-4"
+              className="sticky bottom-20 rounded-xl border bg-white/95 p-4 backdrop-blur md:bottom-4"
             >
               <input
                 type="hidden"
@@ -561,7 +561,7 @@ export function SeasonSectionsPanel({ board }: { board: SeasonBoardRecord }) {
                 <button
                   type="submit"
                   disabled={savePending}
-                  className="min-h-12 rounded-lg bg-green-800 px-6 font-semibold text-white hover:bg-green-900 disabled:opacity-60"
+                  className="min-h-12 rounded-lg bg-forest px-6 font-semibold text-cream hover:bg-selection disabled:opacity-60"
                 >
                   {savePending ? "Saving…" : "Save sections"}
                 </button>
@@ -586,14 +586,14 @@ export function PreviousSeasonsPanel({ board }: { board: SeasonBoardRecord }) {
   }
 
   return (
-    <section className="rounded-2xl border bg-white p-5 pb-28 shadow-sm sm:p-6 md:pb-6">
+    <section className="rounded-2xl border bg-white p-5 pb-28 sm:p-6 md:pb-6">
       <div className="mb-4">
-        <h2 className="text-xl font-semibold">Previous seasons</h2>
-        <p className="mt-1 text-sm text-neutral-600">
+        <h2 className="text-xl font-semibold text-forest">Previous seasons</h2>
+        <p className="mt-1 text-sm text-forest">
           Read-only history of earlier section cuts and their exposures.
         </p>
       </div>
-      <label className="block text-sm font-semibold text-neutral-800">
+      <label className="block text-sm font-semibold text-forest">
         Season
         <select
           className={fieldClass}
