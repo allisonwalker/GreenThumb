@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 
 import { DuplicateCropError } from "@/lib/crops/identity";
 import {
@@ -17,6 +17,7 @@ import {
 } from "@/lib/db/schema";
 import { daysBetween, localDateString } from "@/lib/garden/local-date";
 
+import { formatLocationPlantingSummary } from "./location-summary";
 import type {
   AddPlantingInput,
   RemovePlantingInput,
@@ -28,7 +29,7 @@ export type CurrentLocationSummary = {
   id: string;
   name: string;
   kind: LocationKind;
-  detail: string;
+  plantingSummary: string;
 };
 
 export type PlantingRecord = {
@@ -104,29 +105,60 @@ export async function listCurrentLocations(): Promise<CurrentLocationSummary[]> 
       id: currentLocations.id,
       name: currentLocations.name,
       kind: currentLocations.kind,
-      startFt: currentLocations.startFt,
-      endFt: currentLocations.endFt,
-      sunExposure: currentLocations.sunExposure,
-      volumeGal: currentLocations.volumeGal,
     })
     .from(currentLocations)
     .orderBy(asc(currentLocations.kind), asc(currentLocations.name));
 
-  return rows
-    .filter(
-      (row): row is typeof row & {
-        id: string;
-        name: string;
-        kind: LocationKind;
-        sunExposure: string;
-      } => Boolean(row.id && row.name && row.kind && row.sunExposure),
-    )
-    .map((row) => ({
-      id: row.id,
-      name: row.name,
-      kind: row.kind,
-      detail: locationDetail(row),
-    }));
+  const locations = rows.filter(
+    (row): row is typeof row & {
+      id: string;
+      name: string;
+      kind: LocationKind;
+    } => Boolean(row.id && row.name && row.kind),
+  );
+
+  const cropsByLocation = new Map<
+    string,
+    { cropName: string; variety: string | null }[]
+  >();
+
+  if (locations.length > 0) {
+    const plantingRows = await database
+      .select({
+        locationId: plantings.locationId,
+        cropName: plantings.cropName,
+        variety: plantings.variety,
+      })
+      .from(plantings)
+      .where(
+        and(
+          inArray(
+            plantings.locationId,
+            locations.map((location) => location.id),
+          ),
+          isNull(plantings.removedOn),
+        ),
+      )
+      .orderBy(asc(plantings.cropName));
+
+    for (const planting of plantingRows) {
+      const crops = cropsByLocation.get(planting.locationId) ?? [];
+      crops.push({
+        cropName: planting.cropName,
+        variety: planting.variety,
+      });
+      cropsByLocation.set(planting.locationId, crops);
+    }
+  }
+
+  return locations.map((location) => ({
+    id: location.id,
+    name: location.name,
+    kind: location.kind,
+    plantingSummary: formatLocationPlantingSummary(
+      cropsByLocation.get(location.id) ?? [],
+    ),
+  }));
 }
 
 export async function getLocationPlantingsPage(
