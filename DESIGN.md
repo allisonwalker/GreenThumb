@@ -10,7 +10,7 @@ Capture of Jory Journal **as it looks today**, before Phase A bolder work. Two i
 
 **Chrome:** `AppShell` and `AppNav` skip these paths (`pathname === "/"` or `pathname.startsWith("/sign-in")` in `components/app-shell.tsx` and `components/app-nav.tsx`). Authenticated visitors are redirected to `/today`. There is no tab bar, no sticky identity header, no `garden.name` on these screens.
 
-**Layout primitive:** `MarketingScreen` (`components/marketing-screen.tsx`) — `min-h-dvh` column, hardcoded `bg-[#172217]` and `text-[#f7faf7]`, selection `#3d6b3d` on cream. Landing stacks a giant title + body, then a three-line punch list and a cream CTA. Sign-in splits on large screens: forest copy column + cream form column (`bg-[#f7faf7] text-[#172217]`).
+**Layout primitive:** `MarketingScreen` (`components/marketing-screen.tsx`) — `min-h-dvh` column, hardcoded `bg-[#172217]` and `text-[#f7faf7]`, selection `#3d6b3d` on cream. Landing stacks a giant title + body, then a cream CTA. Sign-in splits on large screens: forest copy column + cream form column (`bg-[#f7faf7] text-[#172217]`).
 
 **Motif:** inverted forest field. Dark green fills the viewport. Type and the landing primary button are cream. Sign-in inverts again on the form pane so inputs sit on light cream with forest text.
 
@@ -18,7 +18,7 @@ Capture of Jory Journal **as it looks today**, before Phase A bolder work. Two i
 
 | Surface | Headline | Supporting |
 | --- | --- | --- |
-| `/` | `clamp(3.75rem, 16vw, 8.5rem)`, `font-bold`, `leading-[0.82]`, `tracking-[-0.04em]`, max ~12ch | `text-lg` / `sm:text-xl` in `#d7e5d7`; punch list `text-2xl` / `sm:text-3xl font-semibold` |
+| `/` | `clamp(3.75rem, 16vw, 8.5rem)`, `font-bold`, `leading-[0.82]`, `tracking-[-0.04em]`, max ~12ch | `text-lg` / `sm:text-xl` in `#d7e5d7` |
 | `/sign-in` | `clamp(3rem, 10vw, 6.5rem)`, `font-bold`, `leading-[0.88]`, same tracking | Eyebrow link `#c5d9c5`; body `#d7e5d7` |
 
 **Color pairing (hardcoded hex on marketing; not Tailwind tokens):**

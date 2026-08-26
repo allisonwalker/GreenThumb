@@ -22,12 +22,7 @@ export default async function Home() {
           stored crop needs, weather, and the log.
         </p>
       </div>
-      <div className="flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
-        <ul className="max-w-md space-y-1 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
-          <li>One bed. Eight pots.</li>
-          <li>Two of you. Same list.</li>
-          <li>Hours in, work that matters.</li>
-        </ul>
+      <div className="flex justify-end">
         <Link
           href="/sign-in"
           className="inline-flex min-h-14 items-center justify-center rounded-lg bg-[#f7faf7] px-8 text-base font-semibold text-[#172217] transition-colors hover:bg-white"
