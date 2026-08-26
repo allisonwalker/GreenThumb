@@ -30,13 +30,10 @@ export default async function LogPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <header className="mb-8">
-        <p className="text-sm font-semibold uppercase tracking-wide text-green-700">
-          Care log
-        </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="text-5xl font-bold leading-none tracking-display text-forest sm:text-6xl">
           What we already did
         </h1>
-        <p className="mt-3 max-w-2xl text-neutral-600">
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-forest">
           Record watering, feeding, pruning, harvest, and notes so both of you
           — and later, the daily list — know what happened.
         </p>

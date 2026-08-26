@@ -24,10 +24,15 @@ const MOTIF_HEX_PATTERN =
   /#(?:172217|f7faf7|d7e5d7|c5d9c5|3d6b3d|dbe5db)/i;
 
 const QUIET_PAGE_BODY_FILES = [
-  "app/log/page.tsx",
-  "app/log/log-action-form.tsx",
   "app/ask/page.tsx",
   "app/ask/ask-thread.tsx",
+];
+
+const LOG_BOLDER_FILES = [
+  "app/log/page.tsx",
+  "app/log/log-action-form.tsx",
+  "app/log/log-history.tsx",
+  "app/log/void-log-entry-form.tsx",
 ];
 
 const CATALOG_BOLDER_FILES = [
@@ -145,9 +150,53 @@ describe("shared motif tokens (ALL-99)", () => {
       expect(source).not.toContain("tracking-display");
     }
 
-    expect(load("app/log/log-action-form.tsx")).toContain("bg-white");
     expect(load("app/ask/ask-thread.tsx")).toContain("focus:ring-green-200");
-    expect(load("app/log/page.tsx")).toContain("text-green-700");
+    expect(load("app/ask/ask-thread.tsx")).toContain("text-green-700");
+  });
+
+  it("bolders Log entry and history with one type peak, then quieter rows (ALL-102)", () => {
+    const page = load("app/log/page.tsx");
+    const form = load("app/log/log-action-form.tsx");
+    const history = load("app/log/log-history.tsx");
+    const voidForm = load("app/log/void-log-entry-form.tsx");
+
+    expect(page).toContain("What we already did");
+    expect(page).toContain("tracking-display");
+    expect(page).toContain("text-5xl");
+    expect(page).toContain("text-forest");
+    expect(page).not.toContain("text-display");
+    expect(page).not.toContain("bg-forest");
+    expect(page).not.toContain("uppercase");
+    expect(page).not.toContain("text-green-700");
+    expect(page).toContain("Record watering, feeding, pruning, harvest");
+
+    expect(form).toContain("logGardenAction");
+    expect(form).toContain("Log an action");
+    expect(form).toContain("Log it");
+    expect(form).toContain("rounded-2xl border bg-white");
+    expect(form).not.toContain("shadow-sm");
+    expect(form).not.toContain("bg-green-800");
+    expect(form).toContain("bg-forest");
+    expect(form).toContain("text-cream");
+    expect(form).toContain("focus:border-forest");
+    expect(form).toContain("focus:ring-leaf");
+    expect(form).toContain("has-[:checked]:bg-cream");
+
+    expect(history).toContain("History");
+    expect(history).toContain("rounded-2xl border bg-white");
+    expect(history).not.toContain("shadow-sm");
+    expect(history).not.toContain("bg-green-50");
+    expect(history).toContain("bg-cream");
+    expect(history).toContain("VoidLogEntryForm");
+
+    expect(voidForm).toContain("voidGardenAction");
+    expect(voidForm).toContain("This was a mistake");
+    expect(voidForm).not.toContain("text-green-800");
+
+    for (const relative of LOG_BOLDER_FILES) {
+      expect(load(relative)).not.toContain("text-display-compact");
+      expect(load(relative)).not.toContain("text-green-700");
+    }
   });
 
   it("bolders Catalog list and crop detail with one type peak, then quieter rows (ALL-103)", () => {
