@@ -101,7 +101,7 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
       <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-xl font-semibold">Search crops</h2>
         <label className="mt-4 block text-sm font-medium">
-          Search by name, variety, or slug
+          Search by name or variety
           <input
             className={fieldClass}
             type="search"

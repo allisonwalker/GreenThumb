@@ -45,8 +45,8 @@ export function CropEditForm({ crop }: { crop: CropRecord }) {
           {cropIdentityLabel(crop.name, crop.variety)}
         </h1>
         <p className="mt-2 text-neutral-600">
-          This crop is identified by name and variety. If another crop already
-          uses that combination, the save will fail. Saving keeps your edits.
+          Name and variety are how this garden tells crops apart. If you already
+          have this combination, open that crop instead of saving a second one.
         </p>
         <p className="mt-2 text-sm font-medium text-green-800">
           {cropAttributionFromRecord(crop)}
