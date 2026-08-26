@@ -1,14 +1,22 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { requirePageUser } from "@/lib/auth/session";
 import { listCurrentLocations } from "@/lib/garden/planting-repository";
-import { GARDEN_SETUP_PATH } from "@/lib/garden/routes";
+import {
+  emptyGardenDashboardRedirect,
+  GARDEN_SETUP_PATH,
+} from "@/lib/garden/routes";
 
 import { CurrentLocationsPanel } from "./current-locations-panel";
 
 export default async function GardenPage() {
   await requirePageUser();
   const currentLocations = await listCurrentLocations();
+  const setupPath = emptyGardenDashboardRedirect(currentLocations.length);
+  if (setupPath) {
+    redirect(setupPath);
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-12">
