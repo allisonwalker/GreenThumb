@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { runToolLoop } from "./loop";
+import type { ModelCallLog } from "./invocation-log";
 import type { LlmClient, ProviderTurnResult, ToolCallRequest } from "./types";
 
 function mockClient(
@@ -37,7 +38,17 @@ const noopTools = [
   },
 ];
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("runToolLoop bounds", () => {
+  let log: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    log = vi.spyOn(console, "log").mockImplementation(() => {});
+  });
+
   it("stops when the iteration cap is reached", async () => {
     const toolCall: ToolCallRequest = {
       id: "1",

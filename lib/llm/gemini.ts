@@ -1,3 +1,4 @@
+import { withModelInvocationLog } from "./invocation-log";
 import type {
   GenerateJsonRequest,
   GenerateJsonResult,
