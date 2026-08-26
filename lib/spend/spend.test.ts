@@ -38,7 +38,7 @@ describe("decideSpend", () => {
     expect(decision.ok).toBe(false);
     if (!decision.ok) {
       expect(decision.code).toBe("monthly_cap");
-      expect(decision.message).toMatch(/care list is unaffected/i);
+      expect(decision.message).toMatch(/care list still works/i);
     }
   });
 

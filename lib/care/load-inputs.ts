@@ -10,7 +10,7 @@ import {
   gardens,
   plantings,
 } from "@/lib/db/schema";
-import { localDateString } from "@/lib/garden/local-date";
+import { gardenLocalToday, localDateString } from "@/lib/garden/local-date";
 import { readWeatherCache, refreshWeatherCache } from "@/lib/weather";
 
 import type { EvaluateCareListInput } from "./evaluate";
@@ -44,7 +44,7 @@ export async function loadCareMatchingSnapshot(
     return null;
   }
 
-  const today = localDateString(asOf, garden.timezone);
+  const today = gardenLocalToday(garden, asOf);
   const weather = await loadWeather(asOf);
   const plantingRows = await database
     .select({

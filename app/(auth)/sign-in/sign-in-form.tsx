@@ -93,7 +93,7 @@ export function SignInForm() {
   const showCodeStep = Boolean(email);
 
   return (
-    <div className="mt-8 space-y-5">
+    <div className="space-y-5">
       {!showCodeStep ? (
         <form onSubmit={onRequestCode} className="space-y-5">
           <div>

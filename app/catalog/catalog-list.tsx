@@ -14,7 +14,7 @@ const initialState = { status: "idle" as const };
 
 function sourceLabel(source: CropListItem["source"]) {
   if (source === "stub") {
-    return "Stub";
+    return "Needs care numbers";
   }
   if (source === "edited") {
     return "Edited";
@@ -41,10 +41,8 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
       <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-xl font-semibold">Add a crop</h2>
         <p className="mt-1 text-sm text-neutral-600">
-          First sight of a name and variety drafts care with Gemini when the
-          budget allows. A later planting with the same combination reuses this
-          row with no model call. Tomato and Tomato / Sungold are different
-          rows.
+          Add a crop by name and optional variety. Later plantings of the same
+          combination reuse this row. Tomato and Tomato / Sungold stay separate.
         </p>
         <form action={createAction} className="mt-4 space-y-3">
           <label className="block text-sm font-medium">
@@ -76,7 +74,7 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
               }
             >
               {createState.status === "idle"
-                ? "New combinations make one Gemini draft call."
+                ? "We'll fill in a first draft of care numbers when we can."
                 : createState.message}
             </p>
             <button
@@ -84,7 +82,7 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
               disabled={createPending}
               className="min-h-12 rounded-lg bg-green-800 px-6 font-semibold text-white hover:bg-green-900 disabled:opacity-60"
             >
-              {createPending ? "Creating…" : "Create stub"}
+              {createPending ? "Creating…" : "Add crop"}
             </button>
           </div>
           {createState.status === "error" && createState.existingCropId ? (
@@ -103,7 +101,7 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
       <section className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-xl font-semibold">Search crops</h2>
         <label className="mt-4 block text-sm font-medium">
-          Search by name, variety, or slug
+          Search by name or variety
           <input
             className={fieldClass}
             type="search"
@@ -116,7 +114,7 @@ export function CatalogList({ crops }: { crops: CropListItem[] }) {
         </label>
         <p id="catalog-search-help" className="mt-2 text-sm text-neutral-600">
           {crops.length === 0
-            ? "No crop rows yet. Add a stub above, or record a planting."
+            ? "No crops yet. Add one above, or record a planting."
             : `${matches.length} of ${crops.length} crop${crops.length === 1 ? "" : "s"}`}
         </p>
 

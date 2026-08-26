@@ -174,7 +174,7 @@ export function frostTask(
           figure: `forecast min ${low}`,
         },
         {
-          source: "matching rule",
+          source: "frost cutoff",
           figure: `frost threshold ${formatCelsius(need.thresholdC)}`,
         },
       ],

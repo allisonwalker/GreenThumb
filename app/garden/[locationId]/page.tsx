@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { requirePageUser } from "@/lib/auth/session";
 import { getLocationPlantingsPage } from "@/lib/garden/planting-repository";
+import { isGardenLocationIdSegment } from "@/lib/garden/routes";
 
 import { LocationPlantingsPanel } from "../location-plantings-panel";
 
@@ -14,6 +15,9 @@ export default async function LocationPlantingsPage({
 }: LocationPageProps) {
   await requirePageUser();
   const { locationId } = await params;
+  if (!isGardenLocationIdSegment(locationId)) {
+    notFound();
+  }
   const page = await getLocationPlantingsPage(locationId);
 
   if (!page) {

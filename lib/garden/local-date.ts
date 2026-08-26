@@ -1,9 +1,61 @@
-/** Garden-local calendar helpers. Prefer these over UTC date slicing. */
+/**
+ * Garden-local calendar helpers.
+ *
+ * "Today" is the calendar date in the singleton `garden.timezone` (IANA),
+ * never the server's timezone and never `new Date().toISOString().slice(0, 10)`.
+ * Use `gardenLocalToday` for "is it today?", `localDateString` to map an
+ * instant onto that calendar, and `daysBetween` / `addCalendarDays` for spans.
+ */
 
-export function localDateString(
-  instant: Date,
-  timeZone: string,
-): string {
+const ISO_CALENDAR_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+export type GardenTimezone = {
+  timezone: string;
+};
+
+export function parseIsoCalendarDate(value: string): {
+  year: number;
+  month: number;
+  day: number;
+} {
+  const match = ISO_CALENDAR_DATE.exec(value);
+  if (!match) {
+    throw new Error(`Expected YYYY-MM-DD, got ${value}`);
+  }
+
+  return {
+    year: Number(match[1]),
+    month: Number(match[2]),
+    day: Number(match[3]),
+  };
+}
+
+function formatUtcCalendarDate(instant: Date): string {
+  const year = instant.getUTCFullYear();
+  const month = String(instant.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(instant.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/** True when `value` is a real Gregorian YYYY-MM-DD (rejects 2026-02-30). */
+export function isIsoCalendarDate(value: string): boolean {
+  if (!ISO_CALENDAR_DATE.test(value)) {
+    return false;
+  }
+
+  const { year, month, day } = parseIsoCalendarDate(value);
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  return formatUtcCalendarDate(utc) === value;
+}
+
+export function requireIsoCalendarDate(value: string, label: string): string {
+  if (!isIsoCalendarDate(value)) {
+    throw new Error(`${label} must be a valid date.`);
+  }
+  return value;
+}
+
+export function localDateString(instant: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
     year: "numeric",
@@ -23,17 +75,22 @@ export function localDateString(
   return `${year}-${month}-${day}`;
 }
 
-export function addCalendarDays(date: string, days: number): string {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-  if (!match) {
-    throw new Error(`Expected YYYY-MM-DD, got ${date}`);
-  }
+/**
+ * Current garden-local calendar date.
+ * Pass `timezone` from the singleton `garden` row.
+ */
+export function gardenLocalToday(
+  garden: GardenTimezone,
+  now: Date = new Date(),
+): string {
+  return localDateString(now, garden.timezone);
+}
 
-  const utc = new Date(
-    Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])),
-  );
+export function addCalendarDays(date: string, days: number): string {
+  const { year, month, day } = parseIsoCalendarDate(date);
+  const utc = new Date(Date.UTC(year, month - 1, day));
   utc.setUTCDate(utc.getUTCDate() + days);
-  return utc.toISOString().slice(0, 10);
+  return formatUtcCalendarDate(utc);
 }
 
 function zonedParts(instant: Date, timeZone: string) {
@@ -115,10 +172,17 @@ export function zonedDateTimeToUtc(
   return instant;
 }
 
+export function startOfLocalCalendarDate(
+  date: string,
+  timeZone: string,
+): Date {
+  return zonedDateTimeToUtc(`${date}T00:00:00`, timeZone);
+}
+
 /** UTC instant of local midnight for `instant`'s calendar date in `timeZone`. */
 export function startOfLocalDay(instant: Date, timeZone: string): Date {
-  return zonedDateTimeToUtc(
-    `${localDateString(instant, timeZone)}T00:00:00`,
+  return startOfLocalCalendarDate(
+    localDateString(instant, timeZone),
     timeZone,
   );
 }
@@ -126,10 +190,7 @@ export function startOfLocalDay(instant: Date, timeZone: string): Date {
 /** Last UTC instant that still falls on `date` in `timeZone`. */
 export function endOfLocalDay(date: string, timeZone: string): Date {
   return new Date(
-    zonedDateTimeToUtc(
-      `${addCalendarDays(date, 1)}T00:00:00`,
-      timeZone,
-    ).getTime() - 1,
+    startOfLocalCalendarDate(addCalendarDays(date, 1), timeZone).getTime() - 1,
   );
 }
 
@@ -139,14 +200,8 @@ export function localDayInterval(
   timeZone: string,
 ): { start: Date; end: Date } {
   const localDate = localDateString(instant, timeZone);
-  const start = startOfLocalDay(
-    new Date(`${localDate}T12:00:00.000Z`),
-    timeZone,
-  );
-  const end = startOfLocalDay(
-    new Date(`${addCalendarDays(localDate, 1)}T12:00:00.000Z`),
-    timeZone,
-  );
+  const start = startOfLocalCalendarDate(localDate, timeZone);
+  const end = startOfLocalCalendarDate(addCalendarDays(localDate, 1), timeZone);
   return { start, end };
 }
 
@@ -155,22 +210,15 @@ export function localMonthInterval(
   instant: Date,
   timeZone: string,
 ): { start: Date; end: Date; monthKey: string } {
-  const localDate = localDateString(instant, timeZone);
-  const year = Number(localDate.slice(0, 4));
-  const month = Number(localDate.slice(5, 7));
-  const monthKey = localDate.slice(0, 7);
-  const start = startOfLocalDay(
-    new Date(
-      `${year}-${String(month).padStart(2, "0")}-01T12:00:00.000Z`,
-    ),
-    timeZone,
+  const { year, month } = parseIsoCalendarDate(
+    localDateString(instant, timeZone),
   );
+  const monthKey = `${year}-${String(month).padStart(2, "0")}`;
+  const start = startOfLocalCalendarDate(`${monthKey}-01`, timeZone);
   const nextMonth = month === 12 ? 1 : month + 1;
   const nextYear = month === 12 ? year + 1 : year;
-  const end = startOfLocalDay(
-    new Date(
-      `${nextYear}-${String(nextMonth).padStart(2, "0")}-01T12:00:00.000Z`,
-    ),
+  const end = startOfLocalCalendarDate(
+    `${nextYear}-${String(nextMonth).padStart(2, "0")}-01`,
     timeZone,
   );
   return { start, end, monthKey };

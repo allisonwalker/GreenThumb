@@ -395,7 +395,7 @@ describe("evaluateCareList fertilize, prune, and frost", () => {
       expect.arrayContaining([
         { source: "crop catalog", figure: "frost_sensitive true" },
         { source: "weather cache", figure: "forecast min -1.0°C" },
-        { source: "matching rule", figure: "frost threshold 0.0°C" },
+        { source: "frost cutoff", figure: "frost threshold 0.0°C" },
       ]),
     );
   });
