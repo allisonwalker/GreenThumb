@@ -14,10 +14,10 @@ export default async function Home() {
   return (
     <MarketingScreen className="justify-between gap-16 px-5 py-8 sm:px-10 sm:py-12">
       <div className="max-w-5xl">
-        <h1 className="max-w-[12ch] text-[clamp(3.75rem,16vw,8.5rem)] font-bold leading-[0.82] tracking-[-0.04em]">
+        <h1 className="max-w-[12ch] text-display font-bold tracking-display">
           Jory Journal
         </h1>
-        <p className="mt-8 max-w-xl text-lg leading-7 text-[#d7e5d7] sm:text-xl sm:leading-8">
+        <p className="mt-8 max-w-xl text-lg leading-7 text-leaf sm:text-xl sm:leading-8">
           Remembers this one bed and its pots. Today&apos;s care list comes from
           stored crop needs, weather, and the log.
         </p>
@@ -30,7 +30,7 @@ export default async function Home() {
         </ul>
         <Link
           href="/sign-in"
-          className="inline-flex min-h-14 items-center justify-center rounded-lg bg-[#f7faf7] px-8 text-base font-semibold text-[#172217] transition-colors hover:bg-white"
+          className="inline-flex min-h-14 items-center justify-center rounded-lg bg-cream px-8 text-base font-semibold text-forest transition-colors hover:bg-white"
         >
           Sign in with email
         </Link>

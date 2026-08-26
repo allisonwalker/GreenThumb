@@ -15,6 +15,10 @@ export const PRIMARY_NAV_HREFS = [
   "/ask",
 ] as const;
 
+export function isMarketingPath(pathname: string) {
+  return pathname === "/" || pathname.startsWith("/sign-in");
+}
+
 export function resolveGardenDisplayName(
   storedName: string | null | undefined,
 ): string {

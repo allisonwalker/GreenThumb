@@ -51,12 +51,14 @@ describe("DESIGN.md Persuade vs Operate capture", () => {
     expect(source).toMatch(/not a fold-covering poster/i);
   });
 
-  it("lists marketing hex vs CSS variables vs Tailwind neutrals for extract", () => {
+  it("lists promoted motif tokens vs leftover Operate page-body utilities", () => {
     const source = loadDesignDoc();
 
     expect(source).toMatch(/^## Primitives/m);
     expect(source).toContain("--background");
     expect(source).toContain("--foreground");
+    expect(source).toContain("--color-forest");
+    expect(source).toContain("--color-cream");
     expect(source).toContain("Hardcoded marketing hex");
     expect(source).toContain("neutral-*");
   });
