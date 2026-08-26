@@ -1,0 +1,57 @@
+# Daily matching check-in (ALL-35).
+#
+# Garden timezone is America/Los_Angeles. GitHub Actions `cron` is UTC-only and
+# does not follow daylight saving time, so this schedule is fixed to one offset:
+#
+#   cron `0 13 * * *`  →  13:00 UTC
+#   PDT (UTC-7, ~Mar–Nov): 06:00 garden-local
+#   PST (UTC-8, ~Nov–Mar): 05:00 garden-local (one hour early)
+#
+# September demo window is PDT, so the job lands at 06:00 garden-local then.
+# Matching lives at POST `/api/care/checkin` (ALL-9 / ALL-14), not the
+# conversational agent.
+#
+# This request also counts as the daily Supabase keep-alive (free-tier idle pause).
+
+name: Daily matching check-in
+
+on:
+  schedule:
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  checkin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: POST matching check-in
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CRON_SECRET}" ]; then
+            echo "CRON_SECRET repository secret is not set" >&2
+            exit 1
+          fi
+
+          if [ -z "${SITE_URL}" ]; then
+            echo "SITE_URL repository secret is not set" >&2
+            exit 1
+          fi
+
+          origin="${SITE_URL%/}"
+          url="${origin}/api/care/checkin"
+
+          echo "POSTing matching check-in to ${url}"
+
+          curl -fsS --fail-with-body \
+            -X POST \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            "${url}"
