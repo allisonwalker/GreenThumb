@@ -95,6 +95,10 @@ describe("runAgent", () => {
     expect(ASK_EVAL_PROMPTS["ask-sys-v1"]).not.toContain(
       "If the question does not name a crop or location",
     );
+    expect(ASK_SYSTEM_PROMPT).toMatch(/short plain sentences/i);
+    expect(ASK_SYSTEM_PROMPT).toMatch(/do not use markdown/i);
+    expect(ASK_SYSTEM_PROMPT).toMatch(/do not use em dashes/i);
+    expect(ASK_EVAL_PROMPTS["ask-sys-v4"]).toContain("Do not use markdown");
 
     const created: unknown[] = [];
     const store: AgentRunStore = {
@@ -147,6 +151,12 @@ describe("runAgent", () => {
   it("uses the time-budget prompt for kind=time_budget and records that kind", async () => {
     expect(systemPromptForKind("time_budget")).toBe(TIME_BUDGET_SYSTEM_PROMPT);
     expect(TIME_BUDGET_SYSTEM_PROMPT).not.toBe(ASK_SYSTEM_PROMPT);
+    expect(TIME_BUDGET_SYSTEM_PROMPT).toMatch(/short plain sentences/i);
+    expect(TIME_BUDGET_SYSTEM_PROMPT).toMatch(/do not use markdown/i);
+    expect(TIME_BUDGET_SYSTEM_PROMPT).toMatch(/do not use em dashes/i);
+    expect(TIME_BUDGET_SYSTEM_PROMPT).toMatch(
+      /plain lines, not markdown headings/,
+    );
 
     const created: unknown[] = [];
     let seenSystem = "";

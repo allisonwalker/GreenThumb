@@ -7,6 +7,7 @@ export type AskStreamEvent =
       assistantMessageId: string;
       agentRunId: string | null;
       stopReason: string;
+      content: string;
     }
   | { type: "error"; message: string };
 

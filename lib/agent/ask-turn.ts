@@ -4,6 +4,7 @@ import {
   type ConversationStore,
   type MessageRecord,
 } from "./conversation";
+import { sanitizeAssistantReply } from "./plain-reply";
 import { systemPromptForKind } from "./prompts";
 import { friendlyAskError, isLlmQuotaError } from "./ask-errors";
 import {
@@ -146,7 +147,9 @@ export async function runAskTurn(
     }
   }
 
-  const content = result.finalText.trim() || streamed.trim();
+  const content = sanitizeAssistantReply(
+    result.finalText.trim() || streamed.trim(),
+  );
   if (!content) {
     const message = friendlyAskError(result.error);
     if (isLlmQuotaError(result.error)) {
@@ -186,6 +189,7 @@ export async function runAskTurn(
     assistantMessageId: assistant.id,
     agentRunId: result.agentRunId,
     stopReason: result.stopReason,
+    content,
   });
 }
 
@@ -198,13 +202,14 @@ async function emitAssistantReply(input: {
   stopReason: string;
   onEvent: (event: AskStreamEvent) => void;
 }) {
+  const content = sanitizeAssistantReply(input.content);
   const assistant = await input.store.appendMessage({
     conversationId: input.conversationId,
     role: "assistant",
-    content: input.content,
+    content,
     agentRunId: input.agentRunId,
   });
-  input.onEvent({ type: "token", text: input.content });
+  input.onEvent({ type: "token", text: content });
   input.onEvent({
     type: "done",
     conversationId: input.conversationId,
@@ -212,6 +217,7 @@ async function emitAssistantReply(input: {
     assistantMessageId: assistant.id,
     agentRunId: input.agentRunId,
     stopReason: input.stopReason,
+    content,
   });
 }
 

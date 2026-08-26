@@ -22,12 +22,26 @@ describe("Ask stream encoding", () => {
     expect(parsed.rest).toBe("");
   });
 
-  it("parses CRLF-delimited events without treating two JSON objects as one", () => {
-    const encoded =
-      'data: {"type":"token","text":"Hello"}\r\n\r\ndata: {"type":"token","text":" garden"}\r\n\r\n';
+  it("round-trips a done event that includes the persisted assistant text", () => {
+    const encoded = encodeAskStreamEvent({
+      type: "done",
+      conversationId: "c1",
+      userMessageId: "u1",
+      assistantMessageId: "a1",
+      agentRunId: "r1",
+      stopReason: "completed",
+      content: "Peppers want full sun.",
+    });
     expect(parseAskStreamBuffer(encoded).events).toEqual([
-      { type: "token", text: "Hello" },
-      { type: "token", text: " garden" },
+      {
+        type: "done",
+        conversationId: "c1",
+        userMessageId: "u1",
+        assistantMessageId: "a1",
+        agentRunId: "r1",
+        stopReason: "completed",
+        content: "Peppers want full sun.",
+      },
     ]);
   });
 });

@@ -2,7 +2,7 @@
 export const DEFAULT_DAILY_QA_CAP = 20;
 
 export const DAILY_QA_CAP_MESSAGE =
-  "You've asked as many questions as we allow today. Today's list on Today is still available — try Ask again tomorrow.";
+  "You've asked as many questions as we allow today. Today's list on Today is still available. Try Ask again tomorrow.";
 
 export function resolveDailyQaCap(
   raw: string | undefined = process.env.DAILY_QA_CAP,

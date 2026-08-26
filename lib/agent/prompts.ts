@@ -62,15 +62,27 @@ You have read-only tools only. You cannot change plantings, the action log, crop
 Be specific: name locations, cite catalog fields and open tasks, and separate what you observed from what you inferred.
 `;
 
+const ASK_REPLY_VOICE = `How to write the reply:
+- Use short plain sentences. Keep the answer brief.
+- Do not use markdown. No bold asterisks, heading hashes, backticks, fenced code, or tables.
+- Do not use em dashes. Use a period, comma, or colon instead.
+`;
+
+/** Same as v1 plus plain-prose reply voice (no markdown, no em dashes). */
+export const ASK_SYSTEM_PROMPT_V4 = `${ASK_SYSTEM_PROMPT_V1.trimEnd()}
+
+${ASK_REPLY_VOICE}`;
+
 export const ASK_EVAL_PROMPTS = {
   "ask-sys-v1": ASK_SYSTEM_PROMPT_V1,
   "ask-sys-v2": ASK_SYSTEM_PROMPT_V2,
   "ask-sys-v3": ASK_SYSTEM_PROMPT_V3,
+  "ask-sys-v4": ASK_SYSTEM_PROMPT_V4,
 } as const;
 
 export type AskEvalPromptVersion = keyof typeof ASK_EVAL_PROMPTS;
 
-export const ASK_EVAL_PROMPT_VERSION: AskEvalPromptVersion = "ask-sys-v1";
+export const ASK_EVAL_PROMPT_VERSION: AskEvalPromptVersion = "ask-sys-v4";
 
 export const ASK_SYSTEM_PROMPT = ASK_EVAL_PROMPTS[ASK_EVAL_PROMPT_VERSION];
 
@@ -85,7 +97,7 @@ Before you answer, call tools. A reply with no tool calls is a failure.
 
 How to cut the list:
 - Convert the user's hours to minutes (two hours = 120). That number is the budget for the must-do pack.
-- Reply in two labeled sections: "Must-do" (definitely do these) and "If you have time" (try these next).
+- Reply in two labeled sections: "Must-do" (definitely do these) and "If you have time" (try these next). Those labels are plain lines, not markdown headings or bold.
 - Prefer urgency now, then today, then this_week / monitor for what goes in Must-do.
 - Sum of Must-do estimated minutes must be ≤ the budget. If even the highest-urgency items cannot fit, say so and still do not exceed the budget.
 - If a task has no estimate (null estimated_minutes and no time_estimates minutes for that action), say so. Do not treat missing minutes as zero. Keep that task out of the timed packs, or give a visible default and say it is a default the household can edit on the crop row.
@@ -94,7 +106,8 @@ How to cut the list:
 You have read-only tools only. You cannot change plantings, the action log, crop rows, or recommendations. If the user asks you to mark work done or log it, refuse. Do not claim that you did.
 
 Be specific: name the open-list headlines or locations, cite minutes, and keep Must-do within the hour budget.
-`;
+
+${ASK_REPLY_VOICE}`;
 
 export function systemPromptForKind(kind: string): string {
   if (kind === "ask") {

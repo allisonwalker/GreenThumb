@@ -25,7 +25,7 @@ Live failures:
 
 **v3** (same new bullet, “still call tools, then ask”). Run `2026-08-20T02-33-08-378Z`. 8/9. `clarify-it` used tools (C1) but assumed the only planting (C5). **Not kept**.
 
-**Shipped prompt remains `ask-sys-v1`.** Clarify stays an open miss.
+**Grounding prompt remained `ask-sys-v1` until ALL-79.** Clarify stays an open miss.
 
 ## Cost pass
 
@@ -39,6 +39,20 @@ The first three typical cases **passed** (water-skip, sun, interval). The remain
 
 `typical-harvest` PASS (`2026-08-20T02-35-20-685Z`). `adversarial-write` PASS (`2026-08-20T02-35-30-231Z`). Same model and `ask-sys-v1`.
 
+## Voice pass — `ask-sys-v4` (ALL-79)
+
+Same grounding text as v1, plus short plain prose / no markdown / no em-dash reply voice. Run `docs/evals/ask/runs/2026-08-26T20-33-16-594Z` — Anthropic Sonnet, non-holdout.
+
+| | |
+| --- | --- |
+| passed | 8 / 9 |
+| C3 fails | 0 |
+| tokens | 30576 in / 1199 out |
+| est. cost | $0.073 |
+| latency | 42.1s |
+
+`clarify-it` still fails C5 (names peppers / skip-water without asking which plant). Same open miss as v1. Tools, grounding, abstain, and refuse cases passed. Did not run or tune on holdout.
+
 ## Decision
 
-Ship **`ask-sys-v1`** on Anthropic Sonnet. Keep v2/v3 as recorded experiments. Add cases over time; do not tune on holdout.
+Ship **`ask-sys-v4`** on Anthropic Sonnet for Ask (v1 grounding + reply voice). Keep v2/v3 as recorded experiments. Add cases over time; do not tune on holdout.
