@@ -23,7 +23,7 @@ const MOTIF_HEX = {
 const MOTIF_HEX_PATTERN =
   /#(?:172217|f7faf7|d7e5d7|c5d9c5|3d6b3d|dbe5db)/i;
 
-const QUIET_PAGE_BODY_FILES = [
+const ASK_BOLDER_FILES = [
   "app/ask/page.tsx",
   "app/ask/ask-thread.tsx",
 ];
@@ -141,17 +141,41 @@ describe("shared motif tokens (ALL-99)", () => {
     }
   });
 
-  it("does not restyle Operate page bodies still waiting on their bolder ticket", () => {
-    for (const relative of QUIET_PAGE_BODY_FILES) {
-      const source = load(relative);
-      expect(source).not.toContain("bg-forest");
-      expect(source).not.toContain("text-display");
-      expect(source).not.toContain("text-display-compact");
-      expect(source).not.toContain("tracking-display");
-    }
+  it("bolders Ask with one type peak, then quieter thread (ALL-104)", () => {
+    const page = load("app/ask/page.tsx");
+    const thread = load("app/ask/ask-thread.tsx");
 
-    expect(load("app/ask/ask-thread.tsx")).toContain("focus:ring-green-200");
-    expect(load("app/ask/ask-thread.tsx")).toContain("text-green-700");
+    expect(page).toContain("AskThread");
+    expect(page).toContain("loadAskMessages");
+    expect(page).not.toContain("tracking-display");
+    expect(page).not.toContain("bg-forest");
+
+    expect(thread).toMatch(/<h1[^>]*>\s*Ask\s*<\/h1>/);
+    expect(thread).toContain("tracking-display");
+    expect(thread).toContain("text-5xl");
+    expect(thread).toContain("text-forest");
+    expect(thread).not.toContain("text-display");
+    expect(thread).not.toContain("text-display-compact");
+    expect(thread).not.toContain("uppercase");
+    expect(thread).not.toContain("text-green-700");
+    expect(thread).not.toContain("bg-green-800");
+    expect(thread).not.toContain("shadow-sm");
+    expect(thread).not.toContain("Questions about this garden");
+    expect(thread).toContain("rounded-2xl border bg-white");
+    expect(thread).toContain("bg-forest");
+    expect(thread).toContain("text-cream");
+    expect(thread).toContain("focus:border-forest");
+    expect(thread).toContain("focus:ring-leaf");
+    expect(thread).toContain('fetch("/api/agent/ask"');
+    expect(thread).toContain("parseAskStreamBuffer");
+    expect(thread).toContain('submitLabel="Ask"');
+    expect(thread).toContain('submitLabel="Plan my hours"');
+    expect(thread).toContain("Hours I have");
+
+    for (const relative of ASK_BOLDER_FILES) {
+      expect(load(relative)).not.toContain("text-display-compact");
+      expect(load(relative)).not.toContain("text-green-700");
+    }
   });
 
   it("bolders Log entry and history with one type peak, then quieter rows (ALL-102)", () => {
