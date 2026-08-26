@@ -9,7 +9,7 @@ import {
   isDailyQaCapExceeded,
   resolveDailyQaCap,
 } from "./qa-cap";
-import { parseAskRequestBody } from "./ask-request";
+import { parseAskRequestBody, parseConversationKind } from "./ask-request";
 
 describe("Ask stream encoding", () => {
   it("round-trips token events so the UI can append incrementally", () => {
@@ -62,5 +62,15 @@ describe("Ask request body", () => {
     expect(
       parseAskRequestBody({ prompt: "I have two hours Saturday.", kind: "write" }),
     ).toEqual({ error: "Expected kind to be ask or time_budget." });
+  });
+});
+
+describe("conversation kind", () => {
+  it("accepts ask and time_budget only", () => {
+    expect(parseConversationKind("ask")).toBe("ask");
+    expect(parseConversationKind("time_budget")).toBe("time_budget");
+    expect(parseConversationKind("crop_draft")).toEqual({
+      error: "Expected kind to be ask or time_budget.",
+    });
   });
 });

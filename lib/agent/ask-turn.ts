@@ -13,9 +13,9 @@ import {
 } from "./qa-cap";
 import { runAgent, type RunAgentOptions, type RunAgentResult } from "./run";
 import type { AskStreamEvent } from "./ask-stream";
-import { startOfLocalDay } from "@/lib/garden/local-date";
 import { createLlmClient, createFallbackLlmClient } from "@/lib/llm";
 import type { LlmClient } from "@/lib/llm/types";
+import { createSpendStore } from "@/lib/spend/store";
 
 const HISTORY_LIMIT = 20;
 
@@ -34,6 +34,7 @@ export type AskTurnDependencies = {
   fallbackClient?: LlmClient;
   now?: () => Date;
   dailyQaCap?: number;
+  countDailyQa?: () => Promise<number>;
 };
 
 export async function runAskTurn(
@@ -48,7 +49,6 @@ export async function runAskTurn(
   const store = dependencies.conversationStore ?? createConversationStore();
   const now = dependencies.now?.() ?? new Date();
   const cap = dependencies.dailyQaCap ?? resolveDailyQaCap();
-  const since = startOfLocalDay(now, input.timezone);
   const kind = input.kind ?? "ask";
 
   const conversation = await store.getOrCreate(input.userId, kind);
@@ -57,21 +57,7 @@ export async function runAskTurn(
     role: message.role,
     content: message.content,
   }));
-  const [askCount, timeBudgetCount] = await Promise.all([
-    store.countUserMessagesSince({
-      userId: input.userId,
-      kind: "ask",
-      role: "user",
-      since,
-    }),
-    store.countUserMessagesSince({
-      userId: input.userId,
-      kind: "time_budget",
-      role: "user",
-      since,
-    }),
-  ]);
-  const askedToday = askCount + timeBudgetCount;
+  const askedToday = await resolveAskedToday(input, dependencies, now);
 
   const userMessage = await store.appendMessage({
     conversationId: conversation.id,
@@ -105,6 +91,7 @@ export async function runAskTurn(
     result = await executeAgent({
       kind,
       trigger: kind,
+      userId: input.userId,
       prompt,
       history: priorTurns,
       systemPrompt: systemPromptForKind(kind),
@@ -140,6 +127,7 @@ export async function runAskTurn(
       result = await executeAgent({
         kind,
         trigger: kind,
+        userId: input.userId,
         prompt,
         history: priorTurns,
         systemPrompt: systemPromptForKind(kind),
@@ -234,6 +222,29 @@ export async function loadAskMessages(
 ): Promise<MessageRecord[]> {
   const conversation = await store.getOrCreate(userId, kind);
   return store.listMessages(conversation.id);
+}
+
+export async function clearAskConversation(
+  userId: string,
+  kind: ConversationKind,
+  store: ConversationStore = createConversationStore(),
+): Promise<void> {
+  await store.clearMessages(userId, kind);
+}
+
+function resolveAskedToday(
+  input: AskTurnInput,
+  dependencies: AskTurnDependencies,
+  now: Date,
+): Promise<number> {
+  if (dependencies.countDailyQa) {
+    return dependencies.countDailyQa();
+  }
+  return createSpendStore().dailyQaCount({
+    userId: input.userId,
+    now,
+    timeZone: input.timezone,
+  });
 }
 
 function resolveAskClient(
