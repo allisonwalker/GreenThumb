@@ -21,5 +21,9 @@
 # local archives
 cursor-skills.zip
 
+# local agent worktrees and Impeccable config
+.worktrees/
+.impeccable/
+
 # generated Ask eval run dumps
 docs/evals/ask/runs/

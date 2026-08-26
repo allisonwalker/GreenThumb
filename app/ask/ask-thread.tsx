@@ -8,7 +8,7 @@ import type { ConversationKind, MessageRecord } from "@/lib/agent/conversation";
 import { formatTimeBudgetPrompt } from "@/lib/agent/time-budget-prompt";
 
 const fieldClass =
-  "min-h-12 w-full resize-none rounded-lg border bg-white px-3 py-3 text-base shadow-sm outline-none focus:border-green-700 focus:ring-2 focus:ring-green-200";
+  "min-h-12 w-full resize-none rounded-lg border bg-white px-3 py-3 text-base outline-none focus:border-forest focus:ring-2 focus:ring-leaf";
 
 type ThreadMessage = {
   id: string;
@@ -158,15 +158,10 @@ export function AskThread({
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-2xl flex-col">
       <header className="flex shrink-0 flex-col">
-        <p className="text-sm font-semibold uppercase tracking-wide text-green-700">
+        <h1 className="text-5xl font-bold leading-none tracking-display text-forest sm:text-6xl">
           Ask
-        </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">
-          {mode === "ask"
-            ? "Questions about this garden"
-            : "Hours I have"}
         </h1>
-        <p className="mt-3 text-neutral-600">
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-forest">
           {mode === "ask"
             ? "Ask about this garden — crop rows, what's planted, weather, and today's list."
             : "Enter Saturday and Sunday hours. We'll suggest must-do vs if-you-have-time from your open care list. When you finish a task, mark it done on Today."}
@@ -204,19 +199,19 @@ export function AskThread({
             role="alertdialog"
             aria-labelledby="clear-chat-title"
             aria-describedby="clear-chat-description"
-            className="mt-4 rounded-2xl border bg-white p-4 shadow-sm"
+            className="mt-4 rounded-2xl border bg-white p-4"
           >
-            <p id="clear-chat-title" className="text-sm font-semibold">
+            <p id="clear-chat-title" className="text-sm font-semibold text-forest">
               Clear this {modeLabel} chat?
             </p>
-            <p id="clear-chat-description" className="mt-2 text-sm text-neutral-600">
+            <p id="clear-chat-description" className="mt-2 text-sm text-forest">
               This removes the current {modeLabel} thread. The other mode is
               unchanged, and it does not give you extra questions today.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
-                className="min-h-12 rounded-lg border bg-white px-4 text-sm font-semibold text-neutral-700"
+                className="min-h-12 rounded-lg border bg-white px-4 text-sm font-semibold text-forest"
                 disabled={clearing}
                 onClick={() => setConfirmingClear(false)}
               >
@@ -224,7 +219,7 @@ export function AskThread({
               </button>
               <button
                 type="button"
-                className="min-h-12 rounded-lg bg-green-800 px-4 text-sm font-semibold text-white hover:bg-green-900 disabled:opacity-60"
+                className="min-h-12 rounded-lg bg-forest px-4 text-sm font-semibold text-cream hover:bg-selection disabled:opacity-60"
                 disabled={clearing}
                 onClick={() => void onConfirmClear()}
               >
@@ -235,7 +230,7 @@ export function AskThread({
         ) : (
           <button
             type="button"
-            className="mt-4 min-h-12 self-start rounded-lg border bg-white px-4 text-sm font-semibold text-neutral-700 disabled:opacity-60"
+            className="mt-4 min-h-12 self-start rounded-lg border bg-white px-4 text-sm font-semibold text-forest disabled:opacity-60"
             disabled={busy || messages.length === 0}
             onClick={() => setConfirmingClear(true)}
           >
@@ -250,7 +245,7 @@ export function AskThread({
         aria-live="polite"
       >
         {messages.length === 0 ? (
-          <p className="rounded-2xl border bg-white p-5 text-sm text-neutral-600 shadow-sm">
+          <p className="rounded-2xl border bg-white p-5 text-sm text-forest">
             {mode === "ask"
               ? "Ask anything about this garden. The answer will stream in here, and the thread stays when you come back."
               : "Enter hours below. The cut streams in here and stays when you come back. Mark tasks done on Today, not here."}
@@ -262,13 +257,11 @@ export function AskThread({
               data-role={message.role}
               data-agent-run-id={message.agentRunId ?? undefined}
               data-kind={mode}
-              className={
-                message.role === "user"
-                  ? "ml-8 rounded-2xl bg-green-800 px-4 py-3 text-white"
-                  : "mr-8 rounded-2xl border bg-white px-4 py-3 text-neutral-900 shadow-sm"
-              }
+              className={`rounded-2xl border bg-white px-4 py-3 text-forest ${
+                message.role === "user" ? "ml-8" : "mr-8"
+              }`}
             >
-              <p className="text-xs font-semibold uppercase tracking-wide opacity-80">
+              <p className="text-xs font-medium text-forest">
                 {message.role === "user" ? "You" : "Jory Journal"}
               </p>
               <p className="mt-1 whitespace-pre-wrap text-base leading-6">
@@ -287,9 +280,9 @@ export function AskThread({
       {mode === "ask" ? (
         <form
           onSubmit={onAskSubmit}
-          className="sticky bottom-20 shrink-0 space-y-3 border-t bg-[var(--background)] pt-4 md:bottom-0"
+          className="sticky bottom-20 shrink-0 space-y-3 border-t bg-cream pt-4 md:bottom-0"
         >
-          <label className="block text-sm font-medium">
+          <label className="block text-sm font-medium text-forest">
             Your question
             <textarea
               className={`${fieldClass} mt-2`}
@@ -313,10 +306,10 @@ export function AskThread({
       ) : (
         <form
           onSubmit={onHoursSubmit}
-          className="sticky bottom-20 shrink-0 space-y-3 border-t bg-[var(--background)] pt-4 md:bottom-0"
+          className="sticky bottom-20 shrink-0 space-y-3 border-t bg-cream pt-4 md:bottom-0"
         >
           <div className="grid grid-cols-2 gap-3">
-            <label className="block text-sm font-medium">
+            <label className="block text-sm font-medium text-forest">
               Saturday hours
               <input
                 className={`${fieldClass} mt-2`}
@@ -331,7 +324,7 @@ export function AskThread({
                 name="saturdayHours"
               />
             </label>
-            <label className="block text-sm font-medium">
+            <label className="block text-sm font-medium text-forest">
               Sunday hours
               <input
                 className={`${fieldClass} mt-2`}
@@ -381,8 +374,8 @@ function ModeTab({
       onClick={onSelect}
       className={
         selected
-          ? "min-h-12 rounded-lg bg-green-800 px-3 text-sm font-semibold text-white"
-          : "min-h-12 rounded-lg border bg-white px-3 text-sm font-semibold text-neutral-700"
+          ? "min-h-12 rounded-lg bg-forest px-3 text-sm font-semibold text-cream"
+          : "min-h-12 rounded-lg border bg-white px-3 text-sm font-semibold text-forest"
       }
     >
       {children}
@@ -413,7 +406,7 @@ function ComposerFooter({
       <button
         type="submit"
         disabled={pending || capped || disabled}
-        className="min-h-12 rounded-lg bg-green-800 px-6 font-semibold text-white hover:bg-green-900 disabled:opacity-60"
+        className="min-h-12 rounded-lg bg-forest px-6 font-semibold text-cream hover:bg-selection disabled:opacity-60"
       >
         {pending ? pendingLabel : submitLabel}
       </button>

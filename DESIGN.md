@@ -2,7 +2,7 @@
 
 Capture of Jory Journal **as it looks today**, before Phase A bolder work. Two incumbent worlds already exist. Do not invent a third palette, a new display font, or a new motif. Product facts and chrome (Jory Journal + garden name, five destinations) stay in `PRODUCT.md` and `docs/architecture.md`. This file is look only.
 
-**Strongest existing move:** the Persuade forest field — full-viewport forest (`#172217`) with cream (`#f7faf7`) type, oversized bold headlines, shell off. Named tokens for that motif live in `app/globals.css`. Signed-in **chrome** now uses forest/cream at Operate density (usable nav, not a fold-covering poster). **Today, Garden, Catalog, and Log page titles** now use that type conviction at list/form density. Ask bodies stay quiet until their bolder ticket.
+**Strongest existing move:** the Persuade forest field — full-viewport forest (`#172217`) with cream (`#f7faf7`) type, oversized bold headlines, shell off. Named tokens for that motif live in `app/globals.css`. Signed-in **chrome** now uses forest/cream at Operate density (usable nav, not a fold-covering poster). **Today, Garden, Catalog, Log, and Ask page titles** now use that type conviction at list/form/conversation density.
 
 ## Persuade
 
@@ -44,13 +44,13 @@ Sign-in **form controls** on the cream pane drop back into Operate language: `ne
 
 **Type:** same Arial stack. Page pattern is repeated, not poster-scale:
 
-- Eyebrow: `text-sm font-semibold uppercase tracking-wide text-green-700`
-- Title: `text-3xl font-bold tracking-tight` (`sm:text-4xl` on most destinations; Ask stays `text-3xl`)
-- Body: `text-neutral-600`
+- Eyebrow: `text-sm font-semibold uppercase tracking-wide text-green-700` (retired on Operate destinations)
+- Title: `text-3xl font-bold tracking-tight` was the quiet pattern; Operate destinations now use `text-5xl` / `sm:text-6xl`
+- Body: `text-forest` (was `text-neutral-600`)
 
-That is one hierarchy step above body copy on destinations that have not had a bolder ticket yet. It is quieter than landing’s `clamp` headlines. **Today, Garden, Catalog, and Log** are the exception: page titles use `text-5xl` / `sm:text-6xl`, `leading-none`, and `tracking-display` in `text-forest` — type conviction at Operate density, not `text-display`.
+That is quieter than landing’s `clamp` headlines. **Today, Garden, Catalog, Log, and Ask** page titles use `text-5xl` / `sm:text-6xl`, `leading-none`, and `tracking-display` in `text-forest` — type conviction at Operate density, not `text-display`.
 
-**Color and density:** cream `--background` shows at the edges of main; content sits on **white cards** (`rounded-2xl` or shadcn `rounded-xl`, `border`; Ask still often `shadow-sm`). Chrome is forest/cream. Ask still uses mixed greens (`green-700` eyebrows, `green-800` primary buttons / links, `green-50` washes) plus Tailwind `neutral-*`. Today, Garden, Catalog, and Log page bodies use motif names. All of them read as a **dashboard / form / list**, not a marketing fold.
+**Color and density:** cream `--background` shows at the edges of main; content sits on **white cards** (`rounded-2xl` or shadcn `rounded-xl`, `border`, without `shadow-sm` on Operate page bodies). Chrome is forest/cream. Today, Garden, Catalog, Log, and Ask page bodies use motif names (`forest`, `cream`, `leaf`, `selection`). All of them read as a **dashboard / form / list / conversation**, not a marketing fold.
 
 **Per destination (look only):**
 
@@ -58,13 +58,13 @@ That is one hierarchy step above body copy on destinations that have not had a b
 - **Garden** — one peak per route: list `h1` is `Current locations`; setup `h1` is `Your garden profile`; location `h1` is the location name. Same type recipe as Today (`text-5xl` / `sm:text-6xl`, `leading-none`, `tracking-display`, `text-forest`). No green uppercase eyebrow. Setup and location keep a quiet sentence-case breadcrumb (`Garden · Setup` / `Garden · Bed section|Pot`). **Garden setup** is an outline button on white, not a cream-on-forest landing CTA. Rows and forms stay `rounded-2xl border bg-white` without `shadow-sm`. Primary saves are `bg-forest text-cream`; secondary actions stay outline. Bed sections then pots; each row still opens `/garden/[locationId]`. Sun-map zone colors stay as exposure legend (amber / lime / emerald / teal). Not a map and not a poster.
 - **Catalog** — one peak per route: list `h1` is `Crop catalog`; detail `h1` is the crop name (+ variety when present). Same type recipe as Today (`text-5xl` / `sm:text-6xl`, `leading-none`, `tracking-display`, `text-forest`). No green uppercase eyebrow. Detail keeps a quiet sentence-case `Catalog` breadcrumb back to the list. Search, add, and edit sit in `rounded-2xl border bg-white` panels without `shadow-sm`. Crop rows hover `bg-cream`. Primary add/save are `bg-forest text-cream`; Draft with Gemini is an outline button on white. Fields use `focus:border-forest` / `focus:ring-leaf`. Still a searchable table/form, not a poster.
 - **Log** — one peak: `What we already did` as `h1` (`text-5xl` / `sm:text-6xl`, `font-bold`, `leading-none`, `tracking-display`, `text-forest`). No green uppercase eyebrow. Entry form (`Log an action`) and history stay quieter `h2`s. Panels stay `rounded-2xl border bg-white` without `shadow-sm`. **Log it** is `bg-forest text-cream`. Fields use `focus:border-forest` / `focus:ring-leaf`. Action chips sit on white; the selected chip is cream. Last-care filter wash is `bg-cream`. Void/correction stays `red-*`. Still a form then a history list, not a poster.
-- **Ask** — same eyebrow/title, then a conversation column and `green-700` focus rings on the composer.
+- **Ask** — one peak: `Ask` as `h1` (`text-5xl` / `sm:text-6xl`, `font-bold`, `leading-none`, `tracking-display`, `text-forest`). No green uppercase eyebrow. Mode tabs (Questions / Hours I have) and supporting copy stay quieter. Thread, empty state, and composer sit in `rounded-2xl border bg-white` panels without `shadow-sm`. **Ask** / **Plan my hours** are `bg-forest text-cream`. Fields use `focus:border-forest` / `focus:ring-leaf`. Selected mode tab is cream-on-forest; idle is outline on white. Still a conversation column, not a poster covering the composer.
 
-**Today, Garden, Catalog, and Log** now share landing’s motif and type conviction at Operate density. Ask page bodies **still read quieter than landing** until their own ticket. Same product: Persuade fills the fold; chrome is forest/cream; Today, Garden, Catalog, and Log titles are the Operate peak; remaining Operate pages are still modest type + default cards.
+**Today, Garden, Catalog, Log, and Ask** now share landing’s motif and type conviction at Operate density. Same product: Persuade fills the fold; chrome is forest/cream; Operate titles are the peak; page bodies stay conversation/list density, quieter than landing’s fold-covering poster.
 
 ## Intent for later bolder (page tickets)
 
-Operate chrome already shares landing’s **motif and type conviction** at **Operate density**. **Today, Garden, Catalog, and Log titles** do too (`tracking-display`, not `text-display`). Ask still reads quieter than landing until its own ticket. Do not restyle `/` or `/sign-in` again as a stand-in. Do not invent new hex or a new font in a page ticket — use `forest` / `cream` / `leaf` / `leaf-muted` / `selection` / `text-display` / `tracking-display`. Recapture this file after remaining page bolders ship.
+Operate chrome already shares landing’s **motif and type conviction** at **Operate density**. **Today, Garden, Catalog, Log, and Ask titles** do too (`tracking-display`, not `text-display`). Do not restyle `/` or `/sign-in` again as a stand-in. Do not invent new hex or a new font in a page ticket — use `forest` / `cream` / `leaf` / `leaf-muted` / `selection` / `text-display` / `tracking-display`. Recapture this file as the bold incumbent (ALL-105).
 
 ## Primitives (honest inventory)
 
@@ -89,6 +89,8 @@ Promoted into `@theme` in `app/globals.css`. Do not invent a third set.
 
 **Hardcoded marketing hex** is retired from components. Those same values (`#172217`, `#f7faf7`, `#d7e5d7`, `#c5d9c5`, `#3d6b3d`) are the theme tokens above, plus `white` hover on the landing CTA.
 
-**Tailwind on Operate page bodies:** Ask still uses `neutral-*`, `green-50` / `green-200` / `green-700` / `green-800` / `green-900`, `red-*`, `white`, default `border`. **Today** uses motif names (`forest`, `cream`, `selection`) plus `amber-*` for matching error. **Garden** uses motif names (`forest`, `cream`, `leaf`, `selection`) plus `amber-*` for out-of-season, `red-*` for remove/errors, and sun-map legend colors (`amber-300` / `lime-300` / `emerald-300` / `teal-500`). **Catalog** uses motif names (`forest`, `cream`, `leaf`, `selection`) plus `red-*` for save/create errors. **Log** uses motif names (`forest`, `cream`, `leaf`, `selection`) plus `red-*` for save errors and void. Chrome uses `forest` / `cream` / `leaf` / `selection`.
+**Tailwind leftovers:** sign-in form widgets still use `neutral-*` and `green-800`. Operate page bodies no longer do.
+
+**Tailwind on Operate page bodies:** **Today** uses motif names (`forest`, `cream`, `selection`) plus `amber-*` for matching error. **Garden** uses motif names (`forest`, `cream`, `leaf`, `selection`) plus `amber-*` for out-of-season, `red-*` for remove/errors, and sun-map legend colors (`amber-300` / `lime-300` / `emerald-300` / `teal-500`). **Catalog** uses motif names (`forest`, `cream`, `leaf`, `selection`) plus `red-*` for save/create errors. **Log** uses motif names (`forest`, `cream`, `leaf`, `selection`) plus `red-*` for save errors and void. **Ask** uses motif names (`forest`, `cream`, `leaf`, `selection`) plus `red-*` for send errors. Chrome uses `forest` / `cream` / `leaf` / `selection`.
 
 **Components:** `MarketingScreen` (Persuade only), `AppShell` / `AppNav` (Operate only; skipped on marketing paths), shadcn `Card` (white, `rounded-xl`, `shadow-sm`). Radius on marketing/Operate CTAs is `rounded-lg`; task cards often `rounded-2xl`.
