@@ -130,3 +130,16 @@ Stories written as "the agent reasons watering / harvest / planting" need a rewr
 **Documentation cleanup:**
 
 `greenthumb-spec.md` contains garbled text and still describes an LLM-based daily care agent. This brief supersedes it.
+
+## Increment: app shell and Garden (Aug 2026)
+
+Product name shown to people is **Jory Journal**. Today stays the app home. Catalog, Log, and Ask stay in the shell. Matching and auth stay untouched.
+
+**In this increment:**
+
+- Chrome always shows Jory Journal and this garden’s name. Same five destinations (Today, Garden, Catalog, Log, Ask) plus sign out. Bottom nav on phone, side on desktop. Not a sixth tab.
+- `/garden` is a locations dashboard only: bed sections, then pots; each row has a name and planting summary and opens that location. No spatial bed map. No LLM on Garden.
+- Profile, sun map, and season drawing move to `/garden/setup`, linked from the Garden header.
+- Empty Garden (no sections/pots) sends the gardener to setup.
+
+**Out of this increment:** visual identity replacement; mixing setup forms into the location list; extra personas.

@@ -11,7 +11,7 @@ export function PlaceholderPage({
 }: PlaceholderPageProps) {
   return (
     <section className="mx-auto max-w-2xl">
-      <p className="mb-2 text-sm font-medium text-green-700">GreenThumb</p>
+      <p className="mb-2 text-sm font-medium text-green-700">Jory Journal</p>
       <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
       <Card className="mt-6">
         <CardHeader>

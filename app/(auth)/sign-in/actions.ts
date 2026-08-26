@@ -25,7 +25,7 @@ export type VerifySignInCodeResult =
   | { ok: true }
   | { ok: false; message: string };
 
-const NOT_AUTHORIZED = "This email is not authorized to use GreenThumb.";
+const NOT_AUTHORIZED = "This email is not authorized to use Jory Journal.";
 const SEND_FAILED = "We could not send the sign-in code. Please try again.";
 const CODE_REJECTED =
   "That code is invalid or expired. Request a new code and try again.";

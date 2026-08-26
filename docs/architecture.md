@@ -85,7 +85,9 @@ Two structural properties:
 app/
   (auth)/                 magic-link sign-in
   today/                  matching output — the primary screen
-  garden/                 locations, sun zones, seasons, plantings
+  garden/                 locations dashboard (sections, then pots)
+  garden/setup/           profile, sun map, season drawing (not a shell tab)
+  garden/[locationId]/    plantings for one location
   catalog/                searchable/editable crop care rows
   log/                    action log entry + history
   ask/                    Q&A + time-budget (streamed)
@@ -111,6 +113,8 @@ scripts/
 ```
 
 **What exists today vs this layout:** garden profile, weather cache, auth, Today cards, and an agent loop with `propose_recommendation` are in the repo. `lib/agent/care-signals.ts` is a prototype matcher with **hardcoded** watering/fertilizer/pruning rules and no crop table. There is no catalog UI, no action-log UI, no Ask stream, no check-in workflow, and no `care_run` table. `recommendation.agent_run_id` is currently `NOT NULL`, which is the wrong shape for matching-produced rows.
+
+**Garden routes (shell/Garden increment).** Product chrome shows **Jory Journal** (branding, not a column) plus `garden.name` from the singleton row. Same five destinations as today (`/today`, `/garden`, `/catalog`, `/log`, `/ask`) plus sign out — identity is not a sixth tab. `/garden` is a locations list only (current bed sections, then pots; name + planting summary; link to `/garden/[locationId]`). No spatial map and no LLM on Garden. Profile, sun map, and season drawing live at `/garden/setup`, linked from the Garden header. Implement `app/garden/setup/page.tsx` as a **static sibling** of `[locationId]` so the word `setup` is never treated as an id (location ids are UUIDs). Empty Garden means `listCurrentLocations()` is empty (no current sections and no pots) — not “no garden row.” `/garden` **server-redirects** to `/garden/setup` in that case. Setup, location pages, and the other four tabs must not redirect on empty. Matching, Catalog, Log, Ask, and auth stay unchanged; `/garden/setup` is already session-gated because the proxy matcher is `/garden/:path*`.
 
 ## Data model
 
@@ -244,6 +248,7 @@ Unchanged and still the right call:
 - Any authenticated user is a full member of the one garden. No roles.
 - Browser never talks to Postgres. Server actions and route handlers check the session. RLS deny-by-default remains the backstop (ALL-16).
 - Scheduled matching is **not** a user session: `POST /api/care/checkin` with bearer `CRON_SECRET` (ALL-14 still applies — the route must not be a public “spend money / send mail” button, even though it no longer spends LLM credits).
+- **Do not change the auth proxy for this increment.** `/garden/setup` and `/garden/[id]` inherit protection from `/garden`. Empty-garden send-to-setup is a server `redirect` on the dashboard page only — not middleware that would loop with setup or run a locations query on every Garden request.
 
 ## Key data flows
 
@@ -316,7 +321,32 @@ Unmediated by the agent. Immediate write. Next matching run (or an `after_write`
 
 ### 6. Re-cutting the bed (ALL-5)
 
-Unchanged: new `season`, new section intervals, sun re-derived from untouched `sun_zone` rows.
+Unchanged data: new `season`, new section intervals, sun re-derived from untouched `sun_zone` rows. **UI move only:** that work happens on `/garden/setup`, not on the locations dashboard.
+
+### 7. Garden dashboard vs setup (ALL-90–ALL-93)
+
+```
+Authenticated chrome
+  └─ product label “Jory Journal” (constant)
+  └─ garden.name from the singleton (existing column; no new table)
+  └─ five tabs unchanged; Today remains home
+
+GET /garden
+  └─ listCurrentLocations()
+      ├─ empty → 307/redirect /garden/setup
+      └─ else → sections list, then pots; each row → /garden/[locationId]
+           header link → /garden/setup
+           no profile form, no sun map, no season drawing, no LLM
+
+GET /garden/setup
+  └─ existing profile / sun / season forms (moved, not rewritten)
+  └─ never redirect “because empty” (that is how you unstick first-run)
+
+GET /garden/[locationId]
+  └─ existing plantings page; UUID only
+```
+
+No schema change. `garden.name` is already defaulted (`Jory Journal Garden`). Chrome loads it on the server (layout or a small server shell), not a client fetch to Postgres.
 
 ## Conversational agent
 

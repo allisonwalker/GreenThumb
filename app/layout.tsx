@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 
-import { AppShell } from "@/components/app-shell";
+import { AuthenticatedShell } from "@/components/authenticated-shell";
 
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "GreenThumb",
+  title: "Jory Journal",
   description: "Garden care for one household",
 };
+
+export const dynamic = "force-dynamic";
 
 export default function RootLayout({
   children,
@@ -17,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AppShell>{children}</AppShell>
+        <AuthenticatedShell>{children}</AuthenticatedShell>
       </body>
     </html>
   );
