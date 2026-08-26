@@ -1,3 +1,4 @@
+import { requireIsoCalendarDate } from "./local-date";
 import {
   SUN_EXPOSURES,
   validateSunZoneCoverage,
@@ -47,15 +48,7 @@ function optionalDate(formData: FormData, name: string, label: string) {
   if (!value) {
     return null;
   }
-  const parsed = new Date(`${value}T00:00:00.000Z`);
-  if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
-    Number.isNaN(parsed.valueOf()) ||
-    parsed.toISOString().slice(0, 10) !== value
-  ) {
-    throw new Error(`${label} must be a valid date.`);
-  }
-  return value;
+  return requireIsoCalendarDate(value, label);
 }
 
 function isIanaTimezone(value: string) {

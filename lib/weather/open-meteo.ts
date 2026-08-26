@@ -1,3 +1,5 @@
+import { gardenLocalToday } from "@/lib/garden/local-date";
+
 const DAILY_FIELDS = [
   "precipitation_sum",
   "temperature_2m_min",
@@ -109,7 +111,7 @@ export function normalizeOpenMeteoResponse(
     "daily.wind_speed_10m_max",
     dates.length,
   );
-  const localToday = dateInTimezone(now, timezone);
+  const localToday = gardenLocalToday({ timezone }, now);
 
   return dates.map((date, index) => ({
     date,
@@ -128,19 +130,6 @@ function timezoneFromUrl(requestUrl: string): string {
     throw new Error("Open-Meteo request URL is missing timezone");
   }
   return timezone;
-}
-
-function dateInTimezone(date: Date, timezone: string): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((value) => value.type === type)?.value;
-
-  return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
 function requireStringArray(value: unknown, path: string): string[] {

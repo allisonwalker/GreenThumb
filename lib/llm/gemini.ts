@@ -1,4 +1,7 @@
+import { withModelInvocationLog } from "./invocation-log";
 import type {
+  GenerateJsonRequest,
+  GenerateJsonResult,
   LlmClient,
   ProviderMessage,
   ProviderTurnResult,
@@ -129,7 +132,82 @@ export function createGeminiClient(
 
       return fromGeminiResponse(payload);
     },
+
+    async generateJson(request) {
+      return generateGeminiJson({
+        apiKey,
+        modelName,
+        fetchImplementation,
+        request,
+      });
+    },
   };
+}
+
+export async function generateGeminiJson(input: {
+  apiKey: string;
+  modelName: string;
+  fetchImplementation: typeof fetch;
+  request: GenerateJsonRequest;
+}): Promise<GenerateJsonResult> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), input.request.timeoutMs);
+
+  try {
+    const url = new URL(
+      `https://generativelanguage.googleapis.com/v1beta/models/${input.modelName}:generateContent`,
+    );
+    url.searchParams.set("key", input.apiKey);
+
+    const response = await input.fetchImplementation(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: input.request.system }],
+        },
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: input.request.user }],
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens: input.request.maxOutputTokens,
+          responseMimeType: "application/json",
+          responseSchema: toGeminiResponseSchema(input.request.schema),
+        },
+      }),
+    });
+
+    const payload = (await response.json()) as GeminiResponse;
+    if (!response.ok) {
+      throw new Error(
+        payload.error?.message ??
+          `Gemini request failed (${response.status})`,
+      );
+    }
+
+    const turn = fromGeminiResponse(payload);
+    if (!turn.text) {
+      throw new Error("Gemini returned empty JSON text");
+    }
+
+    return {
+      text: turn.text,
+      inputTokens: turn.inputTokens,
+      outputTokens: turn.outputTokens,
+      stopReason: turn.stopReason === "max_tokens" ? "max_tokens" : "end",
+    };
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`Gemini generateJson timed out after ${input.request.timeoutMs}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function readGeminiSse(
@@ -263,6 +341,34 @@ export function toGeminiParameters(
     type: "OBJECT",
     ...rest,
   };
+}
+
+/** responseSchema for one-shot JSON generate — uppercase Gemini types. */
+export function toGeminiResponseSchema(
+  schema: Record<string, unknown>,
+): Record<string, unknown> {
+  return uppercaseGeminiSchemaTypes(
+    stripUnsupportedSchemaKeys(schema),
+  ) as Record<string, unknown>;
+}
+
+function uppercaseGeminiSchemaTypes(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(uppercaseGeminiSchemaTypes);
+  }
+  if (typeof value !== "object" || value === null) {
+    return value;
+  }
+
+  const result: Record<string, unknown> = {};
+  for (const [key, child] of Object.entries(value)) {
+    if (key === "type" && typeof child === "string") {
+      result[key] = child.toUpperCase();
+      continue;
+    }
+    result[key] = uppercaseGeminiSchemaTypes(child);
+  }
+  return result;
 }
 
 function toFunctionDeclaration(tool: ToolDefinition) {

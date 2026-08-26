@@ -60,6 +60,11 @@ export function createAnthropicClient(
       const response = await client.messages.create(params);
       return fromAnthropicResponse(response);
     },
+    async generateJson() {
+      throw new Error(
+        "Crop draft uses Gemini generateJson; Anthropic is not the draft provider.",
+      );
+    },
   };
 }
 

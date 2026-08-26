@@ -10,6 +10,16 @@ import type {
   GardenProfileRecord,
 } from "./profile-validation";
 
+export async function getGardenName(): Promise<string | null> {
+  const database = getDatabase();
+  const rows = await database
+    .select({ name: gardens.name })
+    .from(gardens)
+    .limit(1);
+
+  return rows[0]?.name ?? null;
+}
+
 export async function getGardenProfileRecord(): Promise<GardenProfileRecord | null> {
   const database = getDatabase();
   const rows = await database

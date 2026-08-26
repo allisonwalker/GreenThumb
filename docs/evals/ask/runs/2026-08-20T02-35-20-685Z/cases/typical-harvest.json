@@ -1,0 +1,34 @@
+{
+  "caseId": "typical-harvest",
+  "tags": [
+    "catalog"
+  ],
+  "category": "typical",
+  "holdout": true,
+  "prompt": "When can I harvest the peppers?",
+  "promptVersion": "ask-sys-v1",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 3531,
+  "outputTokens": 328,
+  "estimatedCostUsd": 0.010342,
+  "latencyMs": 9094,
+  "toolTrace": [
+    "get_plantings",
+    "get_crop_catalog"
+  ],
+  "finalText": "Here's what the records show for your **Carmen peppers** in the **Pepper Pot**:\n\n- **Planted:** June 1, 2026 (via transplant)\n- **Days since planting:** 73 days\n- **Catalog harvest window:** 60–80 days after transplanting\n\nBased on the catalog:\n- **Earliest harvest** (60 days): ~**July 31, 2026** — already passed, so they *could* be ready now!\n- **Latest harvest** (80 days): ~**August 20, 2026** — that's the outer end of the window.\n\nSince you're at **day 73**, you're well within the harvest window right now. Carmen peppers are an Italian sweet frying variety, so look for fruits that are full-sized and have turned from green to red (or whichever color your variety targets) as a sign they're ready. The catalog doesn't include a specific color/size note beyond the day range, so use the fruit's appearance as your final guide.",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": "skipped",
+    "C5": "skipped"
+  },
+  "ok": true,
+  "failures": []
+}

@@ -1,0 +1,38 @@
+{
+  "caseId": "clarify-it",
+  "tags": [
+    "care",
+    "clarify"
+  ],
+  "category": "abstain",
+  "holdout": false,
+  "prompt": "Should I water it today?",
+  "promptVersion": "ask-sys-v3",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 3631,
+  "outputTokens": 197,
+  "estimatedCostUsd": 0.009232,
+  "latencyMs": 5461,
+  "toolTrace": [
+    "get_plantings",
+    "get_open_recommendations"
+  ],
+  "finalText": "Great question! I can see you have one planting — **Carmen Peppers in the Pepper Pot** — and today's recommendation addresses it directly:\n\n> 🌧️ **Skip watering Pepper Pot today.**\n> Rain is forecast in the next 24 hours, so watering is not needed right now.\n\nSo the short answer is: **no, hold off on watering today.** Let the incoming rain do the work for you! If the rain doesn't materialize, you may want to check back tomorrow.",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": "skipped",
+    "C5": false
+  },
+  "ok": false,
+  "failures": [
+    "C5: reply does not ask which crop or location (need ? or which crop/location/plant/pot)",
+    "C5: reply answers watering as peppers without asking which crop or location"
+  ]
+}

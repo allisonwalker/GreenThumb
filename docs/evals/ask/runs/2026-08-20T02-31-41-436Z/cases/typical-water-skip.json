@@ -1,0 +1,35 @@
+{
+  "caseId": "typical-water-skip",
+  "tags": [
+    "care"
+  ],
+  "category": "typical",
+  "holdout": false,
+  "prompt": "Should I water the peppers today?",
+  "promptVersion": "ask-sys-v2",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 3687,
+  "outputTokens": 289,
+  "estimatedCostUsd": 0.010264,
+  "latencyMs": 7642,
+  "toolTrace": [
+    "get_open_recommendations",
+    "get_plantings",
+    "get_care_history"
+  ],
+  "finalText": "Based on today's recommendations, **skip watering the peppers today**.\n\nHere's the summary:\n\n- **What's planted:** Carmen peppers in the **Pepper Pot**, transplanted 73 days ago and actively growing.\n- **Today's open task:** The care system flags this as **\"Skip watering Pepper Pot — rain coming\"** (urgency: today). The reason is that **rain is forecast in the next 24 hours**, so watering now would be unnecessary.\n- **Recent care history:** No watering events are logged in the past 30 days (the log appears empty), but the open recommendation already accounts for current conditions.\n\n**Bottom line:** Hold off on watering today and let the rain do the work. If the rain doesn't materialize, check back tomorrow and I can look at updated recommendations for you.",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": true,
+    "C5": "skipped"
+  },
+  "ok": true,
+  "failures": []
+}

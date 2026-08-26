@@ -36,8 +36,8 @@ export default async function TodayPage() {
           Open garden tasks
         </h1>
         <p className="mt-3 text-neutral-600">
-          Mark a task done when you do it — that writes the care log so the
-          next matching run does not ask again. Dismiss leaves the log alone.
+          Mark a task done when you finish it — that records it in the care log
+          so it drops off this list. Dismiss leaves the log as-is.
         </p>
       </header>
 
@@ -76,8 +76,8 @@ export default async function TodayPage() {
         >
           Say how many hours you have
         </Link>{" "}
-        and we will cut the open list into must-do vs if-you-have-time. That
-        screen does not change Today — mark work done here.
+        and we will suggest must-do vs if-you-have-time from this list. Mark
+        work done here when you finish it.
       </p>
 
       <footer className="space-y-2 text-sm text-neutral-500">

@@ -10,7 +10,7 @@ export const OPEN_METEO_ATTRIBUTION =
   "Weather data by Open-Meteo (CC BY 4.0).";
 
 export const MICROCLIMATE_LIMITATION =
-  "Without sensors, GreenThumb cannot see this yard's microclimate.";
+  "Without sensors, Jory Journal cannot see this yard's microclimate.";
 
 const URGENCY_HEADLINE: Record<WateringNeed["urgency"], string> = {
   now: "water now",
@@ -174,7 +174,7 @@ export function frostTask(
           figure: `forecast min ${low}`,
         },
         {
-          source: "matching rule",
+          source: "frost cutoff",
           figure: `frost threshold ${formatCelsius(need.thresholdC)}`,
         },
       ],

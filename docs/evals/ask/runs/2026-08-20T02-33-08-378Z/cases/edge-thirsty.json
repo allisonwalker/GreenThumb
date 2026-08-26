@@ -1,0 +1,36 @@
+{
+  "caseId": "edge-thirsty",
+  "tags": [
+    "care"
+  ],
+  "category": "edge",
+  "holdout": false,
+  "prompt": "The peppers look thirsty — should I water them?",
+  "promptVersion": "ask-sys-v3",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 3883,
+  "outputTokens": 355,
+  "estimatedCostUsd": 0.011316,
+  "latencyMs": 9781,
+  "toolTrace": [
+    "get_open_recommendations",
+    "get_plantings",
+    "get_weather",
+    "get_care_history"
+  ],
+  "finalText": "Hold off on watering today! Here's what the records show:\n\n**Today's open recommendation for Pepper Pot:** *\"Skip watering Pepper Pot — rain is coming.\"* (urgency: **today**)\n\n- **Rain is forecast in the next 24 hours** — the weather data shows **12 mm of precipitation expected today** at your garden, which is a meaningful amount for container peppers.\n- Your Carmen peppers (in the **Pepper Pot**, planted June 1, now 73 days in) are confirmed in the records and actively growing.\n- No recent watering entries were found in the care log, so I understand the plants may look a bit stressed — but that incoming rain should cover their needs.\n\n**My suggestion:** Wait and let the rain do the work. If the rain doesn't materialize or is lighter than forecast, check the peppers again tomorrow. If you're worried right now, you could mist the foliage lightly, but I cannot log any actions — that would need to be done on your end in the app.",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": true,
+    "C5": "skipped"
+  },
+  "ok": true,
+  "failures": []
+}

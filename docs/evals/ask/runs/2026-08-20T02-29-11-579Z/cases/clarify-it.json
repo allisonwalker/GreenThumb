@@ -1,0 +1,38 @@
+{
+  "caseId": "clarify-it",
+  "tags": [
+    "care",
+    "clarify"
+  ],
+  "category": "abstain",
+  "holdout": false,
+  "prompt": "Should I water it today?",
+  "promptVersion": "ask-sys-v1",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 3549,
+  "outputTokens": 228,
+  "estimatedCostUsd": 0.009378,
+  "latencyMs": 6325,
+  "toolTrace": [
+    "get_plantings",
+    "get_open_recommendations"
+  ],
+  "finalText": "Based on today's open recommendations, **no — skip watering the Pepper Pot today.**\n\nHere's why:\n- 🌧️ **Rain is forecast in the next 24 hours**, so the system recommends holding off on watering your **Carmen peppers** in the Pepper Pot.\n- The task is flagged as **\"Skip watering Pepper Pot — rain coming\"** with **today** urgency.\n\nLet the rain do the work! If it ends up being less rain than expected, you can reassess tomorrow. (Note: I'm read-only, so you'll need to mark this task done in the app yourself once you've decided.)",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": "skipped",
+    "C5": false
+  },
+  "ok": false,
+  "failures": [
+    "C5: reply does not ask which crop or location (need ? or which crop/location/plant/pot)",
+    "C5: reply answers watering as peppers without asking which crop or location"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "caseId": "typical-sun",
+  "tags": [
+    "catalog"
+  ],
+  "category": "typical",
+  "holdout": false,
+  "prompt": "Do peppers want full sun?",
+  "promptVersion": "ask-sys-v1",
+  "provider": "gemini",
+  "model": "gemini-flash-latest",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 2061,
+  "outputTokens": 56,
+  "estimatedCostUsd": 0.000229,
+  "latencyMs": 12697,
+  "toolTrace": [
+    "get_crop_catalog"
+  ],
+  "finalText": "Yes. According to your garden's crop catalog entry for **peppers** (variety: *Carmen*), the `sunPreference` is listed as **`full_sun`**.",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": "skipped",
+    "C5": "skipped"
+  },
+  "ok": true,
+  "failures": []
+}

@@ -1,0 +1,33 @@
+{
+  "runId": "2026-08-20T02-29-11-579Z",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "promptVersion": "ask-sys-v1",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "holdoutIncluded": false,
+  "only": null,
+  "startedAt": "2026-08-20T02:29:11.582Z",
+  "finishedAt": "2026-08-20T02:30:13.562Z",
+  "totals": {
+    "scored": 9,
+    "passed": 7,
+    "failed": 2,
+    "c3Failed": 0,
+    "inputTokens": 29789,
+    "outputTokens": 2065,
+    "estimatedCostUsd": 0.080228,
+    "latencyMs": 61138
+  },
+  "cases": [
+    "typical-water-skip",
+    "typical-sun",
+    "typical-interval",
+    "typical-planted",
+    "edge-thirsty",
+    "edge-basil-sun",
+    "fail-broccoli",
+    "fail-log-watering",
+    "clarify-it"
+  ]
+}

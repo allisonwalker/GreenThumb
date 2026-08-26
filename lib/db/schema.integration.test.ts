@@ -761,6 +761,18 @@ describeDatabase("garden schema integration", () => {
     });
   });
 
+  it("accepts crop_draft as an agent_run kind", async () => {
+    await expectRollback(async (transaction) => {
+      const [run] = await transaction<{ kind: string }[]>`
+        insert into agent_run (kind, trigger, provider, model)
+        values ('crop_draft', 'catalog_create', 'gemini', 'gemini-flash-latest')
+        returning kind
+      `;
+      expect(run.kind).toBe("crop_draft");
+      throw new Error(rollbackMessage);
+    });
+  });
+
   it("persists a matching recommendation on care_run with no agent_run_id", async () => {
     await expectRollback(async (transaction) => {
       const [garden] = await transaction<{ id: string }[]>`

@@ -5,6 +5,7 @@ import {
   parseGeminiStreamChunk,
   toGeminiContents,
   toGeminiParameters,
+  toGeminiResponseSchema,
 } from "./gemini";
 import { createLlmClient, fallbackLlmProvider, resolveLlmProvider } from "./index";
 
@@ -53,6 +54,23 @@ describe("LLM provider seam", () => {
       },
     });
     expect(parameters).not.toHaveProperty("additionalProperties");
+  });
+
+  it("uppercases types for Gemini responseSchema on one-shot JSON generate", () => {
+    expect(
+      toGeminiResponseSchema({
+        type: "object",
+        properties: {
+          wateringIntervalDays: { type: "integer", nullable: true },
+        },
+        additionalProperties: false,
+      }),
+    ).toEqual({
+      type: "OBJECT",
+      properties: {
+        wateringIntervalDays: { type: "INTEGER", nullable: true },
+      },
+    });
   });
 
   it("echoes Gemini providerContent so thought signatures survive tool turns", () => {

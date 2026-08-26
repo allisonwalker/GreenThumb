@@ -149,6 +149,10 @@ Vercel environment variables, redeploy, and confirm `/health` still reports
 | `GMAIL_APP_PASSWORD` | Yes | Google Account → **Security → App passwords**. Revoke the existing app password and generate a new one. It is per-application, so revoking affects only this app. |
 | `CRON_SECRET` | Yes | Self-issued: `openssl rand -base64 32`. Update the Vercel variable and the GitHub Actions repository secret together, or the scheduled check-in starts failing with 401. |
 
+`CRON_SECRET` and `SITE_URL` must also be GitHub Actions **repository secrets**
+(Settings → Secrets and variables → Actions). They are not committed. `.env.example`
+lists empty placeholders only.
+
 `SUPABASE_URL`, `ALLOWED_EMAILS`, `SITE_URL`, and `LLM_PROVIDER` are not
 credentials, but they stay server-only as well — nothing in the browser needs
 them. Adding a secret to `SECRET_ENV_VARS` in `lib/security/secrets.ts` brings
@@ -192,6 +196,24 @@ roles) and needs `DATABASE_URL`.
 Migrations are deliberate and are not run during `next build`. Apply them from
 a trusted checkout with `npm run db:migrate` before deploying schema-dependent
 code.
+
+## Daily matching check-in
+
+`.github/workflows/checkin.yml` POSTs to `/api/care/checkin` every morning so
+the Today list is already computed — it does not run the LLM agent loop.
+
+- **Schedule:** `13:00 UTC` (`cron: 0 13 * * *`), which is **06:00** in
+  `America/Los_Angeles` during PDT. GitHub Actions cron is UTC-only and does
+  not follow DST, so during PST the same job fires at **05:00** garden-local.
+  The offset and this caveat are documented in the workflow file.
+- **Auth:** `Authorization: Bearer` using the `CRON_SECRET` repository secret
+  (must match the Vercel env var).
+- **Manual run:** Actions → **Daily matching check-in** → **Run workflow**
+  (`workflow_dispatch`). A failed POST (missing secrets, HTTP 4xx/5xx) exits
+  non-zero and shows as a red run in that history.
+- **Supabase keep-alive:** this daily request also prevents the free-tier
+  database from pausing after inactivity. Weekly `pg_dump` backups (ALL-28)
+  are a separate job; they are not a substitute for this ping.
 
 ## Validation
 

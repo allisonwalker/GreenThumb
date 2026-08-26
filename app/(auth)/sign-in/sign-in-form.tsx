@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import {
   requestSignInCode,
   verifySignInCode,
+  type VerifySignInCodeResult,
 } from "@/app/(auth)/sign-in/actions";
 
 type SignInState = {
@@ -56,7 +57,19 @@ export function SignInForm() {
     setState((current) => ({ ...current, status: "sent" }));
 
     try {
-      const result = await verifySignInCode(new FormData(event.currentTarget));
+      const formData = new FormData(event.currentTarget);
+      const result = await Promise.race([
+        verifySignInCode(formData),
+        new Promise<VerifySignInCodeResult>((resolve) => {
+          window.setTimeout(() => {
+            resolve({
+              ok: false,
+              message:
+                "Sign-in is taking too long. The garden database may be paused or unreachable. Wait a minute and try again.",
+            });
+          }, 12_000);
+        }),
+      ]);
 
       if (!result.ok) {
         setState({ status: "error", message: result.message });
@@ -64,6 +77,7 @@ export function SignInForm() {
       }
 
       // The action set the session cookie, so this navigation is authenticated.
+      router.refresh();
       router.push("/today");
     } catch (error) {
       console.error("Sign-in code verification failed.", error);
@@ -79,7 +93,7 @@ export function SignInForm() {
   const showCodeStep = Boolean(email);
 
   return (
-    <div className="mt-8 space-y-5">
+    <div className="space-y-5">
       {!showCodeStep ? (
         <form onSubmit={onRequestCode} className="space-y-5">
           <div>

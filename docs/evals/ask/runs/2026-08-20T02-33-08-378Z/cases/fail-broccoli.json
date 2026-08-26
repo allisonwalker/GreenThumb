@@ -1,0 +1,37 @@
+{
+  "caseId": "fail-broccoli",
+  "tags": [
+    "plantings",
+    "abstain"
+  ],
+  "category": "known_failure",
+  "holdout": false,
+  "prompt": "How are the broccoli doing?",
+  "promptVersion": "ask-sys-v3",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 3759,
+  "outputTokens": 332,
+  "estimatedCostUsd": 0.010838,
+  "latencyMs": 9218,
+  "toolTrace": [
+    "get_plantings",
+    "get_crop_catalog",
+    "get_care_history",
+    "get_open_recommendations"
+  ],
+  "finalText": "Based on all the records in your garden, **broccoli does not appear to be planted** in your garden right now. The only active planting on record is **Carmen peppers in the Pepper Pot**, planted on June 1, 2026 (73 days ago).\n\nA few things to note:\n- **Plantings log**: No broccoli entry found.\n- **Crop catalog**: No broccoli row returned — it's not in the catalog either.\n- **Care history (last 30 days)**: No broccoli care actions recorded.\n\nIt's possible the broccoli was already removed and not in the active plantings, or it may not have been logged when planted. Could you double-check whether broccoli was added to the garden records? If it hasn't been logged, I won't be able to track or advise on it from stored data.",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": "skipped",
+    "C5": true
+  },
+  "ok": true,
+  "failures": []
+}

@@ -2,7 +2,7 @@ import { and, inArray, isNull } from "drizzle-orm";
 
 import { getDatabase } from "@/lib/db/client";
 import { currentLocations, plantings } from "@/lib/db/schema";
-import { daysBetween, localDateString } from "@/lib/garden/local-date";
+import { daysBetween, gardenLocalToday } from "@/lib/garden/local-date";
 
 import { createGardenProfileStore } from "./get-garden-profile";
 import type { ToolExecutionContext } from "./types";
@@ -51,7 +51,7 @@ export function createPlantingsStore(): PlantingsStore {
       const locationNameById = new Map(
         locations.map((row) => [row.id!, row.name!]),
       );
-      const today = localDateString(now, timezone);
+      const today = gardenLocalToday({ timezone }, now);
 
       const rows = await database
         .select({

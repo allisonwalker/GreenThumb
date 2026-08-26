@@ -1,5 +1,4 @@
 import type { OpenCareRecommendation } from "@/lib/care/types";
-import { listOpenRecommendations } from "@/lib/care/list-open";
 import type { CropTimeEstimates, TimeEstimateAction } from "@/lib/crops/types";
 
 import { createGardenProfileStore } from "./get-garden-profile";
@@ -25,6 +24,7 @@ export type OpenRecommendationsStore = {
 export function createOpenRecommendationsStore(): OpenRecommendationsStore {
   return {
     async list(gardenId) {
+      const { listOpenRecommendations } = await import("@/lib/care/list-open");
       return listOpenRecommendations(gardenId);
     },
   };

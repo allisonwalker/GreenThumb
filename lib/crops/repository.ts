@@ -14,7 +14,7 @@ import type {
   CropSource,
   CropTimeEstimates,
 } from "./types";
-import type { CropEditInput } from "./validation";
+import type { CropCareFields, CropEditInput } from "./validation";
 
 function asInteger(value: number | string | null): number | null {
   if (value === null) {
@@ -184,7 +184,7 @@ export async function createStubCropRecord(
       })
       .returning();
 
-    if (!inserted) {
+    if (!inserted?.id) {
       throw new Error("The crop row could not be created.");
     }
 
@@ -203,23 +203,63 @@ export async function createStubCropRecord(
 export async function resolveCropForPlanting(
   name: string,
   variety: string | null,
-): Promise<CropRecord> {
+): Promise<{ crop: CropRecord; created: boolean }> {
   const existing = await resolveCrop(name, variety);
   if (existing) {
-    return existing;
+    return { crop: existing, created: false };
   }
 
   try {
-    return await createStubCropRecord(name, variety);
+    const createdCrop = await createStubCropRecord(name, variety);
+    if (!createdCrop?.id) {
+      throw new Error("The crop row could not be created.");
+    }
+    return { crop: createdCrop, created: true };
   } catch (error) {
     if (error instanceof DuplicateCropError) {
       const raced = await resolveCrop(name, variety);
-      if (raced) {
-        return raced;
+      if (raced?.id) {
+        return { crop: raced, created: false };
       }
     }
     throw error;
   }
+}
+
+export async function applyGeneratedCareFields(input: {
+  id: string;
+  care: CropCareFields;
+  generatedByProvider: string;
+  generatedByModel: string;
+}): Promise<CropRecord> {
+  const database = getDatabase();
+  const [updated] = await database
+    .update(crops)
+    .set({
+      wateringIntervalDays: input.care.wateringIntervalDays,
+      fertilizingIntervalDays: input.care.fertilizingIntervalDays,
+      pruning: input.care.pruning,
+      frostSensitive: input.care.frostSensitive,
+      sunPreference: input.care.sunPreference,
+      plantWindowStart: input.care.plantWindowStart,
+      plantWindowEnd: input.care.plantWindowEnd,
+      daysToHarvestMin: input.care.daysToHarvestMin,
+      daysToHarvestMax: input.care.daysToHarvestMax,
+      timeEstimates: input.care.timeEstimates,
+      notes: input.care.notes,
+      source: "generated",
+      generatedByProvider: input.generatedByProvider,
+      generatedByModel: input.generatedByModel,
+      updatedAt: new Date(),
+    })
+    .where(eq(crops.id, input.id))
+    .returning();
+
+  if (!updated) {
+    throw new Error("Crop not found.");
+  }
+
+  return toCropRecord(updated);
 }
 
 export async function saveCropRecord(input: CropEditInput) {

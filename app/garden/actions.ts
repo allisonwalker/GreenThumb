@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requirePageUser } from "@/lib/auth/session";
+import { GARDEN_PATH, GARDEN_SETUP_PATH } from "@/lib/garden/routes";
 import {
   type GardenProfileFormState,
   parseGardenProfileForm,
@@ -15,10 +16,13 @@ import {
   revertSectionExposureRecord,
   saveSeasonSectionsRecord,
 } from "@/lib/garden/season-repository";
+import { getCropRecord } from "@/lib/crops/repository";
+import { cropCareCopyLabel } from "@/lib/crops/slug";
 import {
   addPlantingRecord,
   removePlantingRecord,
 } from "@/lib/garden/planting-repository";
+import { sunMismatchWarning } from "@/lib/garden/sun-fit";
 import {
   type PlantingFormState,
   parseAddPlantingForm,
@@ -31,6 +35,11 @@ import {
   parseRevertSectionForm,
   parseSaveSectionsForm,
 } from "@/lib/garden/season-validation";
+
+function revalidateGardenAndSetup() {
+  revalidatePath(GARDEN_PATH);
+  revalidatePath(GARDEN_SETUP_PATH);
+}
 
 export async function saveGardenProfile(
   _previousState: GardenProfileFormState,
@@ -51,7 +60,7 @@ export async function saveGardenProfile(
 
   try {
     await saveGardenProfileRecord(input);
-    revalidatePath("/garden");
+    revalidateGardenAndSetup();
     return { status: "success", message: "Garden profile saved." };
   } catch (error) {
     console.error("Saving the garden profile failed.", error);
@@ -81,7 +90,7 @@ export async function createSeason(
 
   try {
     await createSeasonRecord(input);
-    revalidatePath("/garden");
+    revalidateGardenAndSetup();
     return {
       status: "success",
       message: input.markCurrent
@@ -117,7 +126,7 @@ export async function saveSeasonSections(
 
     const input = parseSaveSectionsForm(formData, board.bedLengthFt);
     await saveSeasonSectionsRecord(input);
-    revalidatePath("/garden");
+    revalidateGardenAndSetup();
     return { status: "success", message: "Bed sections saved." };
   } catch (error) {
     console.error("Saving season sections failed.", error);
@@ -140,7 +149,7 @@ export async function overrideSectionExposure(
   try {
     const input = parseOverrideSectionForm(formData);
     await overrideSectionExposureRecord(input);
-    revalidatePath("/garden");
+    revalidateGardenAndSetup();
     return { status: "success", message: "Section exposure overridden." };
   } catch (error) {
     console.error("Overriding section exposure failed.", error);
@@ -163,7 +172,7 @@ export async function revertSectionExposure(
   try {
     const { sectionId } = parseRevertSectionForm(formData);
     await revertSectionExposureRecord(sectionId);
-    revalidatePath("/garden");
+    revalidateGardenAndSetup();
     return { status: "success", message: "Reverted to derived exposure." };
   } catch (error) {
     console.error("Reverting section exposure failed.", error);
@@ -181,7 +190,7 @@ export async function addPlanting(
   _previousState: PlantingFormState,
   formData: FormData,
 ): Promise<PlantingFormState> {
-  await requirePageUser();
+  const identity = await requirePageUser();
 
   let input;
   try {
@@ -195,11 +204,40 @@ export async function addPlanting(
   }
 
   try {
-    await addPlantingRecord(input);
+    const result = await addPlantingRecord(input);
+    const crop = result.crop;
+    const created = result.created;
+    if (!crop?.id) {
+      return {
+        status: "error",
+        message: "Could not resolve or create a catalog crop for this planting.",
+      };
+    }
+
+    let message = "Planting added.";
+
+    if (created) {
+      const { draftCropCare } = await import("@/lib/crops/draft");
+      const draft = await draftCropCare({
+        cropId: crop.id,
+        trigger: "planting_first_sight",
+        userId: identity.id,
+      });
+      if (draft.outcome === "generated") {
+        message = "Planting added. Care fields drafted by Gemini.";
+      } else if (draft.outcome === "stub_monthly_cap") {
+        message = `Planting added with blank care numbers. ${draft.message}`;
+      } else {
+        message =
+          "Planting added with blank care numbers — we could not fill them in yet.";
+      }
+    }
+
     revalidatePath("/garden");
     revalidatePath(`/garden/${input.locationId}`);
     revalidatePath("/catalog");
-    return { status: "success", message: "Planting added." };
+    revalidatePath(`/catalog/${crop.id}`);
+    return { status: "success", message };
   } catch (error) {
     console.error("Adding a planting failed.", error);
     return {

@@ -20,3 +20,6 @@
 
 # local archives
 cursor-skills.zip
+
+# generated Ask eval run dumps
+docs/evals/ask/runs/

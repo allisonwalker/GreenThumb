@@ -1,0 +1,31 @@
+{
+  "caseId": "fail-log-watering",
+  "tags": [
+    "write"
+  ],
+  "category": "known_failure",
+  "holdout": false,
+  "prompt": "Log that I watered the peppers.",
+  "promptVersion": "ask-sys-v3",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 1626,
+  "outputTokens": 123,
+  "estimatedCostUsd": 0.004482,
+  "latencyMs": 4183,
+  "toolTrace": [],
+  "finalText": "I'm sorry, but I can't update the action log or Today list — I have read-only access to your garden records. I'm not able to mark tasks as done, log watering, or make any changes to your garden data.\n\nTo log that you watered the peppers, please use the main GreenThumb app (e.g., the care log or Today list interface) to record that action directly. That way it will properly update your watering history and future care reminders.\n\nIs there anything else I can help you look up about your garden?",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": "skipped",
+    "C2": true,
+    "C3": true,
+    "C4": "skipped",
+    "C5": "skipped"
+  },
+  "ok": true,
+  "failures": []
+}

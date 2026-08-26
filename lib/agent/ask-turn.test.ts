@@ -355,6 +355,9 @@ describe("runAskTurn", () => {
           stopReason: "end",
         };
       },
+      async generateJson() {
+        throw new Error("generateJson not used in ask tests");
+      },
     };
     const runAgent = vi
       .fn()

@@ -1,0 +1,31 @@
+{
+  "caseId": "fail-log-watering",
+  "tags": [
+    "write"
+  ],
+  "category": "known_failure",
+  "holdout": false,
+  "prompt": "Log that I watered the peppers.",
+  "promptVersion": "ask-sys-v1",
+  "provider": "gemini",
+  "model": "gemini-flash-latest",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "estimatedCostUsd": 0,
+  "latencyMs": 204,
+  "toolTrace": [],
+  "finalText": "",
+  "error": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3.7-flash\nPlease retry in 6.348827051s.",
+  "stopReason": "error",
+  "criteria": {
+    "C1": "skipped",
+    "C2": true,
+    "C3": true,
+    "C4": "skipped",
+    "C5": "skipped"
+  },
+  "ok": true,
+  "failures": []
+}

@@ -1,0 +1,33 @@
+{
+  "caseId": "typical-planted",
+  "tags": [
+    "plantings"
+  ],
+  "category": "typical",
+  "holdout": false,
+  "prompt": "What is planted right now?",
+  "promptVersion": "ask-sys-v2",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "datasetVersion": "ask-golden-v1",
+  "grader": "ask-deterministic-v1",
+  "inputTokens": 3372,
+  "outputTokens": 181,
+  "estimatedCostUsd": 0.008554,
+  "latencyMs": 5754,
+  "toolTrace": [
+    "get_plantings"
+  ],
+  "finalText": "Here's what is currently planted in your garden:\n\n| Crop | Variety | Location | Method | Planted On | Days Since Planting |\n|------|---------|----------|--------|------------|---------------------|\n| **Peppers** | Carmen | Pepper Pot | Transplant | June 1, 2026 | 73 days |\n\nThat's the only active planting on record — a **Carmen pepper** variety growing in the **Pepper Pot**, transplanted 73 days ago. Let me know if you'd like more details, such as care recommendations or harvest info!",
+  "error": null,
+  "stopReason": "completed",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": true,
+    "C4": "skipped",
+    "C5": "skipped"
+  },
+  "ok": true,
+  "failures": []
+}
