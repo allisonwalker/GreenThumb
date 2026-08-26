@@ -16,7 +16,8 @@ export function getDatabase() {
   // One connection per serverless isolate. A larger pool plus a waking
   // (or misconfigured) Supabase instance is how OTP verify appears to hang.
   client ??= postgres(databaseUrl, {
-    max: 1,
+    // Concurrent RSC loads and Promise.all queries queue forever if this is 1.
+    max: 5,
     prepare: false,
     idle_timeout: 20,
     connect_timeout: 4,

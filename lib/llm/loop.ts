@@ -1,4 +1,5 @@
 import { estimateCostUsd } from "./cost";
+import { withModelInvocationLog } from "./invocation-log";
 import type {
   ProviderMessage,
   RunToolLoopOptions,
