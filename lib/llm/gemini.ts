@@ -150,26 +150,6 @@ export async function generateGeminiJson(input: {
   fetchImplementation: typeof fetch;
   request: GenerateJsonRequest;
 }): Promise<GenerateJsonResult> {
-  return withModelInvocationLog({
-    model: input.modelName,
-    provider: "gemini",
-    question: input.request.user,
-    invoke: () => generateGeminiJsonUnlogged(input),
-    toLog: (result) => ({
-      inputTokens: result.inputTokens,
-      outputTokens: result.outputTokens,
-      outcome: result.stopReason,
-      response: result.text,
-    }),
-  });
-}
-
-async function generateGeminiJsonUnlogged(input: {
-  apiKey: string;
-  modelName: string;
-  fetchImplementation: typeof fetch;
-  request: GenerateJsonRequest;
-}): Promise<GenerateJsonResult> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), input.request.timeoutMs);
 

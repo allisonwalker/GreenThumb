@@ -53,7 +53,7 @@ Each run writes `docs/evals/ask/runs/<runId>/`:
 - `manifest.json` — dataset, grader, prompt version, provider/model, flags, totals
 - `cases/<id>.json` — prompt, tokens, cost, latency, tool names, `finalText`, per-criterion pass/fail, overall `ok`
 
-The runner prints a table and totals. Exit code 1 if any scored case fails C3 or overall.
+The runner prints a live per-case line, then a boxed table (criteria, pass/fail, latency, tokens, cost, tools) and a totals row. Failures and a truncated reply sit under the table so rows stay aligned. Exit code 1 if any scored case fails C3 or overall. Colors use ANSI when stdout is a TTY; set `NO_COLOR=1` to disable.
 
 ## How graders work
 

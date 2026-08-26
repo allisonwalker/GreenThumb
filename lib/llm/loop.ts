@@ -60,32 +60,20 @@ export async function runToolLoop(
         256,
         options.maxTokens - (inputTokens + outputTokens),
       );
-      const turn = await withModelInvocationLog({
-        model: options.client.model,
-        provider: options.client.provider,
-        question: options.userMessage,
-        invoke: () =>
-          options.client.complete(
-            {
-              system: options.system,
-              messages,
-              tools: options.tools,
-              maxOutputTokens: Math.min(
-                DEFAULT_OUTPUT_TOKENS_PER_TURN,
-                remainingTokens,
-              ),
-            },
-            options.onTextDelta
-              ? { onTextDelta: options.onTextDelta }
-              : undefined,
+      const turn = await options.client.complete(
+        {
+          system: options.system,
+          messages,
+          tools: options.tools,
+          maxOutputTokens: Math.min(
+            DEFAULT_OUTPUT_TOKENS_PER_TURN,
+            remainingTokens,
           ),
-        toLog: (result) => ({
-          inputTokens: result.inputTokens,
-          outputTokens: result.outputTokens,
-          outcome: result.stopReason,
-          response: result.text ?? "",
-        }),
-      });
+        },
+        options.onTextDelta
+          ? { onTextDelta: options.onTextDelta }
+          : undefined,
+      );
 
       inputTokens += turn.inputTokens;
       outputTokens += turn.outputTokens;

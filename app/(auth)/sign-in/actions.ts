@@ -13,6 +13,8 @@ import {
   normalizeEmail,
   normalizeSignInCode,
 } from "@/lib/auth/config";
+import { pingDatabase } from "@/lib/db/client";
+import { DATABASE_UNAVAILABLE_MESSAGE } from "@/lib/db/ping";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type RequestSignInCodeResult =
@@ -48,13 +50,20 @@ export async function requestSignInCode(
 
   try {
     const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: getAuthCallbackUrl(process.env.SITE_URL),
-        shouldCreateUser: true,
-      },
-    });
+    const [{ error }] = await Promise.all([
+      supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: getAuthCallbackUrl(process.env.SITE_URL),
+          shouldCreateUser: true,
+        },
+      }),
+      // Free-tier Postgres may be paused. Wake it while the email is in flight
+      // so entering the code does not sit on a dead connection.
+      pingDatabase().catch((error) => {
+        console.error("Database was not reachable while sending a sign-in code.", error);
+      }),
+    ]);
 
     if (error) {
       console.error("Supabase could not send a sign-in code.", error);
@@ -130,7 +139,18 @@ export async function verifySignInCode(
       return { ok: false, message: NOT_AUTHORIZED };
     }
 
-    await ensureAppUser({ id: user.id, email: user.email });
+    try {
+      await pingDatabase();
+      await ensureAppUser({ id: user.id, email: user.email });
+    } catch (error) {
+      console.error("Could not persist the signed-in user.", error);
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) {
+        console.error("Could not clear the session after a database failure.", signOutError);
+      }
+      return { ok: false, message: DATABASE_UNAVAILABLE_MESSAGE };
+    }
+
     return { ok: true };
   } catch (error) {
     console.error("Sign-in code verification failed.", error);
