@@ -60,9 +60,7 @@ export async function loadCareMatchingSnapshot(
       fertilizingIntervalDays: crops.fertilizingIntervalDays,
       pruning: crops.pruning,
       frostSensitive: crops.frostSensitive,
-      sunPreference: crops.sunPreference,
       timeEstimates: crops.timeEstimates,
-      locationSunExposure: currentLocations.sunExposure,
     })
     .from(plantings)
     .innerJoin(currentLocations, eq(plantings.locationId, currentLocations.id))
@@ -73,9 +71,6 @@ export async function loadCareMatchingSnapshot(
 
   const matchedPlantings: CarePlantingInput[] = plantingRows.flatMap((row) => {
     if (!row.locationId || !row.locationName || row.drynessFactor == null) {
-      return [];
-    }
-    if (!row.locationSunExposure) {
       return [];
     }
     return [
@@ -91,8 +86,6 @@ export async function loadCareMatchingSnapshot(
         fertilizingIntervalDays: row.fertilizingIntervalDays,
         pruning: row.pruning,
         frostSensitive: row.frostSensitive,
-        sunPreference: row.sunPreference,
-        locationSunExposure: row.locationSunExposure,
         estimatedMinutes: minutesFor(row.timeEstimates, "watered"),
         fertilizeMinutes: minutesFor(row.timeEstimates, "fertilized"),
         pruneMinutes: minutesFor(row.timeEstimates, "pruned"),

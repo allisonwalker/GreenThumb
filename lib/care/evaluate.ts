@@ -1,15 +1,10 @@
 import {
-  isStoredSunPreference,
-  locationFitsSunPreference,
-} from "@/lib/garden/sun-fit";
-
-import {
   evaluateFertilizePlanting,
   evaluatePrunePlanting,
   preferCadenceNeed,
   type CadenceNeed,
 } from "./cadence";
-import { cadenceTask, frostTask, sunMismatchTask, wateringTask } from "./copy";
+import { cadenceTask, frostTask, wateringTask } from "./copy";
 import {
   evaluateFrostPlanting,
   preferFrostNeed,
@@ -40,7 +35,6 @@ export function evaluateCareList(
   const fertilizeByLocation = new Map<string, CadenceNeed>();
   const pruneByLocation = new Map<string, CadenceNeed>();
   const frostByLocation = new Map<string, FrostNeed>();
-  const sunByLocation = new Map<string, CarePlantingInput>();
 
   for (const planting of input.plantings) {
     const watering = evaluateWateringPlanting({
@@ -95,18 +89,6 @@ export function evaluateCareList(
         preferFrostNeed(frost, frostByLocation.get(planting.locationId)),
       );
     }
-
-    const sunFits = locationFitsSunPreference(
-      planting.sunPreference,
-      planting.locationSunExposure,
-    );
-    if (
-      sunFits === false &&
-      isStoredSunPreference(planting.sunPreference) &&
-      !sunByLocation.has(planting.locationId)
-    ) {
-      sunByLocation.set(planting.locationId, planting);
-    }
   }
 
   return [
@@ -122,27 +104,6 @@ export function evaluateCareList(
     ...[...frostByLocation.values()].map((need) =>
       frostTask(need, input.today, input.timeZone),
     ),
-    ...[...sunByLocation.values()].flatMap((planting) => {
-      if (!isStoredSunPreference(planting.sunPreference)) {
-        return [];
-      }
-      return [
-        sunMismatchTask(
-          {
-            locationId: planting.locationId,
-            locationName: planting.locationName,
-            plantingId: planting.plantingId,
-            cropId: planting.cropId,
-            cropName: planting.cropName,
-            variety: planting.variety,
-            sunPreference: planting.sunPreference,
-            locationSunExposure: planting.locationSunExposure,
-          },
-          input.today,
-          input.timeZone,
-        ),
-      ];
-    }),
   ];
 }
 

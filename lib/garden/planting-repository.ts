@@ -7,18 +7,15 @@ import {
   createStubCropRecord,
   resolveCrop,
 } from "@/lib/crops/repository";
-import { cropCareCopyLabel } from "@/lib/crops/slug";
 import type { CropRecord } from "@/lib/crops/types";
 import { getDatabase } from "@/lib/db/client";
 import {
   currentLocations,
-  crops,
   gardens,
   locations,
   plantings,
 } from "@/lib/db/schema";
 import { daysBetween, localDateString } from "@/lib/garden/local-date";
-import { sunMismatchWarning } from "@/lib/garden/sun-fit";
 
 import type {
   AddPlantingInput,
@@ -44,7 +41,6 @@ export type PlantingRecord = {
   removedOn: string | null;
   status: string;
   daysSincePlanted: number;
-  sunMismatch: string | null;
 };
 
 export type LocationPlantingsPage = {
@@ -85,10 +81,8 @@ function toPlantingRecord(
     plantedOn: string;
     removedOn: string | null;
     status: string;
-    sunPreference: string | null;
   },
   todayLocal: string,
-  locationSunExposure: string,
 ): PlantingRecord {
   return {
     id: row.id,
@@ -100,14 +94,6 @@ function toPlantingRecord(
     removedOn: row.removedOn,
     status: row.status,
     daysSincePlanted: daysBetween(row.plantedOn, todayLocal),
-    sunMismatch:
-      row.removedOn === null
-        ? sunMismatchWarning({
-            cropLabel: cropCareCopyLabel(row.cropName, row.variety),
-            sunPreference: row.sunPreference,
-            locationExposure: locationSunExposure,
-          })
-        : null,
   };
 }
 
@@ -196,16 +182,12 @@ export async function getLocationPlantingsPage(
       plantedOn: plantings.plantedOn,
       removedOn: plantings.removedOn,
       status: plantings.status,
-      sunPreference: crops.sunPreference,
     })
     .from(plantings)
-    .innerJoin(crops, eq(plantings.cropId, crops.id))
     .where(eq(plantings.locationId, locationId))
     .orderBy(desc(plantings.plantedOn), asc(plantings.cropName));
 
-  const records = rows.map((row) =>
-    toPlantingRecord(row, todayLocal, location.sunExposure),
-  );
+  const records = rows.map((row) => toPlantingRecord(row, todayLocal));
 
   return {
     location: {
@@ -226,10 +208,7 @@ export async function addPlantingRecord(input: AddPlantingInput) {
   const database = getDatabase();
 
   const [current] = await database
-    .select({
-      id: currentLocations.id,
-      sunExposure: currentLocations.sunExposure,
-    })
+    .select({ id: currentLocations.id })
     .from(currentLocations)
     .where(eq(currentLocations.id, input.locationId))
     .limit(1);
@@ -261,11 +240,7 @@ export async function addPlantingRecord(input: AddPlantingInput) {
     status: "growing",
   });
 
-  return {
-    crop,
-    created: cropWasCreated,
-    locationSunExposure: current.sunExposure ?? "",
-  };
+  return { crop, created: cropWasCreated };
 }
 
 async function resolveOrCreateCropForPlanting(

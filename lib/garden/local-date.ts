@@ -36,46 +36,7 @@ export function addCalendarDays(date: string, days: number): string {
   return utc.toISOString().slice(0, 10);
 }
 
-/** UTC instant of local midnight for `instant`'s calendar date in `timeZone`. */
-export function startOfLocalDay(instant: Date, timeZone: string): Date {
-  return utcInstantFromLocalDateTime(
-    localDateString(instant, timeZone),
-    "00:00:00",
-    timeZone,
-  );
-}
-
-/** Last UTC instant that still falls on `date` in `timeZone`. */
-export function endOfLocalDay(date: string, timeZone: string): Date {
-  return new Date(
-    utcInstantFromLocalDateTime(
-      addCalendarDays(date, 1),
-      "00:00:00",
-      timeZone,
-    ).getTime() - 1,
-  );
-}
-
-function utcInstantFromLocalDateTime(
-  date: string,
-  time: string,
-  timeZone: string,
-): Date {
-  const asUtc = new Date(`${date}T${time}Z`);
-  if (Number.isNaN(asUtc.getTime())) {
-    throw new Error(`Invalid local date-time ${date} ${time}`);
-  }
-  const firstOffset = localOffsetMs(asUtc, timeZone);
-  const corrected = new Date(asUtc.getTime() - firstOffset);
-  const secondOffset = localOffsetMs(corrected, timeZone);
-  if (secondOffset !== firstOffset) {
-    return new Date(asUtc.getTime() - secondOffset);
-  }
-  return corrected;
-}
-
-/** Local wall-clock interpreted as UTC, minus the real UTC instant. */
-function localOffsetMs(instant: Date, timeZone: string): number {
+function zonedParts(instant: Date, timeZone: string) {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
     year: "numeric",
@@ -88,6 +49,7 @@ function localOffsetMs(instant: Date, timeZone: string): number {
   }).formatToParts(instant);
   const part = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((value) => value.type === type)?.value;
+
   const year = part("year");
   const month = part("month");
   const day = part("day");
@@ -95,17 +57,80 @@ function localOffsetMs(instant: Date, timeZone: string): number {
   const minute = part("minute");
   const second = part("second");
   if (!year || !month || !day || !hour || !minute || !second) {
-    throw new Error(`Could not read local offset for timezone ${timeZone}`);
+    throw new Error(`Could not format local date-time for timezone ${timeZone}`);
   }
-  const localAsUtc = Date.UTC(
-    Number(year),
-    Number(month) - 1,
-    Number(day),
-    Number(hour),
-    Number(minute),
-    Number(second),
+
+  return { year, month, day, hour, minute, second };
+}
+
+export function localDateTimeString(
+  instant: Date,
+  timeZone: string,
+): string {
+  const parts = zonedParts(instant, timeZone);
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}
+
+export function zonedDateTimeToUtc(
+  localDateTime: string,
+  timeZone: string,
+): Date {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(
+    localDateTime,
   );
-  return localAsUtc - instant.getTime();
+  if (!match) {
+    throw new Error(`Expected YYYY-MM-DDTHH:mm, got ${localDateTime}`);
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  const second = Number(match[6] ?? "0");
+  const utcGuess = Date.UTC(year, month - 1, day, hour, minute, second);
+  const asZone = zonedParts(new Date(utcGuess), timeZone);
+  const zoneAsUtc = Date.UTC(
+    Number(asZone.year),
+    Number(asZone.month) - 1,
+    Number(asZone.day),
+    Number(asZone.hour),
+    Number(asZone.minute),
+    Number(asZone.second),
+  );
+  const instant = new Date(utcGuess - (zoneAsUtc - utcGuess));
+  const roundTrip = zonedParts(instant, timeZone);
+  if (
+    Number(roundTrip.year) !== year ||
+    Number(roundTrip.month) !== month ||
+    Number(roundTrip.day) !== day ||
+    Number(roundTrip.hour) !== hour ||
+    Number(roundTrip.minute) !== minute
+  ) {
+    throw new Error(
+      `${localDateTime} is not a valid local time in ${timeZone}.`,
+    );
+  }
+
+  return instant;
+}
+
+/** UTC instant of local midnight for `instant`'s calendar date in `timeZone`. */
+export function startOfLocalDay(instant: Date, timeZone: string): Date {
+  return zonedDateTimeToUtc(
+    `${localDateString(instant, timeZone)}T00:00:00`,
+    timeZone,
+  );
+}
+
+/** Last UTC instant that still falls on `date` in `timeZone`. */
+export function endOfLocalDay(date: string, timeZone: string): Date {
+  return new Date(
+    zonedDateTimeToUtc(
+      `${addCalendarDays(date, 1)}T00:00:00`,
+      timeZone,
+    ).getTime() - 1,
+  );
 }
 
 /** Half-open [start, end) covering the local calendar day of `instant`. */

@@ -16,28 +16,20 @@ function StatusLine({
   state,
   idle,
 }: {
-  state: { status: string; message?: string; warning?: string };
+  state: { status: string; message?: string };
   idle: string;
 }) {
-  const warning =
-    state.status === "success" && "warning" in state ? state.warning : undefined;
   return (
-    <div aria-live="polite" className="space-y-2">
-      <p
-        className={
-          state.status === "error"
-            ? "text-sm font-medium text-red-700"
-            : "text-sm font-medium text-green-800"
-        }
-      >
-        {state.status === "idle" ? idle : state.message}
-      </p>
-      {warning ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-          {warning}
-        </p>
-      ) : null}
-    </div>
+    <p
+      aria-live="polite"
+      className={
+        state.status === "error"
+          ? "text-sm font-medium text-red-700"
+          : "text-sm font-medium text-green-800"
+      }
+    >
+      {state.status === "idle" ? idle : state.message}
+    </p>
   );
 }
 
@@ -197,14 +189,6 @@ export function LocationPlantingsPanel({
                 <p className="mt-1 text-sm text-neutral-600">
                   {planting.method} · planted {planting.plantedOn}
                 </p>
-                {planting.sunMismatch ? (
-                  <p
-                    role="status"
-                    className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
-                  >
-                    {planting.sunMismatch}
-                  </p>
-                ) : null}
                 <form
                   action={removeAction}
                   className="mt-4 grid gap-3 border-t pt-3 sm:grid-cols-[1fr_auto] sm:items-end"

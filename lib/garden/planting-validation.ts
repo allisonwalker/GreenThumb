@@ -1,6 +1,6 @@
 export type PlantingFormState =
   | { status: "idle" }
-  | { status: "success"; message: string; warning?: string }
+  | { status: "success"; message: string }
   | { status: "error"; message: string };
 
 export type PlantingMethod = "seed" | "transplant";
