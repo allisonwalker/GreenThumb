@@ -12,30 +12,32 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { signOut } from "@/lib/auth/actions";
+import { PRIMARY_NAV_HREFS } from "@/lib/shell/identity";
 import { cn } from "@/lib/utils";
 
-const destinations = [
-  { href: "/today", label: "Today", icon: ListTodo },
-  { href: "/garden", label: "Garden", icon: Flower2 },
-  { href: "/catalog", label: "Catalog", icon: Leaf },
-  { href: "/log", label: "Log", icon: ClipboardPlus },
-  { href: "/ask", label: "Ask", icon: CircleHelp },
-];
+const destinationMeta = {
+  "/today": { label: "Today", icon: ListTodo },
+  "/garden": { label: "Garden", icon: Flower2 },
+  "/catalog": { label: "Catalog", icon: Leaf },
+  "/log": { label: "Log", icon: ClipboardPlus },
+  "/ask": { label: "Ask", icon: CircleHelp },
+} as const;
 
 export function AppNav() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/sign-in")) {
+  if (pathname === "/" || pathname.startsWith("/sign-in")) {
     return null;
   }
 
   return (
     <nav
       aria-label="Primary navigation"
-      className="fixed inset-x-0 bottom-0 z-10 border-t bg-white md:static md:border-t-0 md:border-r"
+      className="fixed inset-x-0 bottom-0 z-10 border-t bg-white md:static md:border-t-0"
     >
       <ul className="mx-auto grid max-w-lg grid-cols-6 md:w-52 md:grid-cols-1 md:gap-2 md:p-4">
-        {destinations.map(({ href, label, icon: Icon }) => {
+        {PRIMARY_NAV_HREFS.map((href) => {
+          const { label, icon: Icon } = destinationMeta[href];
           const isActive = pathname.startsWith(href);
 
           return (

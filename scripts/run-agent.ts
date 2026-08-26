@@ -5,7 +5,7 @@ async function main() {
   const prompt = process.argv.slice(2).join(" ").trim();
   const provider = resolveLlmProvider();
 
-  console.log(`Running GreenThumb agent via LLM_PROVIDER=${provider}`);
+  console.log(`Running Jory Journal agent via LLM_PROVIDER=${provider}`);
   console.log("---");
 
   const result = await runAgent({

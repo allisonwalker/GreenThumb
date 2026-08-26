@@ -1,5 +1,5 @@
 export const LLM_QUOTA_MESSAGE =
-  "Gemini's free Ask limit is still exhausted. Wait a few minutes and try again — Today's list still works without asking.";
+  "Ask is temporarily unavailable. Wait a few minutes and try again. Today's care list is still here.";
 
 export function isLlmQuotaError(message: string | undefined): boolean {
   if (!message) {

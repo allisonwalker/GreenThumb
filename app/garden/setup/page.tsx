@@ -1,0 +1,64 @@
+import Link from "next/link";
+
+import { requirePageUser } from "@/lib/auth/session";
+import { GARDEN_PATH } from "@/lib/garden/routes";
+import { getGardenProfileRecord } from "@/lib/garden/profile-repository";
+import { getSeasonBoardRecord } from "@/lib/garden/season-repository";
+
+import { GardenProfileForm } from "../garden-profile-form";
+import {
+  PreviousSeasonsPanel,
+  SeasonSectionsPanel,
+} from "../season-sections-panel";
+
+export default async function GardenSetupPage() {
+  await requirePageUser();
+  const [profile, seasonBoard] = await Promise.all([
+    getGardenProfileRecord(),
+    getSeasonBoardRecord(),
+  ]);
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-12">
+      <header>
+        <p className="text-sm font-semibold uppercase tracking-wide text-green-700">
+          <Link href={GARDEN_PATH} className="hover:underline">
+            Garden
+          </Link>
+          {" · "}
+          Setup
+        </p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+          Your garden profile
+        </h1>
+        <p className="mt-3 max-w-2xl text-neutral-600">
+          Set the location and permanent sun map, then draw this season&apos;s
+          bed sections. Plantings stay on each location.
+        </p>
+      </header>
+
+      <GardenProfileForm profile={profile} />
+
+      {seasonBoard ? (
+        <SeasonSectionsPanel
+          key={`${seasonBoard.currentSeason?.id ?? "none"}-${(seasonBoard.currentSeason?.sections ?? [])
+            .map((section) => `${section.id}:${section.sunExposure}:${section.sunExposureSource}`)
+            .join("|")}`}
+          board={seasonBoard}
+        />
+      ) : (
+        <section className="rounded-2xl border border-dashed bg-neutral-50 p-5 sm:p-6">
+          <h2 className="text-xl font-semibold">Seasons &amp; bed sections</h2>
+          <p className="mt-2 text-sm text-neutral-600">
+            Save the garden profile and a complete sun map first. Section
+            exposures are derived from those permanent zones.
+          </p>
+        </section>
+      )}
+
+      {seasonBoard && seasonBoard.pastSeasons.length > 0 ? (
+        <PreviousSeasonsPanel board={seasonBoard} />
+      ) : null}
+    </div>
+  );
+}

@@ -140,8 +140,8 @@ export function AskThread({
         </h1>
         <p className="mt-3 text-neutral-600">
           {mode === "ask"
-            ? "Answers come from your catalog, plantings, weather, and Today list — not a generic chatbot."
-            : "Say Saturday and Sunday hours. We'll cut the open Today list into must-do vs if-you-have-time. This screen does not change the list — mark work done on Today."}
+            ? "Ask about this garden — crop rows, what's planted, weather, and today's list."
+            : "Enter Saturday and Sunday hours. We'll suggest must-do vs if-you-have-time from your open care list. When you finish a task, mark it done on Today."}
         </p>
         <div
           role="tablist"

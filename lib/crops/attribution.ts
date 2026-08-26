@@ -12,7 +12,7 @@ export function cropAttributionCopy(input: {
     input.generatedByProvider?.trim().toLowerCase() === "gemini";
 
   if (input.source === "stub") {
-    return "Stub — fields can stay blank until you know them.";
+    return "Care numbers not set yet — fields can stay blank until you know them.";
   }
   if (input.source === "generated" && fromGemini) {
     return "Drafted by Gemini";
@@ -23,7 +23,7 @@ export function cropAttributionCopy(input: {
   if (input.source === "edited") {
     return "Edited by you";
   }
-  return "Generated — not yet edited.";
+  return "Drafted — not yet edited.";
 }
 
 export function cropAttributionFromRecord(crop: CropRecord): string {

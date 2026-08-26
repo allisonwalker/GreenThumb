@@ -157,7 +157,7 @@ describe("cropAttributionCopy", () => {
     ).toBe("Drafted by Gemini, edited by you");
     expect(
       cropAttributionCopy({ source: "stub", generatedByProvider: null }),
-    ).toMatch(/^Stub/);
+    ).toMatch(/not set yet/i);
     expect(
       cropAttributionCopy({ source: "edited", generatedByProvider: null }),
     ).toBe("Edited by you");

@@ -1,7 +1,8 @@
-import { Sprout } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { SignInForm } from "@/app/(auth)/sign-in/sign-in-form";
+import { MarketingScreen } from "@/components/marketing-screen";
 import { getAuthenticatedIdentity } from "@/lib/auth/session";
 
 type SignInPageProps = {
@@ -17,21 +18,29 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   }
 
   return (
-    <section className="mx-auto flex min-h-[75dvh] max-w-md items-center">
-      <div className="w-full rounded-2xl border bg-white p-6 shadow-sm sm:p-8">
-        <Sprout aria-hidden="true" className="size-10 text-green-700" />
-        <p className="mt-5 text-sm font-semibold text-green-700">Jory Journal</p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight">
-          Sign in to your garden
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-neutral-600">
-          We&apos;ll email you a one-time code. Jory Journal does not use
-          passwords.
-        </p>
+    <MarketingScreen className="lg:grid lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="flex flex-col justify-between px-5 py-8 sm:px-10 sm:py-12">
+        <Link
+          href="/"
+          className="text-sm font-semibold tracking-wide text-[#c5d9c5] underline-offset-4 hover:underline"
+        >
+          Jory Journal
+        </Link>
+        <div>
+          <h1 className="max-w-[11ch] text-[clamp(3rem,10vw,6.5rem)] font-bold leading-[0.88] tracking-[-0.04em]">
+            Sign in to your garden
+          </h1>
+          <p className="mt-6 max-w-md text-lg leading-7 text-[#d7e5d7]">
+            We&apos;ll email you a one-time code. Jory Journal does not use
+            passwords.
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-1 flex-col justify-center bg-[#f7faf7] px-5 py-10 text-[#172217] sm:px-10">
         {error ? (
           <p
             role="alert"
-            className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-800"
+            className="mb-6 rounded-lg bg-red-50 p-3 text-sm text-red-800"
           >
             {error === "not-allowed"
               ? "That email is not authorized to use Jory Journal."
@@ -40,6 +49,6 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         ) : null}
         <SignInForm />
       </div>
-    </section>
+    </MarketingScreen>
   );
 }
