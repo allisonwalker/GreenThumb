@@ -6,8 +6,10 @@ crop-care numbers, computes a daily Today list from those records plus weather
 and the care log, and offers optional Ask conversation over that list (not as
 the source of watering tasks). Sign-in is two allowlisted magic-link accounts.
 
-The product name shown in the UI is Jory Journal. This repository, the npm
-package, and the Vercel hostname still say GreenThumb.
+The product name shown in the UI is Jory Journal. This repository and the npm
+package still say GreenThumb. The Vercel project hostname
+(`green-thumb-orpin.vercel.app`) is the underlying deploy; the public site is
+the custom domain below.
 
 Stack: Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui, Drizzle ORM,
 Supabase Postgres, Vercel. Product truth lives in `PRODUCT.md` and
@@ -15,12 +17,13 @@ Supabase Postgres, Vercel. Product truth lives in `PRODUCT.md` and
 
 ## Live app
 
-**https://green-thumb-orpin.vercel.app**
+**https://www.joryjournal.com**
 
 Public health check (no sign-in):
-[https://green-thumb-orpin.vercel.app/health](https://green-thumb-orpin.vercel.app/health)
+[https://www.joryjournal.com/health](https://www.joryjournal.com/health)
 should return `"status":"ok"` and `"database":"connected"`. Garden pages require
-one of the two household emails.
+one of the two household emails. Production `SITE_URL` should be this origin
+so magic-link redirects stay on the custom domain.
 
 ## Local setup
 

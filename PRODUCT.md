@@ -42,7 +42,7 @@ Name: Jory Journal (formerly GreenThumb). Voice: plain, practical, household —
 
 ## Evidence on Hand
 
-Real garden is the product: deployed app at green-thumb-orpin.vercel.app; seed and schema for this household’s bed, sun map, and pots. Do not invent other customers, testimonials, press, pricing, or a multi-garden case. `greenthumb-spec.md` is superseded by `docs/project-brief.md` for product truth.
+Real garden is the product: deployed app at https://www.joryjournal.com; seed and schema for this household’s bed, sun map, and pots. Do not invent other customers, testimonials, press, pricing, or a multi-garden case. `greenthumb-spec.md` is superseded by `docs/project-brief.md` for product truth.
 
 ## Product Principles
 
