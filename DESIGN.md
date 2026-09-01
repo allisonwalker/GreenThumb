@@ -1,27 +1,31 @@
 # Design
 
-Capture of Jory Journal **as it looks today**, before Phase A bolder work. Two incumbent worlds already exist. Do not invent a third palette, a new display font, or a new motif. Product facts and chrome (Jory Journal + garden name, five destinations) stay in `PRODUCT.md` and `docs/architecture.md`. This file is look only.
+Incumbent look of Jory Journal **after Phase A** (shared tokens, amplified chrome, bolder Today / Garden / Catalog / Log / Ask). Phase B polish **refines this world**. Do not invent a third palette, a new display font, or a new motif. Product facts and chrome (Jory Journal + garden name, five destinations) stay in `PRODUCT.md` and `docs/architecture.md`. This file is look only.
 
-**Strongest existing move:** the Persuade forest field — full-viewport forest (`#172217`) with cream (`#f7faf7`) type, oversized bold headlines, shell off. Named tokens for that motif live in `app/globals.css`. Signed-in **chrome** now uses forest/cream at Operate density (usable nav, not a fold-covering poster). **Today, Garden, Catalog, Log, and Ask page titles** now use that type conviction at list/form/conversation density.
+**One product language:** forest/cream motif and type conviction everywhere. Persuade fills the fold with a forest poster. Operate uses the same tokens at **task-list density** (usable nav, one title peak, quieter rows). Shell chrome is forest/cream from promoted `@theme` names in `app/globals.css`.
+
+**Superseded (do not preserve):** pre-bolder quiet Operate — Arial/`neutral-*` page bodies, `text-3xl font-bold tracking-tight` titles, green uppercase eyebrows (`text-green-700`), `green-800` primary page actions, `green-50` row hover, white/`neutral` shell, `shadow-sm` on Operate bodies. That capture (ALL-98) is historical. Polish tickets must not treat it as the system to keep.
+
+**Do not bolder `/` or `/sign-in` again.** They are already-bold Persuade. Phase B may polish contrast, focus, and form errors on those routes only.
 
 ## Persuade
 
-**Routes:** `/` (`app/page.tsx`) and `/sign-in` (`app/(auth)/sign-in/page.tsx`).
+**Routes:** `/` (`app/page.tsx`) and `/sign-in` (`app/(auth)/sign-in/page.tsx`). Already amplified. Unchanged intent: marketing field, shell off, oversized type. Not an Operate surface and not a second bolder target.
 
 **Chrome:** `AppShell` (`components/app-shell.tsx`) and `AppNav` skip these paths (`isMarketingPath` in `lib/shell/identity.ts`). Authenticated visitors are redirected to `/today`. There is no tab bar, no sticky identity header, no `garden.name` on these screens.
 
-**Layout primitive:** `MarketingScreen` (`components/marketing-screen.tsx`) — `min-h-dvh` column, `bg-forest` and `text-cream`, `selection:bg-selection` on cream. Landing stacks a giant title + body, then a three-line punch list and a cream CTA. Sign-in splits on large screens: forest copy column + cream form column (`bg-cream text-forest`). Hex is collapsed onto those names; this is not a second bolder pass.
+**Layout primitive:** `MarketingScreen` (`components/marketing-screen.tsx`) — `min-h-dvh` column, `bg-forest` and `text-cream`, `selection:bg-selection` on cream. Landing stacks a giant title + body, then a three-line punch list and a cream CTA. Sign-in splits on large screens: forest copy column + cream form column (`bg-cream text-forest`). Hex is collapsed onto named tokens.
 
 **Motif:** inverted forest field. Dark green fills the viewport. Type and the landing primary button are cream. Sign-in inverts again on the form pane so inputs sit on light cream with forest text.
 
-**Type:** body font is still global Arial/Helvetica (`app/globals.css`). Conviction comes from **scale and weight**, not a second family.
+**Type:** body font is global Arial/Helvetica (`app/globals.css`). Conviction comes from **scale and weight**, not a second family.
 
 | Surface | Headline | Supporting |
 | --- | --- | --- |
 | `/` | `text-display` (`clamp(3.75rem, 16vw, 8.5rem)` / leading `0.82`), `font-bold`, `tracking-display`, max ~12ch | `text-lg` / `sm:text-xl` in `text-leaf`; punch list `text-2xl` / `sm:text-3xl font-semibold` |
 | `/sign-in` | `text-display-compact` (`clamp(3rem, 10vw, 6.5rem)` / leading `0.88`), `font-bold`, `tracking-display` | Eyebrow link `text-leaf-muted`; body `text-leaf` |
 
-**Color pairing (named `@theme` tokens; same hex as before):**
+**Color pairing (named `@theme` tokens):**
 
 | Role | Token | Hex | Where |
 | --- | --- | --- | --- |
@@ -32,39 +36,38 @@ Capture of Jory Journal **as it looks today**, before Phase A bolder work. Two i
 | Selection | `selection` | `#3d6b3d` | `MarketingScreen`; active nav |
 | CTA hover | `white` | `white` | Landing button `hover:bg-white` |
 
-Sign-in **form controls** on the cream pane drop back into Operate language: `neutral-800` labels, white inputs, `green-800` submit, `red-50` / `red-800` allowlist errors. The field is Persuade; the form widgets are already the quiet system.
+Sign-in **form controls** on the cream pane still use leftover Operate-era widgets: `neutral-800` labels, white inputs, `green-800` submit, `red-50` / `red-800` allowlist errors. The field is Persuade; those widgets are a polish leftover, not a reason to bolder the route again.
 
 ## Operate
 
 **Routes:** `/today`, `/garden` (+ `/garden/setup`, `/garden/[locationId]`), `/catalog` (+ `/catalog/[cropId]`), `/log`, `/ask`. Product chrome: constant **Jory Journal** plus `garden.name` from the singleton. Five destinations plus sign out — not a sixth tab (`docs/architecture.md`).
 
-**Chrome:** `AuthenticatedShell` wraps the app in `AppShell`. Light page (`max-w-5xl`), desktop forest sidebar with identity + `AppNav`, mobile sticky forest header (`bg-forest`, `border-b`) and fixed forest bottom nav (`bg-forest`, `border-t`). Main padding is list-density (`py-8`, extra bottom padding on mobile for the bar). Main content stays cream — not a full-viewport forest field. Identity is `text-sm font-bold tracking-display text-cream` over `text-xs text-leaf` garden name.
+**Chrome:** `AuthenticatedShell` wraps the app in `AppShell`. Light page (`max-w-5xl`), desktop forest sidebar with identity + `AppNav`, mobile sticky forest header (`bg-forest`, `border-b`) and fixed forest bottom nav (`bg-forest`, `border-t`). Main padding is list-density (`py-8`, extra bottom padding on mobile for the bar). Main content stays cream — **not** a full-viewport forest field (**not a fold-covering poster**). Identity is `text-sm font-bold tracking-display text-cream` over `text-xs text-leaf` garden name. Shell uses promoted tokens (`forest`, `cream`, `leaf`, `selection`), not `neutral-*` / `bg-white` chrome.
 
 **Nav:** Lucide icons, `text-xs` / `md:text-sm`. Active destination `bg-selection text-cream`. Idle `text-leaf` with `hover:bg-selection`. Sign out is a sixth cell, same idle treatment, not a cream-on-forest landing CTA.
 
-**Type:** same Arial stack. Page pattern is repeated, not poster-scale:
+**Type:** same Arial stack. Operate destinations share one title recipe — type conviction at **Operate density**, not landing’s `text-display`:
 
-- Eyebrow: `text-sm font-semibold uppercase tracking-wide text-green-700` (retired on Operate destinations)
-- Title: `text-3xl font-bold tracking-tight` was the quiet pattern; Operate destinations now use `text-5xl` / `sm:text-6xl`
-- Body: `text-forest` (was `text-neutral-600`)
+- Title: `text-5xl` / `sm:text-6xl`, `font-bold`, `leading-none`, `tracking-display`, `text-forest`
+- No green uppercase eyebrow
+- Body: `text-forest`
+- Supporting `h2`s and labels stay quieter than the `h1`
 
-That is quieter than landing’s `clamp` headlines. **Today, Garden, Catalog, Log, and Ask** page titles use `text-5xl` / `sm:text-6xl`, `leading-none`, and `tracking-display` in `text-forest` — type conviction at Operate density, not `text-display`.
+That is quieter than landing’s `clamp` headlines. Rows, cards, and composers stay scannable lists/forms, not posters.
 
-**Color and density:** cream `--background` shows at the edges of main; content sits on **white cards** (`rounded-2xl` or shadcn `rounded-xl`, `border`, without `shadow-sm` on Operate page bodies). Chrome is forest/cream. Today, Garden, Catalog, Log, and Ask page bodies use motif names (`forest`, `cream`, `leaf`, `selection`). All of them read as a **dashboard / form / list / conversation**, not a marketing fold.
+**Color and density:** cream `--background` shows at the edges of main; content sits on **white cards** (`rounded-2xl` or shadcn `rounded-xl`, `border`, without `shadow-sm` on Operate page bodies). Chrome is forest/cream. Page bodies use motif names (`forest`, `cream`, `leaf`, `selection`). All of them read as a **dashboard / form / list / conversation**.
 
-**Per destination (look only):**
+**Per destination (look only; one peak, then quiet):**
 
-- **Today** — one peak: `Open garden tasks` as `h1` (`text-5xl` / `sm:text-6xl`, `font-bold`, `leading-none`, `tracking-display`, `text-forest`). No green uppercase eyebrow. Urgency labels are sentence-case `text-sm font-medium text-forest`. Cards stay `rounded-2xl border bg-white` without `shadow-sm`. Done is `bg-forest text-cream`; Dismiss is outline on white. Empty is a bordered white panel; matching error keeps the amber wash. Not a forest poster; still a scannable task list.
-- **Garden** — one peak per route: list `h1` is `Current locations`; setup `h1` is `Your garden profile`; location `h1` is the location name. Same type recipe as Today (`text-5xl` / `sm:text-6xl`, `leading-none`, `tracking-display`, `text-forest`). No green uppercase eyebrow. Setup and location keep a quiet sentence-case breadcrumb (`Garden · Setup` / `Garden · Bed section|Pot`). **Garden setup** is an outline button on white, not a cream-on-forest landing CTA. Rows and forms stay `rounded-2xl border bg-white` without `shadow-sm`. Primary saves are `bg-forest text-cream`; secondary actions stay outline. Bed sections then pots; each row still opens `/garden/[locationId]`. Sun-map zone colors stay as exposure legend (amber / lime / emerald / teal). Not a map and not a poster.
-- **Catalog** — one peak per route: list `h1` is `Crop catalog`; detail `h1` is the crop name (+ variety when present). Same type recipe as Today (`text-5xl` / `sm:text-6xl`, `leading-none`, `tracking-display`, `text-forest`). No green uppercase eyebrow. Detail keeps a quiet sentence-case `Catalog` breadcrumb back to the list. Search, add, and edit sit in `rounded-2xl border bg-white` panels without `shadow-sm`. Crop rows hover `bg-cream`. Primary add/save are `bg-forest text-cream`; Draft with Gemini is an outline button on white. Fields use `focus:border-forest` / `focus:ring-leaf`. Still a searchable table/form, not a poster.
-- **Log** — one peak: `What we already did` as `h1` (`text-5xl` / `sm:text-6xl`, `font-bold`, `leading-none`, `tracking-display`, `text-forest`). No green uppercase eyebrow. Entry form (`Log an action`) and history stay quieter `h2`s. Panels stay `rounded-2xl border bg-white` without `shadow-sm`. **Log it** is `bg-forest text-cream`. Fields use `focus:border-forest` / `focus:ring-leaf`. Action chips sit on white; the selected chip is cream. Last-care filter wash is `bg-cream`. Void/correction stays `red-*`. Still a form then a history list, not a poster.
-- **Ask** — one peak: `Ask` as `h1` (`text-5xl` / `sm:text-6xl`, `font-bold`, `leading-none`, `tracking-display`, `text-forest`). No green uppercase eyebrow. Mode tabs (Questions / Hours I have) and supporting copy stay quieter. Thread, empty state, and composer sit in `rounded-2xl border bg-white` panels without `shadow-sm`. **Ask** / **Plan my hours** are `bg-forest text-cream`. Fields use `focus:border-forest` / `focus:ring-leaf`. Selected mode tab is cream-on-forest; idle is outline on white. Still a conversation column, not a poster covering the composer.
+- **Today** — peak: `Open garden tasks` as `h1` (title recipe above). Urgency labels are sentence-case `text-sm font-medium text-forest`. Cards stay `rounded-2xl border bg-white` without `shadow-sm`. Done is `bg-forest text-cream`; Dismiss is outline on white. Empty is a bordered white panel; matching error keeps the amber wash. Still a scannable task list.
+- **Garden** — peak per route: list `h1` is `Current locations`; setup `h1` is `Your garden profile`; location `h1` is the location name. Same title recipe. Setup and location keep a quiet sentence-case breadcrumb (`Garden · Setup` / `Garden · Bed section|Pot`). **Garden setup** is an outline button on white, not a landing CTA. Rows and forms stay `rounded-2xl border bg-white` without `shadow-sm`. Primary saves are `bg-forest text-cream`; secondary actions stay outline. Bed sections then pots; each row still opens `/garden/[locationId]`. Sun-map zone colors stay as exposure legend (amber / lime / emerald / teal). Not a map and not a poster.
+- **Catalog** — peak per route: list `h1` is `Crop catalog`; detail `h1` is the crop name (+ variety when present). Same title recipe. Detail keeps a quiet sentence-case `Catalog` breadcrumb back to the list. Search, add, and edit sit in `rounded-2xl border bg-white` panels without `shadow-sm`. Crop rows hover `bg-cream`. Primary add/save are `bg-forest text-cream`; Draft with Gemini is an outline button on white. Fields use `focus:border-forest` / `focus:ring-leaf`. Still a searchable table/form.
+- **Log** — peak: `What we already did` as `h1` (title recipe above). Entry form (`Log an action`) and history stay quieter `h2`s. Panels stay `rounded-2xl border bg-white` without `shadow-sm`. **Log it** is `bg-forest text-cream`. Fields use `focus:border-forest` / `focus:ring-leaf`. Action chips sit on white; the selected chip is cream. Last-care filter wash is `bg-cream`. Void/correction stays `red-*`. Still a form then a history list.
+- **Ask** — peak: `Ask` as `h1` (title recipe above). Mode tabs (Questions / Hours I have) and supporting copy stay quieter. Thread, empty state, and composer sit in `rounded-2xl border bg-white` panels without `shadow-sm`. **Ask** / **Plan my hours** are `bg-forest text-cream`. Fields use `focus:border-forest` / `focus:ring-leaf`. Selected mode tab is cream-on-forest; idle is outline on white. Still a conversation column; the composer stays reachable.
 
-**Today, Garden, Catalog, Log, and Ask** now share landing’s motif and type conviction at Operate density. Same product: Persuade fills the fold; chrome is forest/cream; Operate titles are the peak; page bodies stay conversation/list density, quieter than landing’s fold-covering poster.
+## Intent for Phase B
 
-## Intent for later bolder (page tickets)
-
-Operate chrome already shares landing’s **motif and type conviction** at **Operate density**. **Today, Garden, Catalog, Log, and Ask titles** do too (`tracking-display`, not `text-display`). Do not restyle `/` or `/sign-in` again as a stand-in. Do not invent new hex or a new font in a page ticket — use `forest` / `cream` / `leaf` / `leaf-muted` / `selection` / `text-display` / `tracking-display`. Recapture this file as the bold incumbent (ALL-105).
+Audit **drift against this file**. Same motif, type recipe, and Operate density. Do not restore superseded quiet Operate. Do not restyle Persuade as a stand-in for polish. Do not invent new hex or a new font — use `forest` / `cream` / `leaf` / `leaf-muted` / `selection` / `text-display` / `text-display-compact` / `tracking-display`.
 
 ## Primitives (honest inventory)
 

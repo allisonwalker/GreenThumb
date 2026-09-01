@@ -9,12 +9,32 @@ function loadDesignDoc() {
   return readFileSync(designPath, "utf8");
 }
 
-describe("DESIGN.md Persuade vs Operate capture", () => {
+describe("DESIGN.md bold incumbent (ALL-105)", () => {
   it("lives at the repo root", () => {
     expect(() => loadDesignDoc()).not.toThrow();
   });
 
-  it("documents Persuade routes, motif, type, color, and skipped AppShell", () => {
+  it("frames the post-Phase-A look as the world Phase B preserves", () => {
+    const source = loadDesignDoc();
+
+    expect(source).toMatch(/after Phase A/i);
+    expect(source).toMatch(/Phase B polish/i);
+    expect(source).toMatch(/refines this world/i);
+    expect(source).not.toMatch(/before Phase A bolder work/i);
+    expect(source).not.toMatch(/Intent for later bolder/i);
+  });
+
+  it("marks pre-bolder quiet Operate as superseded, not the system to keep", () => {
+    const source = loadDesignDoc();
+
+    expect(source).toMatch(/^\*\*Superseded/m);
+    expect(source).toContain("neutral-*");
+    expect(source).toContain("text-3xl");
+    expect(source).toMatch(/do not preserve/i);
+    expect(source).toMatch(/historical/i);
+  });
+
+  it("documents Persuade routes as already-bold, with motif, type, color, and skipped AppShell", () => {
     const source = loadDesignDoc();
 
     expect(source).toMatch(/^## Persuade/m);
@@ -26,9 +46,12 @@ describe("DESIGN.md Persuade vs Operate capture", () => {
     expect(source).toMatch(/clamp\(3\.75rem/);
     expect(source).toContain("components/app-shell.tsx");
     expect(source).toMatch(/skip|skipped/i);
+    expect(source).toMatch(/Already amplified/i);
+    expect(source).toMatch(/Do not bolder/i);
+    expect(source).toMatch(/Not an Operate surface and not a second bolder target/i);
   });
 
-  it("documents Operate chrome, five destinations, quiet type, and quieter-than-landing", () => {
+  it("documents amplified Operate chrome, five destinations, and title peaks", () => {
     const source = loadDesignDoc();
 
     expect(source).toMatch(/^## Operate/m);
@@ -38,9 +61,7 @@ describe("DESIGN.md Persuade vs Operate capture", () => {
     expect(source).toContain("`/log`");
     expect(source).toContain("`/ask`");
     expect(source).toContain("AppNav");
-    expect(source).toContain("neutral-");
-    expect(source).toContain("text-3xl");
-    expect(source).toMatch(/quieter than landing/i);
+    expect(source).toContain("promoted tokens");
     expect(source).toContain("tracking-display");
     expect(source).toContain("text-5xl");
     expect(source).toContain("Open garden tasks");
@@ -48,18 +69,20 @@ describe("DESIGN.md Persuade vs Operate capture", () => {
     expect(source).toContain("Your garden profile");
     expect(source).toContain("Crop catalog");
     expect(source).toContain("What we already did");
-    expect(source).toMatch(/\*\*Ask\*\* — one peak/);
+    expect(source).toMatch(/\*\*Ask\*\* — peak/);
+    expect(source).toMatch(/quieter than landing/i);
   });
 
-  it("states Operate should inherit motif and type conviction at Operate density", () => {
+  it("states one language: motif and type conviction at Operate density, not a poster", () => {
     const source = loadDesignDoc();
 
+    expect(source).toMatch(/One product language/i);
     expect(source).toMatch(/motif and type conviction/i);
     expect(source).toMatch(/Operate density/i);
     expect(source).toMatch(/not a fold-covering poster/i);
   });
 
-  it("lists promoted motif tokens vs leftover Operate page-body utilities", () => {
+  it("lists promoted motif tokens vs leftover sign-in widgets", () => {
     const source = loadDesignDoc();
 
     expect(source).toMatch(/^## Primitives/m);
@@ -69,5 +92,14 @@ describe("DESIGN.md Persuade vs Operate capture", () => {
     expect(source).toContain("--color-cream");
     expect(source).toContain("Hardcoded marketing hex");
     expect(source).toContain("neutral-*");
+  });
+
+  it("tells Phase B to audit drift against this file, not invent a third world", () => {
+    const source = loadDesignDoc();
+
+    expect(source).toMatch(/^## Intent for Phase B/m);
+    expect(source).toMatch(/drift against this file/i);
+    expect(source).toMatch(/Do not invent new hex/i);
+    expect(source).toMatch(/Do not restore superseded quiet Operate/i);
   });
 });
