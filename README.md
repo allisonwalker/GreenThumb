@@ -1,12 +1,26 @@
-# GreenThumb
+# GreenThumb (Jory Journal)
 
-GreenThumb is a mobile-first garden-care app for one household. This repository
-uses Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui, Drizzle ORM,
-Supabase Postgres, and Vercel.
+**Jory Journal** is a mobile-first web app for one household garden: a single
+raised bed plus eight pots. It stores that garden’s locations, plantings, and
+crop-care numbers, computes a daily Today list from those records plus weather
+and the care log, and offers optional Ask conversation over that list (not as
+the source of watering tasks). Sign-in is two allowlisted magic-link accounts.
+
+The product name shown in the UI is Jory Journal. This repository, the npm
+package, and the Vercel hostname still say GreenThumb.
+
+Stack: Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui, Drizzle ORM,
+Supabase Postgres, Vercel. Product truth lives in `PRODUCT.md` and
+`docs/project-brief.md`. Architecture is in `docs/architecture.md`.
 
 ## Live app
 
-[green-thumb-orpin.vercel.app](https://green-thumb-orpin.vercel.app)
+**https://green-thumb-orpin.vercel.app**
+
+Public health check (no sign-in):
+[https://green-thumb-orpin.vercel.app/health](https://green-thumb-orpin.vercel.app/health)
+should return `"status":"ok"` and `"database":"connected"`. Garden pages require
+one of the two household emails.
 
 ## Local setup
 
@@ -191,11 +205,36 @@ roles) and needs `DATABASE_URL`.
    future pushes to `main` and creates preview deployments for other branches.
 5. Open `<deployment-url>/health` and confirm it returns `"status":"ok"`,
    `"database":"connected"`, and the deployed `commitSha`.
-6. Replace the placeholder in **Live app** above with the production URL.
 
 Migrations are deliberate and are not run during `next build`. Apply them from
 a trusted checkout with `npm run db:migrate` before deploying schema-dependent
 code.
+
+## Deployment problem we hit (and what we learned)
+
+Production once served the UI while `/health` returned **503**
+(`database: "unavailable"`). Magic-link OTP still worked against **Supabase
+Auth**; the stall was the next write to **Postgres**. Vercel Hobby can kill
+the function around 10 seconds, so the sign-in form looked frozen.
+
+What actually fixed it:
+
+1. **Use the Session pooler URI for `DATABASE_URL` on Vercel**, not the
+   direct `db.<project>.supabase.co` host. Serverless functions on Vercel
+   often cannot reach that direct host (IPv6 / network path). The pooler
+   (`*.pooler.supabase.com`, user `postgres.<project-ref>`) is the path that
+   works from both a laptop and a Function.
+2. **Wake a paused free-tier database.** Supabase Hobby sleeps after
+   inactivity. The daily GitHub Actions check-in (`/api/care/checkin`) is
+   also the keep-alive. Sign-in now pings Postgres while the email is in
+   flight so the first code entry is less likely to hit a cold instance.
+3. **Fail fast in the app** (`connect_timeout`, bounded retries, a visible
+   “database unavailable” message) instead of waiting until the platform
+   kills the request.
+
+Lesson: Auth and the application database are separate. A green sign-in
+email does not prove `DATABASE_URL` is right. Treat `/health` as the
+production smoke test after every env or host change.
 
 ## Daily matching check-in
 
