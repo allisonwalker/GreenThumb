@@ -16,6 +16,17 @@ export type GeminiClientOptions = {
 };
 
 const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
+const GEMINI_API_KEY_HEADER = "x-goog-api-key";
+const DEFAULT_GENERATE_JSON_RETRY_DELAYS_MS = [400, 800];
+const GEMINI_TRANSIENT_ERROR =
+  /high demand|try again later|unavailable|overloaded|resource exhausted/i;
+
+function geminiFetchHeaders(apiKey: string): HeadersInit {
+  return {
+    "content-type": "application/json",
+    [GEMINI_API_KEY_HEADER]: apiKey,
+  };
+}
 
 type GeminiPart = Record<string, unknown> & {
   text?: string;
@@ -88,11 +99,10 @@ export function createGeminiClient(
           `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:streamGenerateContent`,
         );
         url.searchParams.set("alt", "sse");
-        url.searchParams.set("key", apiKey);
 
         const response = await fetchImplementation(url, {
           method: "POST",
-          headers: { "content-type": "application/json" },
+          headers: geminiFetchHeaders(apiKey),
           body,
         });
 
@@ -114,11 +124,9 @@ export function createGeminiClient(
       const url = new URL(
         `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`,
       );
-      url.searchParams.set("key", apiKey);
-
       const response = await fetchImplementation(url, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: geminiFetchHeaders(apiKey),
         body,
       });
 
@@ -149,19 +157,70 @@ export async function generateGeminiJson(input: {
   modelName: string;
   fetchImplementation: typeof fetch;
   request: GenerateJsonRequest;
+  retryDelaysMs?: number[];
+}): Promise<GenerateJsonResult> {
+  const retryDelaysMs = input.retryDelaysMs ?? DEFAULT_GENERATE_JSON_RETRY_DELAYS_MS;
+  const deadline = Date.now() + input.request.timeoutMs;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= retryDelaysMs.length; attempt += 1) {
+    const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) {
+      break;
+    }
+
+    try {
+      return await generateGeminiJsonOnce({
+        ...input,
+        remainingMs,
+      });
+    } catch (error) {
+      lastError = error;
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error(
+          `Gemini generateJson timed out after ${input.request.timeoutMs}ms`,
+        );
+      }
+      const delayMs = retryDelaysMs[attempt];
+      const canRetry =
+        delayMs !== undefined &&
+        error instanceof Error &&
+        GEMINI_TRANSIENT_ERROR.test(error.message);
+      if (!canRetry) {
+        throw error;
+      }
+      const waitMs = Math.min(delayMs, Math.max(0, deadline - Date.now() - 50));
+      if (waitMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+      }
+    }
+  }
+
+  if (lastError instanceof Error && lastError.name === "AbortError") {
+    throw new Error(
+      `Gemini generateJson timed out after ${input.request.timeoutMs}ms`,
+    );
+  }
+  throw lastError;
+}
+
+async function generateGeminiJsonOnce(input: {
+  apiKey: string;
+  modelName: string;
+  fetchImplementation: typeof fetch;
+  request: GenerateJsonRequest;
+  remainingMs: number;
 }): Promise<GenerateJsonResult> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), input.request.timeoutMs);
+  const timer = setTimeout(() => controller.abort(), input.remainingMs);
 
   try {
     const url = new URL(
       `https://generativelanguage.googleapis.com/v1beta/models/${input.modelName}:generateContent`,
     );
-    url.searchParams.set("key", input.apiKey);
-
     const response = await input.fetchImplementation(url, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: geminiFetchHeaders(input.apiKey),
       signal: controller.signal,
       body: JSON.stringify({
         systemInstruction: {
@@ -200,11 +259,6 @@ export async function generateGeminiJson(input: {
       outputTokens: turn.outputTokens,
       stopReason: turn.stopReason === "max_tokens" ? "max_tokens" : "end",
     };
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error(`Gemini generateJson timed out after ${input.request.timeoutMs}ms`);
-    }
-    throw error;
   } finally {
     clearTimeout(timer);
   }

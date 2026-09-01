@@ -294,6 +294,28 @@ describe("draftCropCareFlow failure and success paths", () => {
     expect(result.modelCalls).toBe(1);
   });
 
+  it("tells the gardener to retry when Gemini is at high demand", async () => {
+    const result = await draftCropCareFlow({
+      cropId: stubCrop.id,
+      trigger: "test",
+      hardinessZone: "8b",
+      getCrop: async () => stubCrop,
+      applyCare: vi.fn(),
+      client: geminiClient(),
+      recordRun: false,
+      spendGate: allowAllSpendGate(),
+      generateJson: async () => {
+        throw new Error(
+          "This model is currently experiencing high demand. Please try again later.",
+        );
+      },
+    });
+
+    expect(result.outcome).toBe("stub_provider_error");
+    expect(result.message).toMatch(/busy right now/i);
+    expect(result.message).toMatch(/Draft with Gemini again/i);
+  });
+
   it("skips the model when the monthly spend cap is exceeded", async () => {
     const generateJson = vi.fn();
     const result = await draftCropCareFlow({

@@ -20,6 +20,13 @@ import {
 import type { CropCareFields } from "./validation";
 import type { CropRecord } from "./types";
 
+function draftProviderErrorMessage(raw: string): string {
+  if (/high demand|try again later|unavailable|overloaded/i.test(raw)) {
+    return "Gemini is busy right now — tap Draft with Gemini again in a minute. Your blank stub is saved.";
+  }
+  return "Gemini could not draft care fields — saved a blank stub you can edit.";
+}
+
 export type CropDraftOutcome =
   | "generated"
   | "stub_invalid_json"
@@ -142,7 +149,7 @@ export async function draftCropCareFlow(
       outcome: timedOut ? "stub_timeout" : "stub_provider_error",
       message: timedOut
         ? "Gemini timed out — saved a blank stub you can edit."
-        : "Gemini could not draft care fields — saved a blank stub you can edit.",
+        : draftProviderErrorMessage(message),
       agentRunId,
       modelCalls: 1,
     };
