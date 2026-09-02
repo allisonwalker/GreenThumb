@@ -146,7 +146,7 @@ Product name shown to people is **Jory Journal**. Today stays the app home. Cata
 
 ## Increment: bolder, then polish (Impeccable → PO → fullstack-dev)
 
-Landing/sign-in already run through `bolder`. Signed-in screens still read flat. Full increment: `docs/polish-brief.md`.
+Landing/sign-in already run through `bolder`. Signed-in screens still read flat.
 
 **Phase A (bolder) first:** document the two current worlds; promote landing’s motif into shared tokens if Operate cannot express it yet; amplify Today / Garden / Catalog / Log / Ask one surface at a time; rewrite `DESIGN.md` to the **bold** incumbent. Do not polish the quiet look.
 

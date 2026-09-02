@@ -27,3 +27,11 @@ cursor-skills.zip
 
 # generated Ask eval run dumps
 docs/evals/ask/runs/
+
+# local agent / product direction (not for the public repo)
+CLAUDE.md
+AGENTS.md
+DESIGN.md
+PRODUCT.md
+polish-brief.md
+docs/polish-brief.md

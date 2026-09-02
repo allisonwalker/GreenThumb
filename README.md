@@ -1,19 +1,47 @@
-# GreenThumb (Jory Journal)
+# Jory Journal
 
 **Jory Journal** is a mobile-first web app for one household garden: a single
-raised bed plus eight pots. It stores that garden’s locations, plantings, and
-crop-care numbers, computes a daily Today list from those records plus weather
-and the care log, and offers optional Ask conversation over that list (not as
-the source of watering tasks). Sign-in is two allowlisted magic-link accounts.
+raised bed (~50′ × 3′, divided into seasonal sections) plus eight pots. It
+remembers locations, plantings, and crop-care numbers; computes a daily **Today**
+list from those records plus weather and the care log; and offers optional
+**Ask** conversation over that list — never as the source of watering tasks.
 
-The product name shown in the UI is Jory Journal. This repository and the npm
-package still say GreenThumb. The Vercel project hostname
-(`green-thumb-orpin.vercel.app`) is the underlying deploy; the public site is
-the custom domain below.
+Two people co-manage the same garden. Sign-in is two allowlisted magic-link
+accounts. There is no multi-household product.
+
+This GitHub repository and the npm package are still named **GreenThumb**. The
+Vercel project hostname (`green-thumb-orpin.vercel.app`) is the underlying
+deploy. The product name in the UI and the public site are Jory Journal.
 
 Stack: Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui, Drizzle ORM,
-Supabase Postgres, Vercel. Product truth lives in `PRODUCT.md` and
-`docs/project-brief.md`. Architecture is in `docs/architecture.md`.
+Supabase Postgres, Vercel. Product truth lives in `docs/project-brief.md`.
+Architecture is in `docs/architecture.md`.
+
+## What Jory Journal does
+
+Daily care (water, fertilize, prune, harvest, frost, planting windows) is
+**matching**, not a model: stored crop rows × rain/ET₀ × the care log, with
+templated copy you can check (for example, skipped watering because rain is
+coming). Weather comes from Open-Meteo for this garden’s location. Care is
+logged so matching does not nag again.
+
+The **Ask** agent is an optional overlay: questions about this garden, and
+cutting an already-computed list to the hours they have. A one-shot LLM draft
+can fill a crop-care row when a crop first appears; people edit the row.
+
+Chrome always shows **Jory Journal** plus this garden’s name. Five destinations
+plus sign out (not a sixth tab):
+
+| Destination | What it is |
+| --- | --- |
+| **Today** (`/today`) | Default home: the computed open-task list |
+| **Garden** (`/garden`) | Current bed sections and pots; setup at `/garden/setup` |
+| **Catalog** (`/catalog`) | Searchable, editable crop-care rows for crops in this garden |
+| **Log** (`/log`) | What was done and when |
+| **Ask** (`/ask`) | Conversation over garden state and the Today list |
+
+Out of scope for v1: LLM as the daily care engine, sensors, computer vision,
+e-commerce, community or extra households, and a full plant encyclopedia.
 
 ## Live app
 
@@ -89,7 +117,7 @@ Supabase service-role, model, email, or cron credentials. See
    deployed callback URLs when testing both environments.
 6. Ensure the email provider is enabled under **Authentication → Providers**.
 7. Under **Authentication → Providers → Email**, turn **off** “Allow new users
-   to sign up” (open signup). GreenThumb admits only the two household
+   to sign up” (open signup). Jory Journal admits only the two household
    addresses via `ALLOWED_EMAILS`; leaving open signup on would let Supabase
    create accounts for other addresses even though the app callback rejects
    them. Create the two household users first (sign in once with signup still
@@ -101,7 +129,7 @@ Supabase service-role, model, email, or cron credentials. See
    so the email shows a **6-digit code** (required for local sign-in). Example:
 
    ```html
-   <h2>Sign in to GreenThumb</h2>
+   <h2>Sign in to Jory Journal</h2>
    <p>Your code is <strong>{{ .Token }}</strong></p>
    <p>Enter this code in the app. It expires shortly and can only be used once.</p>
    ```
